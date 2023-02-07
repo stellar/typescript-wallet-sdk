@@ -17,4 +17,14 @@ describe("Anchor", () => {
     const resp = await anchor.getInfo();
     expect(resp.WEB_AUTH_ENDPOINT).toBe("https://testanchor.stellar.org/auth");
   });
+
+  it("should be able to authenticate", async () => {
+    // ALEC TODO - put this in a beforeAll or something
+    const Wal = new walletSdk.Wallet(walletSdk.NETWORKS.TESTNET);
+    const anchor = Wal.anchor("testanchor.stellar.org");
+
+    const auth = await anchor.auth(
+      "GDXUU237GGPX3TGWBRGUG4ZA4IY664GZZGGDVMVAG4GRFMOSQDLP5UCC"
+    );
+  });
 });

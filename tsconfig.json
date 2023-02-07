@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
-    "esModuleInterop": true
-  }
+    "esModuleInterop": true,
+    "baseUrl": "src/"
+  },
+  "include": ["src"]
 }
