@@ -2,7 +2,7 @@
   "name": "typescript-wallet-sdk",
   "version": "1.0.0",
   "main": "src/index.ts",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "private": false,
   "devDependencies": {
     "@stellar/eslint-config": "^2.1.2",
