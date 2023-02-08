@@ -19,12 +19,17 @@ describe("Anchor", () => {
   });
 
   it("should be able to authenticate", async () => {
+    jest.setTimeout(3000);
+
     // ALEC TODO - put this in a beforeAll or something
     const Wal = new walletSdk.Wallet(walletSdk.NETWORKS.TESTNET);
     const anchor = Wal.anchor("testanchor.stellar.org");
 
     const auth = await anchor.auth(
-      "GDXUU237GGPX3TGWBRGUG4ZA4IY664GZZGGDVMVAG4GRFMOSQDLP5UCC"
+      "SDXC3OHSJZEQIXKEWFDNEZEQ7SW5DWBPW7RKUWI36ILY3QZZ6VER7TXV"
     );
+    const token = await auth.authenticate();
+    expect(token).toBeTruthy();
+    expect(typeof token).toBe("string");
   });
 });

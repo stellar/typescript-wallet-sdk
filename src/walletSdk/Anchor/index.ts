@@ -14,13 +14,12 @@ export class Anchor {
     return await StellarTomlResolver.resolve(this.domain);
   }
 
-  async auth(publicKey: string) {
+  async auth(privateKey: string) {
     const tomlInfo = await this.getInfo();
-    const auth = new Auth(tomlInfo.WEB_AUTH_ENDPOINT, publicKey);
-
-    // ALEC TODO - remove
-    console.log(auth.authenticate()); // ALEC TODO - remove
+    return new Auth(tomlInfo.WEB_AUTH_ENDPOINT, privateKey);
   }
+
+  interactive() {}
 
   getServicesInfo() {}
 
@@ -29,6 +28,4 @@ export class Anchor {
   getTransactionForAsset() {}
 
   getHistory() {}
-
-  interactive() {}
 }
