@@ -1,50 +1,73 @@
 import axios from "axios";
 import StellarSdk, { Keypair } from "stellar-sdk";
 
+import {
+  InvalidMemoError,
+  ClientDomainWithMemoError,
+  ServerRequestFailedError,
+} from "../exception";
+
 export class Auth {
-  authEndpoint = "";
-  keypair: Keypair = null;
+  private webAuthEndpoint = "";
 
-  constructor(authEndpoint, privateKey) {
-    this.authEndpoint = authEndpoint;
-
-    // ALEC TODO - handle bad private key case
-    this.keypair = StellarSdk.Keypair.fromSecret(privateKey);
+  constructor(webAuthEndpoint) {
+    this.webAuthEndpoint = webAuthEndpoint;
   }
 
-  async authenticate() {
-    const challengeTx = await this.challenge();
-    // ALEC TODO - dont hardcode
+  async authenticate(
+    accountKp: Keypair,
+    memoId?: string,
+    clientDomain?: string
+  ) {
+    const challengeResponse = await this.challenge(
+      accountKp,
+      memoId,
+      clientDomain
+    );
     const signedTx = this.sign(
-      challengeTx,
-      "Test SDF Network ; September 2015"
+      accountKp,
+      challengeResponse.transaction,
+      challengeResponse.network_passphrase
     );
     return await this.getToken(signedTx);
   }
 
-  async challenge() {
-    const url = `${this.authEndpoint}?account=${this.keypair.publicKey()}`;
-    const auth = await axios.get(url);
-
-    // ALEC TODO - handle error case
-    const challengeTx = auth.data.transaction;
-    return challengeTx;
+  async challenge(accountKp: Keypair, memoId?: string, clientDomain?: string) {
+    if (memoId && parseInt(memoId) < 0) {
+      throw new InvalidMemoError();
+    }
+    if (clientDomain && memoId) {
+      throw new ClientDomainWithMemoError();
+    }
+    const url = `${this.webAuthEndpoint}?account=${accountKp.publicKey()}${
+      memoId ? "&memo=memoId" : ""
+    }${clientDomain ? "&client_domain=clientDomain" : ""}`;
+    try {
+      const auth = await axios.get(url);
+      return auth.data;
+    } catch (e) {
+      throw new ServerRequestFailedError(e);
+    }
   }
 
-  sign(challengeTx, network) {
+  // TODO - add signing with client account functionality
+  sign(accountKp: Keypair, challengeTx, network) {
     const transaction = StellarSdk.TransactionBuilder.fromXDR(
       challengeTx,
       network
     );
-    transaction.sign(this.keypair);
+    transaction.sign(accountKp);
     return transaction;
   }
 
   async getToken(signedTx) {
-    const resp = await axios.post(this.authEndpoint, {
-      transaction: signedTx.toXDR(),
-    });
-    // ALEC TODO - handle error case
-    return resp.data.token;
+    try {
+      const resp = await axios.post(this.webAuthEndpoint, {
+        transaction: signedTx.toXDR(),
+      });
+      return resp.data.token;
+    } catch (e) {
+      throw new ServerRequestFailedError(e);
+    }
   }
 }
