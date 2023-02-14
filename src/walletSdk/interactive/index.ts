@@ -19,14 +19,14 @@ export class Interactive {
   async deposit(
     accountAddress: string,
     assetCode: string,
-    token: string,
+    authToken: string,
     extraFields?: ExtraFields,
     fundsAccountAddress?: string
   ) {
     return await this.flow(
       accountAddress,
       assetCode,
-      token,
+      authToken,
       "deposit",
       extraFields,
       fundsAccountAddress
@@ -36,14 +36,14 @@ export class Interactive {
   async withdraw(
     accountAddress: string,
     assetCode: string,
-    token: string,
+    authToken: string,
     extraFields?: ExtraFields,
     fundsAccountAddress?: string
   ) {
     return await this.flow(
       accountAddress,
       assetCode,
-      token,
+      authToken,
       "withdraw",
       extraFields,
       fundsAccountAddress
@@ -53,7 +53,7 @@ export class Interactive {
   async flow(
     accountAddress: string,
     assetCode: string,
-    token: string,
+    authToken: string,
     type: string,
     extraFields?: ExtraFields,
     fundsAccountAddress?: string
@@ -84,7 +84,7 @@ export class Interactive {
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${authToken}`,
           },
         }
       );

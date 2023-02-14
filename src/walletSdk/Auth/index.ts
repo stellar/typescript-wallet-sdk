@@ -10,6 +10,7 @@ import {
 export class Auth {
   private webAuthEndpoint = "";
 
+  // TODO - add config and custom httpClient functionality
   constructor(webAuthEndpoint) {
     this.webAuthEndpoint = webAuthEndpoint;
   }
