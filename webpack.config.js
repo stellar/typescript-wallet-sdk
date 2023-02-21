@@ -16,6 +16,9 @@ module.exports = {
     extensions: [".js", ".json", ".ts"],
   },
   output: {
+    library: "MyLibrary",
+    libraryTarget: "umd",
+    globalObject: "this",
     filename: "bundle.js",
     path: path.resolve(__dirname, "lib"),
   },
