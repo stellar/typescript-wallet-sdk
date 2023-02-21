@@ -1,7 +1,14 @@
 {
-  "compilerOptions": {
+  "compilerOptions":
+  {
     "esModuleInterop": true,
-    "baseUrl": "src/"
+    "baseUrl": "src/",
+    "outDir": "lib",
+    "declaration": true,
+    "declarationDir": "lib"
   },
-  "include": ["src"]
+  "include":
+  [
+    "src"
+  ]
 }
