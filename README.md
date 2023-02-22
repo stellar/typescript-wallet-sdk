@@ -6,10 +6,13 @@ Typescript Wallet SDK to build Stellar wallets
 
 ### To use locally you can use npm link:
 ```
-// add npm link of sdk directory
+// build wallet sdk
 cd typescript-wallet-sdk
-npm link
+yarn
+yarn run build
 
+// add npm link of sdk directory
+npm link
 
 // change to your wallet directory, and then create npm link
 cd my-wallet
