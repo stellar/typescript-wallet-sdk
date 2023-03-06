@@ -1,25 +1,51 @@
 import { StellarTomlResolver } from "stellar-sdk";
+import axios from "axios";
+
+import { Auth } from "../auth";
+import { Interactive } from "../interactive";
+import { TomlInfo, parseToml } from "../toml";
+import { ServerRequestFailedError } from "../exception";
 
 export class Anchor {
-  domain = "";
+  private homeDomain = "";
 
-  constructor(domain) {
-    this.domain = domain;
+  constructor(homeDomain) {
+    this.homeDomain = homeDomain;
   }
 
-  async getInfo(): Promise<StellarTomlResolver.StellarToml> {
-    return await StellarTomlResolver.resolve(this.domain);
+  async getInfo(): Promise<TomlInfo> {
+    const toml = await StellarTomlResolver.resolve(this.homeDomain);
+    return parseToml(toml);
   }
 
-  auth() {}
+  async auth() {
+    const tomlInfo = await this.getInfo();
+    return new Auth(tomlInfo.webAuthEndpoint);
+  }
 
-  getServicesInfo() {}
+  interactive() {
+    return new Interactive(this.homeDomain, this);
+  }
+
+  async getServicesInfo() {
+    const toml = await this.getInfo();
+    const transferServerEndpoint = toml.transferServerSep24;
+
+    try {
+      const resp = await axios.get(`${transferServerEndpoint}/info`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      return resp.data;
+    } catch (e) {
+      throw new ServerRequestFailedError(e);
+    }
+  }
 
   getTransaction() {}
 
   getTransactionForAsset() {}
 
   getHistory() {}
-
-  interactive() {}
 }
