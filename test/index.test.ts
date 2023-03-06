@@ -1,6 +1,7 @@
 import { Keypair } from "stellar-sdk";
 
-import { walletSdk } from "../";
+import sdk from "../src";
+const { walletSdk } = sdk;
 
 describe("SEP-24 flow", () => {
   it("should init a wallet with network and domain", () => {
