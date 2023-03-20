@@ -7,6 +7,11 @@ type ExtraFields = {
   [key: string]: string;
 };
 
+export enum FLOW_TYPE {
+  DEPOSIT = "deposit",
+  WITHDRAW = "withdraw",
+}
+
 export class Interactive {
   private homeDomain = "";
   private anchor: Anchor = null;
@@ -27,7 +32,7 @@ export class Interactive {
       accountAddress,
       assetCode,
       authToken,
-      "deposit",
+      FLOW_TYPE.DEPOSIT,
       extraFields,
       fundsAccountAddress
     );
@@ -44,7 +49,7 @@ export class Interactive {
       accountAddress,
       assetCode,
       authToken,
-      "withdraw",
+      FLOW_TYPE.WITHDRAW,
       extraFields,
       fundsAccountAddress
     );
@@ -64,7 +69,7 @@ export class Interactive {
     const serviceInfo = await this.anchor.getServicesInfo();
 
     let assets;
-    if (type === "deposit") {
+    if (type === FLOW_TYPE.DEPOSIT) {
       assets = Object.keys(serviceInfo.deposit);
     } else {
       assets = Object.keys(serviceInfo.withdraw);
