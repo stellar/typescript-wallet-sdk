@@ -1,5 +1,4 @@
-// import StellarSdk from "stellar-sdk";
-import { Anchor } from "./Anchor";
+import { Anchor } from "./anchor";
 
 export enum NETWORKS {
   PUBLIC = "PUBLIC",
