@@ -5,12 +5,15 @@ import { Auth } from "../auth";
 import { Interactive } from "../interactive";
 import { TomlInfo, parseToml } from "../toml";
 import { ServerRequestFailedError } from "../exception";
+import { Config } from "../";
 
 export class Anchor {
   private homeDomain = "";
+  private httpClient = null;
 
-  constructor(homeDomain) {
+  constructor(cfg: Config, homeDomain: string, httpClient) {
     this.homeDomain = homeDomain;
+    this.httpClient = httpClient;
   }
 
   async getInfo(): Promise<TomlInfo> {
@@ -32,6 +35,7 @@ export class Anchor {
     const transferServerEndpoint = toml.transferServerSep24;
 
     try {
+      // TODO - use httpClient
       const resp = await axios.get(`${transferServerEndpoint}/info`, {
         headers: {
           "Content-Type": "application/json",
