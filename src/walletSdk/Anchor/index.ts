@@ -5,15 +5,16 @@ import { Auth } from "../auth";
 import { Interactive } from "../interactive";
 import { TomlInfo, parseToml } from "../toml";
 import { ServerRequestFailedError } from "../exception";
-import { Config } from "../";
 
 export class Anchor {
   private homeDomain = "";
   private httpClient = null;
+  private cfg;
 
-  constructor(cfg: Config, homeDomain: string, httpClient) {
+  constructor(cfg, homeDomain: string, httpClient) {
     this.homeDomain = homeDomain;
     this.httpClient = httpClient;
+    this.cfg = cfg;
   }
 
   async getInfo(): Promise<TomlInfo> {

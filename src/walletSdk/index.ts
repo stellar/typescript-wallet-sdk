@@ -12,7 +12,7 @@ interface ClientConfigFn {}
 interface ClientConfig {}
 class HttpClient {}
 
-export class Config {
+class Config {
   app: ApplicationConfiguration;
   stellar: StellarConfiguration;
   constructor(stellarCfg, appCfg) {
