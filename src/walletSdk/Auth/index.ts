@@ -41,7 +41,7 @@ export class Auth {
       throw new ClientDomainWithMemoError();
     }
     const url = `${this.webAuthEndpoint}?account=${accountKp.publicKey()}${
-      memoId ? `&memo=$[memoId}` : ""
+      memoId ? `&memo=${memoId}` : ""
     }${clientDomain ? `&client_domain=${clientDomain}` : ""}`;
     try {
       const auth = await axios.get(url);
