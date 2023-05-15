@@ -6,6 +6,7 @@ import { Interactive } from "../interactive";
 import { TomlInfo, parseToml } from "../toml";
 import { ServerRequestFailedError } from "../exception";
 
+// Do not create this object directly, use the Wallet class.
 export class Anchor {
   private homeDomain = "";
   private httpClient = null;

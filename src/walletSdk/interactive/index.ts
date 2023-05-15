@@ -12,6 +12,7 @@ export enum FLOW_TYPE {
   WITHDRAW = "withdraw",
 }
 
+// Do not create this object directly, use the Wallet class.
 export class Interactive {
   private homeDomain = "";
   private anchor: Anchor = null;
