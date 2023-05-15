@@ -63,12 +63,6 @@ export class Wallet {
     );
   }
 
-  close() {
-    this.clients.forEach((c) => {
-      c.close();
-    });
-  }
-
   getClient(httpClientConfig?) {
     // TODO - create an httpClient object from the passed in config object
     const httpClient = null;
