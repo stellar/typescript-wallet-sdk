@@ -7,6 +7,7 @@ import {
   ServerRequestFailedError,
 } from "../exception";
 
+// Do not create this object directly, use the Wallet class.
 export class Auth {
   private webAuthEndpoint = "";
 

@@ -1,11 +1,18 @@
-import { Keypair } from "stellar-sdk";
+import StellarSdk, { Keypair } from "stellar-sdk";
 
 import sdk from "../src";
 const { walletSdk } = sdk;
 
+describe("Wallet", () => {
+  it("should init", () => {
+    walletSdk.Wallet.TestNet();
+    walletSdk.Wallet.MainNet();
+  });
+});
+
 describe("SEP-24 flow", () => {
   it("should init a wallet with network and domain", () => {
-    const Wal = new walletSdk.Wallet(walletSdk.NETWORKS.PUBLIC);
+    const Wal = walletSdk.Wallet.TestNet();
     const anchor = Wal.anchor("anchor-domain");
   });
 });
@@ -14,7 +21,7 @@ let anchor;
 let accountKp;
 describe("Anchor", () => {
   beforeEach(() => {
-    const Wal = new walletSdk.Wallet(walletSdk.NETWORKS.TESTNET);
+    const Wal = walletSdk.Wallet.TestNet();
     anchor = Wal.anchor("testanchor.stellar.org");
     accountKp = Keypair.fromSecret(
       "SDXC3OHSJZEQIXKEWFDNEZEQ7SW5DWBPW7RKUWI36ILY3QZZ6VER7TXV"

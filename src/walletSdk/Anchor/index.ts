@@ -6,11 +6,16 @@ import { Interactive } from "../interactive";
 import { TomlInfo, parseToml } from "../toml";
 import { ServerRequestFailedError } from "../exception";
 
+// Do not create this object directly, use the Wallet class.
 export class Anchor {
   private homeDomain = "";
+  private httpClient = null;
+  private cfg;
 
-  constructor(homeDomain) {
+  constructor(cfg, homeDomain: string, httpClient) {
     this.homeDomain = homeDomain;
+    this.httpClient = httpClient;
+    this.cfg = cfg;
   }
 
   async getInfo(): Promise<TomlInfo> {
@@ -32,6 +37,7 @@ export class Anchor {
     const transferServerEndpoint = toml.transferServerSep24;
 
     try {
+      // TODO - use httpClient
       const resp = await axios.get(`${transferServerEndpoint}/info`, {
         headers: {
           "Content-Type": "application/json",
