@@ -15,6 +15,12 @@ module.exports = {
   },
   resolve: {
     extensions: [".js", ".json", ".ts"],
+    fallback: {
+      http: require.resolve("stream-http"),
+      https: require.resolve("https-browserify"),
+      url: require.resolve("url"),
+      util: require.resolve("util"),
+    },
   },
   output: {
     library: "MyLibrary",
