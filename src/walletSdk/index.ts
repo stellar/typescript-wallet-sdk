@@ -1,4 +1,5 @@
 import StellarSdk, { Networks, Server } from "stellar-sdk";
+import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
 
 import { Anchor } from "./anchor";
 import { WalletSigner, DefaultSigner } from "./auth/WalletSigner";
@@ -7,10 +8,12 @@ import { NETWORK_URLS } from "./horizon/constants";
 import { Recovery } from "./recovery/Recovery";
 import { getUrlDomain } from "./util/url";
 
-// TODO - https://stellarorg.atlassian.net/browse/WAL-789?atlOrigin=eyJpIjoiZjcwNzZhOTJmNjE1NGRhNTk1NDlkOTExMTYxMDJkZmYiLCJwIjoiaiJ9
-interface ClientConfigFn {}
-interface ClientConfig {}
-class HttpClient {}
+/* tslint:disable-next-line:no-var-requires */
+const version = require("../../package.json").version;
+const walletHeaders = {
+  "X-Client-Name": "typescript-wallet-sdk",
+  "X-Client-Version": version,
+};
 
 class Config {
   app: ApplicationConfiguration;
@@ -23,7 +26,6 @@ class Config {
 
 export class Wallet {
   private cfg: Config;
-  private clients = [];
 
   static TestNet = (): Wallet => {
     return new Wallet(StellarConfiguration.TestNet());
@@ -40,7 +42,7 @@ export class Wallet {
     this.cfg = new Config(stellarConfiguration, applicationConfiguration);
   }
 
-  anchor(homeDomain: string, httpClientConfig: ClientConfigFn = null) {
+  anchor(homeDomain: string, httpClientConfig: AxiosRequestConfig = {}) {
     const url =
       homeDomain.indexOf("://") !== -1 ? homeDomain : `https://${homeDomain}`;
     return new Anchor(
@@ -54,7 +56,7 @@ export class Wallet {
     return new Stellar(this.cfg);
   }
 
-  recover(servers, httpClientConfig) {
+  recover(servers, httpClientConfig: AxiosRequestConfig = {}) {
     return new Recovery(
       this.cfg,
       this.stellar(),
@@ -63,13 +65,14 @@ export class Wallet {
     );
   }
 
-  getClient(httpClientConfig?) {
-    // TODO - create an httpClient object from the passed in config object
-    const httpClient = null;
-    if (httpClient) {
-      this.clients.push(httpClient);
-    }
-    return httpClient ? httpClient : this.cfg.app.defaultClient;
+  getClient(httpClientConfig: AxiosRequestConfig = {}) {
+    return axios.create({
+      headers: {
+        ...walletHeaders,
+        ...httpClientConfig.headers,
+      },
+      ...httpClientConfig,
+    });
   }
 }
 
@@ -97,13 +100,13 @@ export class StellarConfiguration {
 
 export class ApplicationConfiguration {
   defaultSigner: WalletSigner;
-  defaultClient: HttpClient;
-  constructor(
-    defaultSigner: WalletSigner = DefaultSigner,
-    defaultCliengConfig: ClientConfig = {}
-  ) {
+  defaultClient: AxiosInstance;
+  constructor(defaultSigner: WalletSigner = DefaultSigner) {
     this.defaultSigner = defaultSigner;
-    // TODO - default client
-    this.defaultClient = new HttpClient();
+    this.defaultClient = axios.create({
+      headers: {
+        ...walletHeaders,
+      },
+    });
   }
 }

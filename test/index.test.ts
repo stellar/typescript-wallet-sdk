@@ -1,4 +1,5 @@
 import StellarSdk, { Keypair } from "stellar-sdk";
+import http from "http";
 
 import sdk from "../src";
 const { walletSdk } = sdk;
@@ -7,6 +8,20 @@ describe("Wallet", () => {
   it("should init", () => {
     walletSdk.Wallet.TestNet();
     walletSdk.Wallet.MainNet();
+  });
+  it("should be able return a client", async () => {
+    let appConfig = new walletSdk.ApplicationConfiguration();
+    let wal = new walletSdk.Wallet(
+      walletSdk.StellarConfiguration.TestNet(),
+      appConfig
+    );
+
+    let client = wal.getClient();
+
+    // create custom client
+    client = wal.getClient({
+      httpAgent: new http.Agent({ keepAlive: false }),
+    });
   });
 });
 
