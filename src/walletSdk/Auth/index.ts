@@ -1,4 +1,3 @@
-import axios from "axios";
 import StellarSdk, { Keypair } from "stellar-sdk";
 
 import {
@@ -10,10 +9,11 @@ import {
 // Do not create this object directly, use the Wallet class.
 export class Auth {
   private webAuthEndpoint = "";
+  private httpClient;
 
-  // TODO - add config and custom httpClient functionality
-  constructor(webAuthEndpoint) {
+  constructor(webAuthEndpoint, httpClient) {
     this.webAuthEndpoint = webAuthEndpoint;
+    this.httpClient = httpClient;
   }
 
   async authenticate(
@@ -45,7 +45,7 @@ export class Auth {
       memoId ? `&memo=${memoId}` : ""
     }${clientDomain ? `&client_domain=${clientDomain}` : ""}`;
     try {
-      const auth = await axios.get(url);
+      const auth = await this.httpClient.get(url);
       return auth.data;
     } catch (e) {
       throw new ServerRequestFailedError(e);
@@ -64,7 +64,7 @@ export class Auth {
 
   async getToken(signedTx) {
     try {
-      const resp = await axios.post(this.webAuthEndpoint, {
+      const resp = await this.httpClient.post(this.webAuthEndpoint, {
         transaction: signedTx.toXDR(),
       });
       return resp.data.token;

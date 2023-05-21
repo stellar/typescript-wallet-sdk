@@ -1,5 +1,4 @@
 import { StellarTomlResolver } from "stellar-sdk";
-import axios from "axios";
 
 import { Auth } from "../auth";
 import { Interactive } from "../interactive";
@@ -25,11 +24,11 @@ export class Anchor {
 
   async auth() {
     const tomlInfo = await this.getInfo();
-    return new Auth(tomlInfo.webAuthEndpoint);
+    return new Auth(tomlInfo.webAuthEndpoint, this.httpClient);
   }
 
   interactive() {
-    return new Interactive(this.homeDomain, this);
+    return new Interactive(this.homeDomain, this, this.httpClient);
   }
 
   async getServicesInfo() {
@@ -37,8 +36,7 @@ export class Anchor {
     const transferServerEndpoint = toml.transferServerSep24;
 
     try {
-      // TODO - use httpClient
-      const resp = await axios.get(`${transferServerEndpoint}/info`, {
+      const resp = await this.httpClient.get(`${transferServerEndpoint}/info`, {
         headers: {
           "Content-Type": "application/json",
         },

@@ -18,7 +18,7 @@ describe("Wallet", () => {
 
     let client = wal.getClient();
 
-    // create custom client
+    // custom client
     client = wal.getClient({
       httpAgent: new http.Agent({ keepAlive: false }),
     });

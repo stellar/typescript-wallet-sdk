@@ -1,5 +1,3 @@
-import axios from "axios";
-
 import { Anchor } from "../anchor";
 import { AssetNotSupportedError, ServerRequestFailedError } from "../exception";
 
@@ -16,10 +14,12 @@ export enum FLOW_TYPE {
 export class Interactive {
   private homeDomain = "";
   private anchor: Anchor = null;
+  private httpClient;
 
-  constructor(homeDomain, anchor) {
+  constructor(homeDomain, anchor, httpClient) {
     this.homeDomain = homeDomain;
     this.anchor = anchor;
+    this.httpClient = httpClient;
   }
 
   async deposit(
@@ -80,7 +80,7 @@ export class Interactive {
     }
 
     try {
-      const resp = await axios.post(
+      const resp = await this.httpClient.post(
         `${transferServerEndpoint}/transactions/${type}/interactive`,
         {
           asset_code: assetCode,
