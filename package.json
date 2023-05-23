@@ -1,5 +1,5 @@
 {
-  "name": "typescript-wallet-sdk",
+  "name": "@stellar/typescript-wallet-sdk",
   "version": "1.0.0",
   "engines": {
     "node": ">=18"
