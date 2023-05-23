@@ -1,10 +1,11 @@
 # typescript-wallet-sdk
+
 Typescript Wallet SDK to build Stellar wallets
 
-### This SDK is currently in development
-
+### This SDK is currently in development. Some features may not work as expected. Please use at your own risk.
 
 ### To use locally you can use npm link:
+
 ```
 // build wallet sdk
 cd typescript-wallet-sdk
@@ -22,8 +23,8 @@ npm link typescript-wallet-sdk
 import typescript-wallet-sdk from "typescript-wallet-sdk"
 ```
 
-
 ### To run tests:
+
 ```
 yarn test
 ```
