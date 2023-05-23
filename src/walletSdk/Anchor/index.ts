@@ -11,6 +11,7 @@ export class Anchor {
   private homeDomain = "";
   private httpClient = null;
   private cfg;
+  private toml: TomlInfo;
 
   constructor(cfg, homeDomain: string, httpClient) {
     this.homeDomain = homeDomain;
@@ -19,13 +20,15 @@ export class Anchor {
   }
 
   async getInfo(): Promise<TomlInfo> {
-    const toml = await StellarTomlResolver.resolve(this.homeDomain);
-    return parseToml(toml);
+    const stellarToml = await StellarTomlResolver.resolve(this.homeDomain);
+    const parsedToml = parseToml(stellarToml);
+    this.toml = parsedToml;
+    return parsedToml;
   }
 
   async auth() {
-    const tomlInfo = await this.getInfo();
-    return new Auth(tomlInfo.webAuthEndpoint);
+    const toml = this.toml || await this.getInfo();
+    return new Auth(toml.webAuthEndpoint);
   }
 
   interactive() {
@@ -33,7 +36,7 @@ export class Anchor {
   }
 
   async getServicesInfo() {
-    const toml = await this.getInfo();
+    const toml = this.toml || await this.getInfo();
     const transferServerEndpoint = toml.transferServerSep24;
 
     try {
