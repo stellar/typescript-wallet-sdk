@@ -17,10 +17,10 @@ npm link
 
 // change to your wallet directory, and then create npm link
 cd my-wallet
-npm link typescript-wallet-sdk
+npm link @stellar/typescript-wallet-sdk
 
 // import in wallet code
-import typescript-wallet-sdk from "typescript-wallet-sdk"
+import typescript-wallet-sdk from "@stellar/typescript-wallet-sdk"
 ```
 
 ### To run tests:
