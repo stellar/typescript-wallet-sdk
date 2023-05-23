@@ -1,7 +1,7 @@
 import StellarSdk, { Networks, Server } from "stellar-sdk";
 
-import { Anchor } from "./anchor";
-import { WalletSigner, DefaultSigner } from "./auth/WalletSigner";
+import { Anchor } from "./Anchor";
+import { WalletSigner, DefaultSigner } from "./Auth/WalletSigner";
 import { Stellar } from "./horizon/Stellar";
 import { NETWORK_URLS } from "./horizon/constants";
 import { Recovery } from "./recovery/Recovery";
