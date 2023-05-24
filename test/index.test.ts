@@ -93,4 +93,63 @@ describe("Anchor", () => {
       await anchor.getTransactionBy(authToken, nonExistingTransactionId);
     }).rejects.toThrowError(ServerRequestFailedError)
   });
+
+  it("should fetch 5 existing transactions by token code", async () => {
+    const transactions = await anchor
+      .getTransactionsForAsset(authToken, { 
+        assetCode: "SRT",
+        limit: 5,
+        lang: "en-US",
+      });
+
+    transactions.forEach(({ status }) => {
+      expect(status).toBeTruthy();
+      expect(typeof status).toBe("string");
+    });
+
+    expect(transactions.length === 5).toBeTruthy();
+  });
+
+  it("should fetch 3 existing deposit transactions by token code", async () => {
+    const transactions = await anchor
+      .getTransactionsForAsset(authToken, { 
+        assetCode: "SRT",
+        limit: 3,
+        kind: "deposit",
+        lang: "en-US",
+      });
+
+    transactions.forEach(({ kind }) => {
+      expect(kind === "deposit").toBeTruthy();    
+    });
+
+    expect(transactions.length === 3).toBeTruthy();
+  });
+
+  it("should fetch 2 existing withdrawal transactions by token code", async () => {
+    const transactions = await anchor
+      .getTransactionsForAsset(authToken, { 
+        assetCode: "SRT",
+        limit: 2,
+        kind: "withdrawal",
+        lang: "en-US",
+      });
+
+    transactions.forEach(({ kind }) => {
+      expect(kind === "withdrawal").toBeTruthy();    
+    });
+
+    expect(transactions.length === 2).toBeTruthy();
+  });
+
+  it("should error fetching transactions with invalid pading id", async () => {
+    await expect(async () => { 
+      await anchor
+      .getTransactionsForAsset(authToken, { 
+        assetCode: "SRT",
+        lang: "en-US",
+        pagingId: "randomPagingId",
+      });
+    }).rejects.toThrowError(ServerRequestFailedError)
+  });
 });
