@@ -5,7 +5,13 @@ import queryString from "query-string";
 import { Auth } from "../Auth";
 import { Interactive } from "../interactive";
 import { TomlInfo, parseToml } from "../toml";
-import { MissingTransactionIdError, ServerRequestFailedError, InvalidTransactionResponseError } from "../exception";
+import {
+  MissingTransactionIdError, 
+  ServerRequestFailedError, 
+  InvalidTransactionResponseError, 
+  InvalidTransactionsResponseError 
+} from "../exception";
+import { camelToSnakeCaseObject } from "../util/camelToSnakeCase";
 
 // Do not create this object directly, use the Wallet class.
 export class Anchor {
@@ -82,6 +88,7 @@ export class Anchor {
   * @return transaction object
   * @throws [MissingTransactionIdError] if none of the id params is provided
   * @throws [InvalidTransactionResponseError] if Anchor returns an invalid transaction
+  * @throws [ServerRequestFailedError] if server request fails
   */
   async getTransactionBy(
     authToken: string,
@@ -130,10 +137,56 @@ export class Anchor {
       throw new ServerRequestFailedError(e);
     }
   }
+  
+  /**
+  * Get account's transactions specified by asset and other params.
+  * 
+  * @param authToken auth token of the account authenticated with the anchor 
+  * @param assetCode target asset to query for
+  * @param noOlderThan response should contain transactions starting on or after this date & time
+  * @param limit response should contain at most 'limit' transactions
+  * @param kind kind of transaction that is desired. E.g.: 'deposit', 'withdrawal'
+  * @param pagingId response should contain transactions starting prior to this ID (exclusive)
+  * @param lang desired language (localization), it can also accept locale in the format 'en-US'
+  * @return list of transactions as requested by the client, sorted in time-descending order
+  * @throws [InvalidTransactionsResponseError] if Anchor returns an invalid response
+  * @throws [ServerRequestFailedError] if server request fails
+  */
+  async getTransactionsForAsset(authToken: string, requestParams: { 
+    assetCode: string,
+    noOlderThan?: string,
+    limit?: number,
+    kind?: string,
+    pagingId?: string,
+    lang?: string,
+  }) {
+    const toml = this.toml || await this.getInfo();
+    const transferServerEndpoint = toml.transferServerSep24;
+
+    // Let's convert all params to snake case for the API call
+    const apiParams = camelToSnakeCaseObject(requestParams);
+
+    try {
+      // TODO - use httpClient
+      const resp = await axios.get(`${transferServerEndpoint}/transactions?${queryString.stringify(apiParams)}`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      const transactions = resp.data?.transactions;
+
+      if(!transactions || !Array.isArray(transactions)) {
+        throw new InvalidTransactionsResponseError(transactions);
+      }
+
+      return transactions.map(this._normalizeTransaction);
+    } catch (e) {
+      throw new ServerRequestFailedError(e);
+    }
+  }
 
   getTransaction() {}
-
-  getTransactionForAsset() {}
 
   getHistory() {}
 }
