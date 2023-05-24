@@ -21,6 +21,7 @@ describe("SEP-24 flow", () => {
 
 let anchor;
 let accountKp;
+let authToken;
 describe("Anchor", () => {
   beforeEach(() => {
     const Wal = walletSdk.Wallet.TestNet();
@@ -29,19 +30,20 @@ describe("Anchor", () => {
       "SDXC3OHSJZEQIXKEWFDNEZEQ7SW5DWBPW7RKUWI36ILY3QZZ6VER7TXV"
     );
   });
+
+  it("should be able to authenticate", async () => {
+    const auth = await anchor.auth();
+    authToken = await auth.authenticate(accountKp);
+
+    expect(authToken).toBeTruthy();
+    expect(typeof authToken).toBe("string");
+  });
+
   it("should give TOML info", async () => {
     const resp = await anchor.getInfo();
 
     expect(resp.webAuthEndpoint).toBe("https://testanchor.stellar.org/auth");
     expect(resp.currencies.length).toBe(2);
-  });
-
-  it("should be able to authenticate", async () => {
-    const auth = await anchor.auth();
-    const token = await auth.authenticate(accountKp);
-
-    expect(token).toBeTruthy();
-    expect(typeof token).toBe("string");
   });
 
   it("should get anchor services info", async () => {
@@ -52,40 +54,28 @@ describe("Anchor", () => {
   });
 
   it("should give interactive deposit url", async () => {
-    const auth = await anchor.auth();
-    const accountKp = Keypair.fromSecret(
-      "SDXC3OHSJZEQIXKEWFDNEZEQ7SW5DWBPW7RKUWI36ILY3QZZ6VER7TXV"
-    );
-    const token = await auth.authenticate(accountKp);
     const assetCode = "SRT";
     const resp = await anchor
       .interactive()
-      .deposit(accountKp.publicKey(), assetCode, token);
+      .deposit(accountKp.publicKey(), assetCode, authToken);
 
     expect(resp.url).toBeTruthy();
     expect(resp.id).toBeTruthy();
   });
 
   it("should give interactive withdraw url", async () => {
-    const auth = await anchor.auth();
-    const token = await auth.authenticate(accountKp);
     const assetCode = "SRT";
     const resp = await anchor
       .interactive()
-      .withdraw(accountKp.publicKey(), assetCode, token);
+      .withdraw(accountKp.publicKey(), assetCode, authToken);
 
     expect(resp.url).toBeTruthy();
     expect(resp.id).toBeTruthy();
   });
 
   it("should fetch existing transaction by id", async () => {
-    const auth = await anchor.auth();
-    const accountKp = Keypair.fromSecret(
-      "SDXC3OHSJZEQIXKEWFDNEZEQ7SW5DWBPW7RKUWI36ILY3QZZ6VER7TXV"
-    );
-    const token = await auth.authenticate(accountKp);
     const transaction = await anchor
-      .getTransactionBy(token, "da8575e9-edc6-4f99-98cf-2b302f203dd8");
+      .getTransactionBy(authToken, "da8575e9-edc6-4f99-98cf-2b302f203dd8");
   
     const { id, kind, amount_in, amount_out, amount_fee } = transaction;
 
@@ -98,15 +88,9 @@ describe("Anchor", () => {
   });
 
   it("should error fetching non-existing transaction by id", async () => {
-    const auth = await anchor.auth();
-    const accountKp = Keypair.fromSecret(
-      "SDXC3OHSJZEQIXKEWFDNEZEQ7SW5DWBPW7RKUWI36ILY3QZZ6VER7TXV"
-    );
-    const token = await auth.authenticate(accountKp);
-
     await expect(async () => { 
       const nonExistingTransactionId = "da8575e9-edc6-4f99-98cf-2b302f203cc7";
-      await anchor.getTransactionBy(token, nonExistingTransactionId);
+      await anchor.getTransactionBy(authToken, nonExistingTransactionId);
     }).rejects.toThrowError(ServerRequestFailedError)
   });
 });
