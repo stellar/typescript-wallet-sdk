@@ -73,18 +73,27 @@ describe("Anchor", () => {
     expect(resp.id).toBeTruthy();
   });
 
-  it("should fetch existing transaction by id", async () => {
+  it("should fetch new transaction by id", async () => {
+    const assetCode = "SRT";
+
+    // creates new 'incomplete' deposit transaction
+    const { id: transactionId } = await anchor
+      .interactive()
+      .deposit(accountKp.publicKey(), assetCode, authToken);
+
+    // fetches transaction that has just been created
     const transaction = await anchor
-      .getTransactionBy(authToken, "da8575e9-edc6-4f99-98cf-2b302f203dd8");
+      .getTransactionBy(authToken, transactionId);
   
-    const { id, kind, amount_in, amount_out, amount_fee } = transaction;
+    const { id, kind, status, amount_in, amount_out } = transaction;
 
     expect(transaction).toBeTruthy();
-    expect(id === "da8575e9-edc6-4f99-98cf-2b302f203dd8").toBeTruthy;
+    expect(id === transactionId).toBeTruthy;
     expect(kind === "deposit").toBeTruthy;
-    expect(amount_in === "100.15").toBeTruthy;
-    expect(amount_out === "99.15").toBeTruthy;
-    expect(amount_fee === "1.00").toBeTruthy;
+    expect(status === "incomplete").toBeTruthy;
+    // we expect fresh 'incomplete' transactions to not have amounts set yet
+    expect(amount_in).toBeFalsy;
+    expect(amount_out).toBeFalsy;
   });
 
   it("should error fetching non-existing transaction by id", async () => {
