@@ -13,7 +13,7 @@ import {
   InvalidTransactionsResponseError
 } from "../exception";
 import { camelToSnakeCaseObject } from "../util/camelToSnakeCase";
-import { TransactionStatus } from "./Types";
+import { TransactionStatus, WatcherResponse } from "./Types";
 
 interface WatchAllTransactionsRegistry {
   [assetCode: string]: boolean;
@@ -241,7 +241,7 @@ export class Anchor {
     noOlderThan?: string;
     kind?: string;
     lang?: string;
-  }) {
+  }): WatcherResponse {
     const {
       authToken,
       assetCode,
