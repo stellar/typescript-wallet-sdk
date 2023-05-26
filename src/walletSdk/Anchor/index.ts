@@ -5,13 +5,31 @@ import queryString from "query-string";
 import { Auth } from "../Auth";
 import { Interactive } from "../interactive";
 import { TomlInfo, parseToml } from "../toml";
-import {
+import { 
   MissingTransactionIdError, 
   ServerRequestFailedError, 
-  InvalidTransactionResponseError, 
-  InvalidTransactionsResponseError 
+  InvalidTransactionResponseError,
+  InvalidTransactionsResponseError
 } from "../exception";
 import { camelToSnakeCaseObject } from "../util/camelToSnakeCase";
+
+function _normalizeTransaction(transaction) {
+  // some anchors return _id instead of id, so rewrite that
+  if (transaction._id && transaction.id === undefined) {
+    transaction.id = transaction._id;
+  }
+
+  // others provide amount but not amount_in / amount_out
+  if (
+    transaction.amount &&
+    transaction.amount_in === undefined &&
+    transaction.amount_out === undefined
+  ) {
+    transaction.amount_in = transaction.amount;
+    transaction.amount_out = transaction.amount;
+  }
+  return transaction;
+}
 
 // Do not create this object directly, use the Wallet class.
 export class Anchor {
@@ -59,24 +77,6 @@ export class Anchor {
     }
   }
 
-  private _normalizeTransaction(transaction) {
-    // some anchors return _id instead of id, so rewrite that
-    if (transaction._id && transaction.id === undefined) {
-      transaction.id = transaction._id;
-    }
-  
-    // others provide amount but not amount_in / amount_out
-    if (
-      transaction.amount &&
-      transaction.amount_in === undefined &&
-      transaction.amount_out === undefined
-    ) {
-      transaction.amount_in = transaction.amount;
-      transaction.amount_out = transaction.amount;
-    }
-    return transaction;
-  }
-
   /**
   * Get single transaction's current status and details. One of the [id], [stellarTransactionId],
   * [externalTransactionId] must be provided.
@@ -90,13 +90,19 @@ export class Anchor {
   * @throws [InvalidTransactionResponseError] if Anchor returns an invalid transaction
   * @throws [ServerRequestFailedError] if server request fails
   */
-  async getTransactionBy(
-    authToken: string,
-    id?: string,
-    stellarTransactionId?: string,
-    externalTransactionId?: string,
-    lang?: string,
-  ) {
+  async getTransactionBy({
+    authToken,
+    id,
+    stellarTransactionId,
+    externalTransactionId,
+    lang,
+  }: {
+    authToken: string;
+    id?: string;
+    stellarTransactionId?: string;
+    externalTransactionId?: string;
+    lang?: string;
+  }) {
     if (!id && !stellarTransactionId && !externalTransactionId) {
       throw new MissingTransactionIdError();
     }
@@ -132,7 +138,7 @@ export class Anchor {
         throw new InvalidTransactionResponseError(transaction);
       }
 
-      return this._normalizeTransaction(transaction);
+      return _normalizeTransaction(transaction);
     } catch (e) {
       throw new ServerRequestFailedError(e);
     }
@@ -180,7 +186,7 @@ export class Anchor {
         throw new InvalidTransactionsResponseError(transactions);
       }
 
-      return transactions.map(this._normalizeTransaction);
+      return transactions.map(_normalizeTransaction);
     } catch (e) {
       throw new ServerRequestFailedError(e);
     }

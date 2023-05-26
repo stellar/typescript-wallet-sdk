@@ -75,7 +75,7 @@ describe("Anchor", () => {
 
   it("should fetch existing transaction by id", async () => {
     const transaction = await anchor
-      .getTransactionBy(authToken, "da8575e9-edc6-4f99-98cf-2b302f203dd8");
+      .getTransactionBy({ authToken, id: "da8575e9-edc6-4f99-98cf-2b302f203dd8" });
   
     const { id, kind, amount_in, amount_out, amount_fee } = transaction;
 
@@ -90,7 +90,7 @@ describe("Anchor", () => {
   it("should error fetching non-existing transaction by id", async () => {
     await expect(async () => { 
       const nonExistingTransactionId = "da8575e9-edc6-4f99-98cf-2b302f203cc7";
-      await anchor.getTransactionBy(authToken, nonExistingTransactionId);
+      await anchor.getTransactionBy({ authToken, id: nonExistingTransactionId });
     }).rejects.toThrowError(ServerRequestFailedError)
   });
 
