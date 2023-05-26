@@ -93,7 +93,7 @@ describe("Anchor", () => {
 
     // fetches transaction that has just been created
     const transaction = await anchor
-      .getTransactionBy(authToken, transactionId);
+      .getTransactionBy({ authToken, id: transactionId });
   
     const { id, kind, status, amount_in, amount_out } = transaction;
 
@@ -109,13 +109,14 @@ describe("Anchor", () => {
   it("should error fetching non-existing transaction by id", async () => {
     await expect(async () => { 
       const nonExistingTransactionId = "da8575e9-edc6-4f99-98cf-2b302f203cc7";
-      await anchor.getTransactionBy(authToken, nonExistingTransactionId);
+      await anchor.getTransactionBy({ authToken, id: nonExistingTransactionId });
     }).rejects.toThrowError(ServerRequestFailedError)
   });
 
   it("should fetch 5 existing transactions by token code", async () => {
     const transactions = await anchor
-      .getTransactionsForAsset(authToken, { 
+      .getTransactionsForAsset({
+        authToken,  
         assetCode: "SRT",
         limit: 5,
         lang: "en-US",
@@ -131,7 +132,8 @@ describe("Anchor", () => {
 
   it("should fetch 3 existing deposit transactions by token code", async () => {
     const transactions = await anchor
-      .getTransactionsForAsset(authToken, { 
+      .getTransactionsForAsset({ 
+        authToken, 
         assetCode: "SRT",
         limit: 3,
         kind: "deposit",
@@ -147,7 +149,8 @@ describe("Anchor", () => {
 
   it("should fetch 2 existing withdrawal transactions by token code", async () => {
     const transactions = await anchor
-      .getTransactionsForAsset(authToken, { 
+      .getTransactionsForAsset({
+        authToken,  
         assetCode: "SRT",
         limit: 2,
         kind: "withdrawal",
@@ -164,7 +167,8 @@ describe("Anchor", () => {
   it("should error fetching transactions with invalid pading id", async () => {
     await expect(async () => { 
       await anchor
-      .getTransactionsForAsset(authToken, { 
+      .getTransactionsForAsset({
+        authToken,  
         assetCode: "SRT",
         lang: "en-US",
         pagingId: "randomPagingId",

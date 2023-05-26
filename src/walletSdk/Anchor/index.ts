@@ -6,11 +6,11 @@ import isEqual from "lodash/isEqual";
 import { Auth } from "../Auth";
 import { Interactive } from "../interactive";
 import { TomlInfo, parseToml } from "../toml";
-import {
+import { 
   MissingTransactionIdError, 
   ServerRequestFailedError, 
-  InvalidTransactionResponseError, 
-  InvalidTransactionsResponseError 
+  InvalidTransactionResponseError,
+  InvalidTransactionsResponseError
 } from "../exception";
 import { camelToSnakeCaseObject } from "../util/camelToSnakeCase";
 import { TransactionStatus } from "./Types";
@@ -113,13 +113,19 @@ export class Anchor {
   * @throws [InvalidTransactionResponseError] if Anchor returns an invalid transaction
   * @throws [ServerRequestFailedError] if server request fails
   */
-  async getTransactionBy(
-    authToken: string,
-    id?: string,
-    stellarTransactionId?: string,
-    externalTransactionId?: string,
-    lang?: string,
-  ) {
+  async getTransactionBy({
+    authToken,
+    id,
+    stellarTransactionId,
+    externalTransactionId,
+    lang,
+  }: {
+    authToken: string;
+    id?: string;
+    stellarTransactionId?: string;
+    externalTransactionId?: string;
+    lang?: string;
+  }) {
     if (!id && !stellarTransactionId && !externalTransactionId) {
       throw new MissingTransactionIdError();
     }
@@ -175,19 +181,22 @@ export class Anchor {
   * @throws [InvalidTransactionsResponseError] if Anchor returns an invalid response
   * @throws [ServerRequestFailedError] if server request fails
   */
-  async getTransactionsForAsset(authToken: string, requestParams: { 
-    assetCode: string,
-    noOlderThan?: string,
-    limit?: number,
-    kind?: string,
-    pagingId?: string,
-    lang?: string,
+  async getTransactionsForAsset(params: { 
+    authToken: string;
+    assetCode: string;
+    noOlderThan?: string;
+    limit?: number;
+    kind?: string;
+    pagingId?: string;
+    lang?: string;
   }) {
+    const { authToken, ...otherParams } = params;
+
     const toml = this.toml || await this.getInfo();
     const transferServerEndpoint = toml.transferServerSep24;
 
     // Let's convert all params to snake case for the API call
-    const apiParams = camelToSnakeCaseObject(requestParams);
+    const apiParams = camelToSnakeCaseObject(otherParams);
 
     try {
       // TODO - use httpClient
@@ -265,7 +274,7 @@ export class Anchor {
       this._watchAllTransactionsRegistry[assetCode] = true;
     }
 
-    this.getTransactionsForAsset(authToken, requestParams)
+    this.getTransactionsForAsset({ authToken, assetCode, ...requestParams })
       .then((transactions: any[]) => { // TOOD - replace with Transaction[] type
         // make sure we're still watching
         if (!this._watchAllTransactionsRegistry[assetCode]) {
