@@ -230,7 +230,7 @@ export class Anchor {
   * You may also provide an array of transaction ids, `watchlist`, and this
   * watcher will always react to transactions whose ids are in the watchlist.
   */
-   watchAllTransactions(params: {
+  watchAllTransactions(params: {
     authToken: string;
     assetCode: string;
     onMessage: (transaction) => void;
