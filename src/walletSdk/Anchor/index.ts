@@ -5,7 +5,11 @@ import queryString from "query-string";
 import { Auth } from "../Auth";
 import { Interactive } from "../interactive";
 import { TomlInfo, parseToml } from "../toml";
-import { MissingTransactionIdError, ServerRequestFailedError, InvalidTransactionResponseError } from "../exception";
+import { 
+  MissingTransactionIdError, 
+  ServerRequestFailedError, 
+  InvalidTransactionResponseError
+} from "../exception";
 
 function _normalizeTransaction(transaction) {
   // some anchors return _id instead of id, so rewrite that
@@ -82,14 +86,21 @@ export class Anchor {
   * @return transaction object
   * @throws [MissingTransactionIdError] if none of the id params is provided
   * @throws [InvalidTransactionResponseError] if Anchor returns an invalid transaction
+  * @throws [ServerRequestFailedError] if server request fails
   */
-  async getTransactionBy(
-    authToken: string,
-    id?: string,
-    stellarTransactionId?: string,
-    externalTransactionId?: string,
-    lang?: string,
-  ) {
+  async getTransactionBy({
+    authToken,
+    id,
+    stellarTransactionId,
+    externalTransactionId,
+    lang,
+  }: {
+    authToken: string;
+    id?: string;
+    stellarTransactionId?: string;
+    externalTransactionId?: string;
+    lang?: string;
+  }) {
     if (!id && !stellarTransactionId && !externalTransactionId) {
       throw new MissingTransactionIdError();
     }

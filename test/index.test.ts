@@ -85,7 +85,7 @@ describe("Anchor", () => {
     );
     const token = await auth.authenticate(accountKp);
     const transaction = await anchor
-      .getTransactionBy(token, "da8575e9-edc6-4f99-98cf-2b302f203dd8");
+      .getTransactionBy({ authToken: token, id: "da8575e9-edc6-4f99-98cf-2b302f203dd8" });
   
     const { id, kind, amount_in, amount_out, amount_fee } = transaction;
 
@@ -106,7 +106,7 @@ describe("Anchor", () => {
 
     await expect(async () => { 
       const nonExistingTransactionId = "da8575e9-edc6-4f99-98cf-2b302f203cc7";
-      await anchor.getTransactionBy(token, nonExistingTransactionId);
+      await anchor.getTransactionBy({ authToken: token, id: nonExistingTransactionId });
     }).rejects.toThrowError(ServerRequestFailedError)
   });
 });
