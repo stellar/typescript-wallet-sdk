@@ -7,6 +7,24 @@ import { Interactive } from "../interactive";
 import { TomlInfo, parseToml } from "../toml";
 import { MissingTransactionIdError, ServerRequestFailedError, InvalidTransactionResponseError } from "../exception";
 
+function _normalizeTransaction(transaction) {
+  // some anchors return _id instead of id, so rewrite that
+  if (transaction._id && transaction.id === undefined) {
+    transaction.id = transaction._id;
+  }
+
+  // others provide amount but not amount_in / amount_out
+  if (
+    transaction.amount &&
+    transaction.amount_in === undefined &&
+    transaction.amount_out === undefined
+  ) {
+    transaction.amount_in = transaction.amount;
+    transaction.amount_out = transaction.amount;
+  }
+  return transaction;
+}
+
 // Do not create this object directly, use the Wallet class.
 export class Anchor {
   private homeDomain = "";
@@ -51,24 +69,6 @@ export class Anchor {
     } catch (e) {
       throw new ServerRequestFailedError(e);
     }
-  }
-
-  private _normalizeTransaction(transaction) {
-    // some anchors return _id instead of id, so rewrite that
-    if (transaction._id && transaction.id === undefined) {
-      transaction.id = transaction._id;
-    }
-  
-    // others provide amount but not amount_in / amount_out
-    if (
-      transaction.amount &&
-      transaction.amount_in === undefined &&
-      transaction.amount_out === undefined
-    ) {
-      transaction.amount_in = transaction.amount;
-      transaction.amount_out = transaction.amount;
-    }
-    return transaction;
   }
 
   /**
@@ -125,7 +125,7 @@ export class Anchor {
         throw new InvalidTransactionResponseError(transaction);
       }
 
-      return this._normalizeTransaction(transaction);
+      return _normalizeTransaction(transaction);
     } catch (e) {
       throw new ServerRequestFailedError(e);
     }
