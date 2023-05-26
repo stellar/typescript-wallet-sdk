@@ -96,7 +96,8 @@ describe("Anchor", () => {
 
   it("should fetch 5 existing transactions by token code", async () => {
     const transactions = await anchor
-      .getTransactionsForAsset(authToken, { 
+      .getTransactionsForAsset({
+        authToken,  
         assetCode: "SRT",
         limit: 5,
         lang: "en-US",
@@ -112,7 +113,8 @@ describe("Anchor", () => {
 
   it("should fetch 3 existing deposit transactions by token code", async () => {
     const transactions = await anchor
-      .getTransactionsForAsset(authToken, { 
+      .getTransactionsForAsset({ 
+        authToken, 
         assetCode: "SRT",
         limit: 3,
         kind: "deposit",
@@ -128,7 +130,8 @@ describe("Anchor", () => {
 
   it("should fetch 2 existing withdrawal transactions by token code", async () => {
     const transactions = await anchor
-      .getTransactionsForAsset(authToken, { 
+      .getTransactionsForAsset({
+        authToken,  
         assetCode: "SRT",
         limit: 2,
         kind: "withdrawal",
@@ -145,7 +148,8 @@ describe("Anchor", () => {
   it("should error fetching transactions with invalid pading id", async () => {
     await expect(async () => { 
       await anchor
-      .getTransactionsForAsset(authToken, { 
+      .getTransactionsForAsset({
+        authToken,  
         assetCode: "SRT",
         lang: "en-US",
         pagingId: "randomPagingId",

@@ -158,19 +158,22 @@ export class Anchor {
   * @throws [InvalidTransactionsResponseError] if Anchor returns an invalid response
   * @throws [ServerRequestFailedError] if server request fails
   */
-  async getTransactionsForAsset(authToken: string, requestParams: { 
-    assetCode: string,
-    noOlderThan?: string,
-    limit?: number,
-    kind?: string,
-    pagingId?: string,
-    lang?: string,
+  async getTransactionsForAsset(params: { 
+    authToken: string;
+    assetCode: string;
+    noOlderThan?: string;
+    limit?: number;
+    kind?: string;
+    pagingId?: string;
+    lang?: string;
   }) {
+    const { authToken, ...otherParams } = params;
+
     const toml = this.toml || await this.getInfo();
     const transferServerEndpoint = toml.transferServerSep24;
 
     // Let's convert all params to snake case for the API call
-    const apiParams = camelToSnakeCaseObject(requestParams);
+    const apiParams = camelToSnakeCaseObject(otherParams);
 
     try {
       // TODO - use httpClient
