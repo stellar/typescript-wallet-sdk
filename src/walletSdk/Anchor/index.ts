@@ -230,30 +230,29 @@ export class Anchor {
   * You may also provide an array of transaction ids, `watchlist`, and this
   * watcher will always react to transactions whose ids are in the watchlist.
   */
-  watchAllTransactions({ 
-    authToken,
-    requestParams, 
-    onMessage,
-    onError,
-    watchlist = [],
-    timeout = 5000,
-    isRetry = false,
-  }: {
+   watchAllTransactions(params: {
     authToken: string;
-    requestParams: {
-      assetCode: string;
-      noOlderThan?: string;
-      kind?: string;
-      lang?: string;
-    };
+    assetCode: string;
     onMessage: (transaction) => void;
     onError: (error: any) => void;
     watchlist?: string[];
     timeout?: number;
     isRetry?: boolean;
+    noOlderThan?: string;
+    kind?: string;
+    lang?: string;
   }) {
-    const { assetCode } = requestParams;
-
+    const {
+      authToken,
+      assetCode,
+      onMessage,
+      onError,
+      watchlist = [],
+      timeout = 5000,
+      isRetry = false,
+      ...otherParams
+    } = params;
+    
     // make an object map out of watchlist
     const watchlistMap: any = watchlist.reduce(
       (memo: any, id: string) => ({ ...memo, [id]: true }),
@@ -274,7 +273,7 @@ export class Anchor {
       this._watchAllTransactionsRegistry[assetCode] = true;
     }
 
-    this.getTransactionsForAsset({ authToken, assetCode, ...requestParams })
+    this.getTransactionsForAsset({ authToken, assetCode, ...(otherParams || {}) })
       .then((transactions: any[]) => { // TOOD - replace with Transaction[] type
         // make sure we're still watching
         if (!this._watchAllTransactionsRegistry[assetCode]) {
@@ -360,12 +359,7 @@ export class Anchor {
         }
         this._allTransactionsWatcher = setTimeout(() => {
           this.watchAllTransactions({
-            authToken,
-            requestParams,
-            onMessage,
-            onError,
-            watchlist,
-            timeout,
+            ...params,
             isRetry: true,
          });
         }, timeout);
@@ -386,12 +380,7 @@ export class Anchor {
         }
 
         this.watchAllTransactions({
-          authToken,
-          requestParams,
-          onMessage,
-          onError,
-          watchlist,
-          timeout,
+          ...params,
           isRetry: true,
        });
       },

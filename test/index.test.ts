@@ -202,10 +202,8 @@ describe("Anchor", () => {
       // start watching
       anchor.watchAllTransactions({
         authToken, 
-        requestParams: {
-          assetCode: "SRT",
-          lang: "en-US",
-        },
+        assetCode: "SRT",
+        lang: "en-US",
         onMessage,
         onError,
         timeout: 1,
@@ -237,10 +235,8 @@ describe("Anchor", () => {
       // start watching
       anchor.watchAllTransactions({
         authToken, 
-        requestParams: {
-          assetCode: "SRT",
-          lang: "en-US",
-        },
+        assetCode: "SRT",
+        lang: "en-US",
         onMessage,
         onError,
         // transactions from watchlist should ALWAYS be returned regardless of their statuses
@@ -278,10 +274,8 @@ describe("Anchor", () => {
       // start watching
       anchor.watchAllTransactions({
         authToken, 
-        requestParams: {
-          assetCode: "SRT",
-          lang: "en-US",
-        },
+        assetCode: "SRT",
+        lang: "en-US",
         onMessage,
         onError,
         timeout: 1,
@@ -382,10 +376,8 @@ describe("Anchor", () => {
       // start watching
       anchor.watchAllTransactions({
         authToken, 
-        requestParams: {
-          assetCode: "SRT",
-          lang: "en-US",
-        },
+        assetCode: "SRT",
+        lang: "en-US",
         onMessage,
         onError,
         timeout: 1,
@@ -558,5 +550,3 @@ describe("Anchor", () => {
     });
   });
 });
-
-
