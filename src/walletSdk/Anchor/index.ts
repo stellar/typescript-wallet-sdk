@@ -1,6 +1,6 @@
 import { StellarTomlResolver } from "stellar-sdk";
 
-import { Auth } from "../auth";
+import { Auth } from "../Auth";
 import { Interactive } from "../interactive";
 import { TomlInfo, parseToml } from "../toml";
 import { ServerRequestFailedError } from "../exception";
