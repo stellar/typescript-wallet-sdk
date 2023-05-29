@@ -279,7 +279,7 @@ export class Anchor {
       this._watchAllTransactionsRegistry[assetCode] = true;
     }
 
-    this.getTransactionsForAsset({ authToken, assetCode, ...(otherParams || {}) })
+    this.getTransactionsForAsset({ authToken, assetCode, ...otherParams })
       .then((transactions: any[]) => { // TOOD - replace with Transaction[] type
         // make sure we're still watching
         if (!this._watchAllTransactionsRegistry[assetCode]) {
