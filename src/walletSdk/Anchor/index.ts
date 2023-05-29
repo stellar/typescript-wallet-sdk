@@ -175,7 +175,7 @@ export class Anchor {
   }) {
     const { authToken, ...otherParams } = params;
 
-    const toml = this.toml || await this.getInfo();
+    const toml = await this.getInfo();
     const transferServerEndpoint = toml.transferServerSep24;
 
     // Let's convert all params to snake case for the API call
