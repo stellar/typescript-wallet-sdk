@@ -260,8 +260,8 @@ export class Anchor {
     } = params;
     
     // make an object map out of watchlist
-    const watchlistMap: any = watchlist.reduce(
-      (memo: any, id: string) => ({ ...memo, [id]: true }),
+    const watchlistMap = watchlist.reduce(
+      (memo, id: string) => ({ ...memo, [id]: true }),
       {},
     );
 
