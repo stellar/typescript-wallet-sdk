@@ -1,4 +1,6 @@
-import { Anchor } from "../anchor";
+import axios from "axios";
+
+import { Anchor } from "../Anchor";
 import { AssetNotSupportedError, ServerRequestFailedError } from "../exception";
 
 type ExtraFields = {
