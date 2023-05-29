@@ -86,3 +86,18 @@ describe("Anchor", () => {
     expect(resp.id).toBeTruthy();
   });
 });
+
+describe("Http client", () => {
+  it("should work with http", async () => {
+    const accountKp = Keypair.fromSecret(
+      "SDXC3OHSJZEQIXKEWFDNEZEQ7SW5DWBPW7RKUWI36ILY3QZZ6VER7TXV"
+    );
+    const wal = walletSdk.Wallet.TestNet();
+    const client = wal.getClient();
+
+    const resp = await client.get(
+      `http://testanchor.stellar.org/auth?account=${accountKp.publicKey()}`
+    );
+    expect(resp.data.transaction).toBeTruthy();
+  });
+});
