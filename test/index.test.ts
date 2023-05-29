@@ -81,6 +81,7 @@ describe("Anchor", () => {
       },
     };
 
+    // because using dummy sk and not real demo wallet sk, lets just check that signing is called
     const challengeResponse = await auth.challenge(
       accountKp,
       "",
