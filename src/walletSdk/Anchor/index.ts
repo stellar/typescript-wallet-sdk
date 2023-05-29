@@ -15,6 +15,14 @@ import {
 import { camelToSnakeCaseObject } from "../util/camelToSnakeCase";
 import { TransactionStatus, WatcherResponse } from "./Types";
 
+interface WatchRegistryAsset {
+  [id: string]: boolean;
+}
+
+interface WatchOneTransactionRegistry {
+  [assetCode: string]: WatchRegistryAsset;
+}
+
 interface WatchAllTransactionsRegistry {
   [assetCode: string]: boolean;
 }
@@ -32,16 +40,6 @@ function _normalizeTransaction(transaction) {
   if (transaction._id && transaction.id === undefined) {
     transaction.id = transaction._id;
   }
-
-  // others provide amount but not amount_in / amount_out
-  if (
-    transaction.amount &&
-    transaction.amount_in === undefined &&
-    transaction.amount_out === undefined
-  ) {
-    transaction.amount_in = transaction.amount;
-    transaction.amount_out = transaction.amount;
-  }
   return transaction;
 }
 
@@ -52,7 +50,14 @@ export class Anchor {
   private cfg;
   private toml: TomlInfo;
 
+  private _oneTransactionWatcher: {
+    [assetCode: string]: {
+      [id: string]: ReturnType<typeof setTimeout>;
+    }
+  };
   private _allTransactionsWatcher?: ReturnType<typeof setTimeout>;
+
+  private _watchOneTransactionRegistry: WatchOneTransactionRegistry;
   private _watchAllTransactionsRegistry: WatchAllTransactionsRegistry;
   private _transactionsRegistry: TransactionsRegistry;
   private _transactionsIgnoredRegistry: TransactionsRegistry;
@@ -62,6 +67,9 @@ export class Anchor {
     this.httpClient = httpClient;
     this.cfg = cfg;
 
+    this._oneTransactionWatcher = {};
+    this._allTransactionsWatcher = undefined;
+    this._watchOneTransactionRegistry = {};
     this._watchAllTransactionsRegistry = {};
     this._transactionsRegistry = {};
     this._transactionsIgnoredRegistry = {};
@@ -396,6 +404,130 @@ export class Anchor {
           this._transactionsRegistry[assetCode] = {};
           this._transactionsIgnoredRegistry[assetCode] = {};
           clearTimeout(this._allTransactionsWatcher);
+        }
+      },
+    };
+  }
+
+  /**
+  * Watch a transaction until it stops pending. Takes three callbacks:
+  * * onMessage - When the transaction comes back as pending_ or incomplete.
+  * * onSuccess - When the transaction comes back as completed / refunded / expired.
+  * * onError - When there's a runtime error, or the transaction comes back as
+  * no_market / too_small / too_large / error.
+  */
+  watchOneTransaction(params: {
+    authToken: string;
+    assetCode: string;
+    id: string;
+    onMessage: (transaction) => void;
+    onSuccess: (transaction) => void;
+    onError: (error: any) => void;
+    timeout?: number;
+    isRetry?: boolean;
+    lang?: string;
+  }): WatcherResponse {
+    const {
+      authToken,
+      assetCode,
+      id,
+      onMessage,
+      onSuccess,
+      onError,
+      timeout = 5000,
+      isRetry = false,
+      lang,
+    } = params;
+    // make sure to initiate registries for the given asset code
+    // to prevent 'Cannot read properties of undefined' errors
+    if(!this._transactionsRegistry[assetCode]) {
+      this._transactionsRegistry[assetCode] = {};
+    }
+    if(!this._oneTransactionWatcher[assetCode]) {
+      this._oneTransactionWatcher[assetCode] = {};
+    }
+
+    // if it's a first run, drop it in the registry for the given asset code
+    if (!isRetry) {
+      this._watchOneTransactionRegistry[assetCode] = {
+        ...(this._watchOneTransactionRegistry[assetCode] || {}),
+        [id]: true,
+      };
+    }
+
+    // do this all asynchronously (since this func needs to return a cancel fun)
+    this.getTransactionBy({ authToken, id, lang })
+      .then((transaction) => {
+        // make sure we're still watching
+        if (!this._watchOneTransactionRegistry[assetCode]?.[id]) {
+          return;
+        }
+
+        const registeredTransaction = this._transactionsRegistry[assetCode][
+          transaction.id
+        ];
+
+        // if we've had the transaction before, only report if there is a change
+        if (
+          registeredTransaction &&
+          isEqual(registeredTransaction, transaction)
+        ) {
+          return;
+        }
+
+        this._transactionsRegistry[assetCode][transaction.id] = transaction;
+
+        if (
+          transaction.status.indexOf("pending") === 0 ||
+          transaction.status === TransactionStatus.incomplete
+        ) {
+          if (this._oneTransactionWatcher[assetCode][id]) {
+            clearTimeout(this._oneTransactionWatcher[assetCode][id]);
+          }
+
+          this._oneTransactionWatcher[assetCode][id] = setTimeout(() => {
+            this.watchOneTransaction({
+              ...params,
+              isRetry: true,
+            });
+          }, timeout);
+          onMessage(transaction);
+        } else if (
+          [
+            TransactionStatus.completed, 
+            TransactionStatus.refunded,
+            TransactionStatus.expired
+          ].includes(transaction.status)
+        ) {
+          onSuccess(transaction);
+        } else {
+          onError(transaction);
+        }
+      })
+      .catch((e) => {
+        onError(e);
+      });
+
+    return {
+      refresh: () => {
+        // don't do that if we stopped watching
+        if (!this._watchOneTransactionRegistry[assetCode]?.[id]) {
+          return;
+        }
+
+        if (this._oneTransactionWatcher[assetCode][id]) {
+          clearTimeout(this._oneTransactionWatcher[assetCode][id]);
+        }
+
+        this.watchOneTransaction({
+          ...params,
+          isRetry: true,
+        });
+      },
+      stop: () => {
+        if (this._oneTransactionWatcher[assetCode][id]) {
+          this._watchOneTransactionRegistry[assetCode][id] = false;
+          clearTimeout(this._oneTransactionWatcher[assetCode][id]);
         }
       },
     };
