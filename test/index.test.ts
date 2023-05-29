@@ -47,7 +47,6 @@ describe("Anchor", () => {
     expect(resp.webAuthEndpoint).toBe("https://testanchor.stellar.org/auth");
     expect(resp.currencies.length).toBe(2);
   });
-
   it("should be able to authenticate", async () => {
     const auth = await anchor.auth();
 
@@ -56,6 +55,42 @@ describe("Anchor", () => {
     expect(typeof token).toBe("string");
   });
 
+  it("should be able to authenticate with client domain", async () => {
+    const auth = await anchor.auth();
+    let signedByClient = false;
+    let signedByDomain = false;
+
+    const walletSigner = {
+      signWithClientAccount: (txn, account) => {
+        txn.sign(account);
+        signedByClient = true;
+        return txn;
+      },
+      signWithDomainAccount: (transactionXDR, networkPassPhrase, account) => {
+        // dummy secret key for signing
+        const clientDomainKp = Keypair.fromSecret(
+          "SC7PKBRGRI5X4XP4QICBZ2NL67VUJJVKFKXDTGSPI3SQYZGC4NZWONIH"
+        );
+        const transaction = StellarSdk.TransactionBuilder.fromXDR(
+          transactionXDR,
+          networkPassPhrase
+        );
+        transaction.sign(clientDomainKp);
+        signedByDomain = true;
+        return transaction;
+      },
+    };
+
+    const challengeResponse = await auth.challenge(
+      accountKp,
+      "",
+      "demo-wallet-server.stellar.org"
+    );
+    const txn = auth.sign(accountKp, challengeResponse, walletSigner);
+    expect(txn).toBeTruthy();
+    expect(signedByClient).toBe(true);
+    expect(signedByDomain).toBe(true);
+  });
   it("should get anchor services info", async () => {
     const serviceInfo = await anchor.getServicesInfo();
     expect(serviceInfo.deposit).toBeTruthy();

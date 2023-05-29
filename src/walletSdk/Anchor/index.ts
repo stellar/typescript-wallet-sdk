@@ -24,7 +24,7 @@ export class Anchor {
 
   async auth() {
     const tomlInfo = await this.getInfo();
-    return new Auth(tomlInfo.webAuthEndpoint, this.httpClient);
+    return new Auth(this.cfg, tomlInfo.webAuthEndpoint, this.httpClient);
   }
 
   interactive() {
