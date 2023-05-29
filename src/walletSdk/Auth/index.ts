@@ -38,7 +38,11 @@ export class Auth {
     return await this.getToken(signedTx);
   }
 
-  async challenge(accountKp: Keypair, memoId?: string, clientDomain?: string) {
+  private async challenge(
+    accountKp: Keypair,
+    memoId?: string,
+    clientDomain?: string
+  ) {
     if (memoId && parseInt(memoId) < 0) {
       throw new InvalidMemoError();
     }
@@ -56,7 +60,7 @@ export class Auth {
     }
   }
 
-  sign(
+  private sign(
     accountKp: Keypair,
     challengeResponse: {
       transaction: string;
@@ -84,7 +88,7 @@ export class Auth {
     return transaction;
   }
 
-  async getToken(signedTx) {
+  private async getToken(signedTx) {
     try {
       const resp = await this.httpClient.post(this.webAuthEndpoint, {
         transaction: signedTx.toXDR(),
