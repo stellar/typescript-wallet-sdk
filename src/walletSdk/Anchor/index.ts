@@ -42,7 +42,13 @@ export class Anchor {
     this.cfg = cfg;
   }
 
-  async getInfo(): Promise<TomlInfo> {
+  async getInfo(shouldRefresh?: boolean): Promise<TomlInfo> {
+    // return cached TOML values by default
+    if(this.toml && !shouldRefresh) {
+      return this.toml;
+    }
+
+    // fetch fresh TOML values from Anchor domain
     const stellarToml = await StellarTomlResolver.resolve(this.homeDomain);
     const parsedToml = parseToml(stellarToml);
     this.toml = parsedToml;
@@ -50,7 +56,7 @@ export class Anchor {
   }
 
   async auth() {
-    const toml = this.toml || await this.getInfo();
+    const toml = await this.getInfo();
     return new Auth(toml.webAuthEndpoint);
   }
 
@@ -59,7 +65,7 @@ export class Anchor {
   }
 
   async getServicesInfo() {
-    const toml = this.toml || await this.getInfo();
+    const toml = await this.getInfo();
     const transferServerEndpoint = toml.transferServerSep24;
 
     try {
@@ -105,7 +111,7 @@ export class Anchor {
       throw new MissingTransactionIdError();
     }
 
-    const toml = this.toml || await this.getInfo();
+    const toml = await this.getInfo();
     const transferServerEndpoint = toml.transferServerSep24;
 
     let qs: { [name: string]: string } = {};
