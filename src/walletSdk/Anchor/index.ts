@@ -183,7 +183,5 @@ export class Anchor {
     }
   }
 
-  getTransaction() {}
-
   getHistory() {}
 }
