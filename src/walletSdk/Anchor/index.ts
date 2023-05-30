@@ -13,24 +13,6 @@ import {
 } from "../exception";
 import { camelToSnakeCaseObject } from "../util/camelToSnakeCase";
 
-function _normalizeTransaction(transaction) {
-  // some anchors return _id instead of id, so rewrite that
-  if (transaction._id && transaction.id === undefined) {
-    transaction.id = transaction._id;
-  }
-
-  // others provide amount but not amount_in / amount_out
-  if (
-    transaction.amount &&
-    transaction.amount_in === undefined &&
-    transaction.amount_out === undefined
-  ) {
-    transaction.amount_in = transaction.amount;
-    transaction.amount_out = transaction.amount;
-  }
-  return transaction;
-}
-
 // Do not create this object directly, use the Wallet class.
 export class Anchor {
   private homeDomain = "";
@@ -144,7 +126,7 @@ export class Anchor {
         throw new InvalidTransactionResponseError(transaction);
       }
 
-      return _normalizeTransaction(transaction);
+      return transaction;
     } catch (e) {
       throw new ServerRequestFailedError(e);
     }
@@ -195,7 +177,7 @@ export class Anchor {
         throw new InvalidTransactionsResponseError(transactions);
       }
 
-      return transactions.map(_normalizeTransaction);
+      return transactions;
     } catch (e) {
       throw new ServerRequestFailedError(e);
     }
