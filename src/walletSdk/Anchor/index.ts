@@ -8,8 +8,10 @@ import { TomlInfo, parseToml } from "../toml";
 import { 
   MissingTransactionIdError, 
   ServerRequestFailedError, 
-  InvalidTransactionResponseError
+  InvalidTransactionResponseError,
+  InvalidTransactionsResponseError
 } from "../exception";
+import { camelToSnakeCaseObject } from "../util/camelToSnakeCase";
 
 function _normalizeTransaction(transaction) {
   // some anchors return _id instead of id, so rewrite that
@@ -147,10 +149,59 @@ export class Anchor {
       throw new ServerRequestFailedError(e);
     }
   }
+  
+  /**
+  * Get account's transactions specified by asset and other params.
+  * 
+  * @param authToken auth token of the account authenticated with the anchor 
+  * @param assetCode target asset to query for
+  * @param noOlderThan response should contain transactions starting on or after this date & time
+  * @param limit response should contain at most 'limit' transactions
+  * @param kind kind of transaction that is desired. E.g.: 'deposit', 'withdrawal'
+  * @param pagingId response should contain transactions starting prior to this ID (exclusive)
+  * @param lang desired language (localization), it can also accept locale in the format 'en-US'
+  * @return list of transactions as requested by the client, sorted in time-descending order
+  * @throws [InvalidTransactionsResponseError] if Anchor returns an invalid response
+  * @throws [ServerRequestFailedError] if server request fails
+  */
+  async getTransactionsForAsset(params: { 
+    authToken: string;
+    assetCode: string;
+    noOlderThan?: string;
+    limit?: number;
+    kind?: string;
+    pagingId?: string;
+    lang?: string;
+  }) {
+    const { authToken, ...otherParams } = params;
+
+    const toml = await this.getInfo();
+    const transferServerEndpoint = toml.transferServerSep24;
+
+    // Let's convert all params to snake case for the API call
+    const apiParams = camelToSnakeCaseObject(otherParams);
+
+    try {
+      // TODO - use httpClient
+      const resp = await axios.get(`${transferServerEndpoint}/transactions?${queryString.stringify(apiParams)}`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      const transactions = resp.data?.transactions;
+
+      if(!transactions || !Array.isArray(transactions)) {
+        throw new InvalidTransactionsResponseError(transactions);
+      }
+
+      return transactions.map(_normalizeTransaction);
+    } catch (e) {
+      throw new ServerRequestFailedError(e);
+    }
+  }
 
   getTransaction() {}
-
-  getTransactionForAsset() {}
 
   getHistory() {}
 }
