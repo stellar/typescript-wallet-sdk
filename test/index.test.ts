@@ -68,9 +68,9 @@ describe("Anchor", () => {
   it("should be able to authenticate", async () => {
     const auth = await anchor.auth();
 
-    const token = await auth.authenticate(accountKp);
-    expect(token).toBeTruthy();
-    expect(typeof token).toBe("string");
+    authToken = await auth.authenticate(accountKp);
+    expect(authToken).toBeTruthy();
+    expect(typeof authToken).toBe("string");
   });
 
   it("should be able to authenticate with client domain", async () => {

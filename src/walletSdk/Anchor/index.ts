@@ -1,4 +1,4 @@
-import axios from "axios";
+import { AxiosInstance } from "axios";
 import queryString from "query-string";
 import { StellarTomlResolver } from "stellar-sdk";
 
@@ -13,7 +13,7 @@ import {
   InvalidTransactionsResponseError,
 } from "../exception";
 import { camelToSnakeCaseObject } from "../util/camelToSnakeCase";
-import { Config, HttpClient } from "walletSdk";
+import { Config } from "walletSdk";
 
 // Do not create this object directly, use the Wallet class.
 export class Anchor {
@@ -21,7 +21,7 @@ export class Anchor {
 
   private cfg: Config;
   private homeDomain: string;
-  private httpClient: HttpClient;
+  private httpClient: AxiosInstance;
   private toml: TomlInfo;
 
   constructor({
@@ -32,7 +32,7 @@ export class Anchor {
   }: {
     cfg: Config;
     homeDomain: string;
-    httpClient: HttpClient;
+    httpClient: AxiosInstance;
     language: string;
   }) {
     this.cfg = cfg;
@@ -132,8 +132,7 @@ export class Anchor {
     qs = { lang, ...qs };
 
     try {
-      // TODO - use httpClient
-      const resp = await axios.get(
+      const resp = await this.httpClient.get(
         `${transferServerEndpoint}/transaction?${queryString.stringify(qs)}`,
         {
           headers: {
@@ -186,8 +185,7 @@ export class Anchor {
     const apiParams = camelToSnakeCaseObject({ lang, ...otherParams });
 
     try {
-      // TODO - use httpClient
-      const resp = await axios.get(
+      const resp = await this.httpClient.get(
         `${transferServerEndpoint}/transactions?${queryString.stringify(
           apiParams
         )}`,
