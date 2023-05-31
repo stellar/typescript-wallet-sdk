@@ -4,7 +4,7 @@ import { Anchor } from "../Anchor";
 import { AssetNotSupportedError, ServerRequestFailedError } from "../exception";
 
 // Extra fields should be sent as snake_case keys
-// since the SEP api uses that format for all params
+// since the SEP api spec uses that format for all params
 type ExtraFields = {
   [api_key: string]: string;
 };
