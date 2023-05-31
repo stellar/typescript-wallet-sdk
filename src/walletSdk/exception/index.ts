@@ -25,3 +25,24 @@ export class ClientDomainWithMemoError extends Error {
         Object.setPrototypeOf(this, ClientDomainWithMemoError.prototype);
     }
 }
+
+export class MissingTransactionIdError extends Error {
+    constructor() {
+        super(`One of id, stellarTransactionId or externalTransactionId is required`);
+        Object.setPrototypeOf(this, MissingTransactionIdError.prototype);
+    }
+}
+
+export class InvalidTransactionResponseError extends Error {
+    constructor(transactionResponse) {
+        super(`Invalid transaction in response data: ${JSON.stringify(transactionResponse)}`);
+        Object.setPrototypeOf(this, InvalidTransactionResponseError.prototype);
+    }
+}
+
+export class InvalidTransactionsResponseError extends Error {
+    constructor(transactionsResponse) {
+        super(`Invalid transactions in response data: ${JSON.stringify(transactionsResponse)}`);
+        Object.setPrototypeOf(this, InvalidTransactionsResponseError.prototype);
+    }
+}
