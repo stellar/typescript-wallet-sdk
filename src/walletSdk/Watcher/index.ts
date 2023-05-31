@@ -37,8 +37,8 @@ export class Watcher {
   *
   * On initial load, it'll return ALL pending transactions via onMessage.
   * Subsequent messages will be any one of these events:
-  *  * Any new transaction appears
-  *  * Any of the initial pending transactions change any state
+  *  - Any new transaction appears
+  *  - Any of the initial pending transactions change any state
   *
   * You may also provide an array of transaction ids, `watchlist`, and this
   * watcher will always react to transactions whose ids are in the watchlist.
