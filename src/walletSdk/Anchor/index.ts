@@ -1,4 +1,4 @@
-import axios from "axios";
+import { AxiosInstance } from "axios";
 import queryString from "query-string";
 import { StellarTomlResolver } from "stellar-sdk";
 
@@ -6,14 +6,14 @@ import { Auth } from "../Auth";
 import { Interactive } from "../interactive";
 import { TomlInfo, parseToml } from "../toml";
 import { Watcher } from "../Watcher";
-import { 
-  MissingTransactionIdError, 
-  ServerRequestFailedError, 
+import {
+  MissingTransactionIdError,
+  ServerRequestFailedError,
   InvalidTransactionResponseError,
-  InvalidTransactionsResponseError
+  InvalidTransactionsResponseError,
 } from "../exception";
 import { camelToSnakeCaseObject } from "../util/camelToSnakeCase";
-import { Config, HttpClient } from "walletSdk";
+import { Config } from "walletSdk";
 
 // Do not create this object directly, use the Wallet class.
 export class Anchor {
@@ -21,19 +21,19 @@ export class Anchor {
 
   private cfg: Config;
   private homeDomain: string;
-  private httpClient: HttpClient;
+  private httpClient: AxiosInstance;
   private toml: TomlInfo;
 
-  constructor({ 
-    cfg, 
-    homeDomain, 
+  constructor({
+    cfg,
+    homeDomain,
     httpClient,
-    language, 
-  }: { 
-    cfg: Config; 
-    homeDomain: string, 
-    httpClient: HttpClient,
-    language: string,
+    language,
+  }: {
+    cfg: Config;
+    homeDomain: string;
+    httpClient: AxiosInstance;
+    language: string;
   }) {
     this.cfg = cfg;
     this.homeDomain = homeDomain;
@@ -43,7 +43,7 @@ export class Anchor {
 
   async getInfo(shouldRefresh?: boolean): Promise<TomlInfo> {
     // return cached TOML values by default
-    if(this.toml && !shouldRefresh) {
+    if (this.toml && !shouldRefresh) {
       return this.toml;
     }
 
@@ -55,12 +55,12 @@ export class Anchor {
   }
 
   async auth() {
-    const toml = await this.getInfo();
-    return new Auth(toml.webAuthEndpoint);
+    const tomlInfo = await this.getInfo();
+    return new Auth(this.cfg, tomlInfo.webAuthEndpoint, this.httpClient);
   }
 
   interactive() {
-    return new Interactive(this.homeDomain, this);
+    return new Interactive(this.homeDomain, this, this.httpClient);
   }
 
   watcher() {
@@ -72,12 +72,14 @@ export class Anchor {
     const transferServerEndpoint = toml.transferServerSep24;
 
     try {
-      // TODO - use httpClient
-      const resp = await axios.get(`${transferServerEndpoint}/info?lang=${lang}`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const resp = await this.httpClient.get(
+        `${transferServerEndpoint}/info?lang=${lang}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       return resp.data;
     } catch (e) {
       throw new ServerRequestFailedError(e);
@@ -85,18 +87,18 @@ export class Anchor {
   }
 
   /**
-  * Get single transaction's current status and details. One of the [id], [stellarTransactionId],
-  * [externalTransactionId] must be provided.
-  *
-  * @param authToken auth token of the account authenticated with the anchor 
-  * @param id transaction ID
-  * @param stellarTransactionId stellar transaction ID
-  * @param externalTransactionId external transaction ID
-  * @return transaction object
-  * @throws [MissingTransactionIdError] if none of the id params is provided
-  * @throws [InvalidTransactionResponseError] if Anchor returns an invalid transaction
-  * @throws [ServerRequestFailedError] if server request fails
-  */
+   * Get single transaction's current status and details. One of the [id], [stellarTransactionId],
+   * [externalTransactionId] must be provided.
+   *
+   * @param authToken auth token of the account authenticated with the anchor
+   * @param id transaction ID
+   * @param stellarTransactionId stellar transaction ID
+   * @param externalTransactionId external transaction ID
+   * @return transaction object
+   * @throws [MissingTransactionIdError] if none of the id params is provided
+   * @throws [InvalidTransactionResponseError] if Anchor returns an invalid transaction
+   * @throws [ServerRequestFailedError] if server request fails
+   */
   async getTransactionBy({
     authToken,
     id,
@@ -130,16 +132,18 @@ export class Anchor {
     qs = { lang, ...qs };
 
     try {
-      // TODO - use httpClient
-      const resp = await axios.get(`${transferServerEndpoint}/transaction?${queryString.stringify(qs)}`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-  
+      const resp = await this.httpClient.get(
+        `${transferServerEndpoint}/transaction?${queryString.stringify(qs)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
+
       const transaction = resp.data?.transaction;
 
-      if(!transaction || Object.keys(transaction).length === 0) {
+      if (!transaction || Object.keys(transaction).length === 0) {
         throw new InvalidTransactionResponseError(transaction);
       }
 
@@ -148,22 +152,22 @@ export class Anchor {
       throw new ServerRequestFailedError(e);
     }
   }
-  
+
   /**
-  * Get account's transactions specified by asset and other params.
-  * 
-  * @param authToken auth token of the account authenticated with the anchor 
-  * @param assetCode target asset to query for
-  * @param noOlderThan response should contain transactions starting on or after this date & time
-  * @param limit response should contain at most 'limit' transactions
-  * @param kind kind of transaction that is desired. E.g.: 'deposit', 'withdrawal'
-  * @param pagingId response should contain transactions starting prior to this ID (exclusive)
-  * @param lang desired language (localization), it can also accept locale in the format 'en-US'
-  * @return list of transactions as requested by the client, sorted in time-descending order
-  * @throws [InvalidTransactionsResponseError] if Anchor returns an invalid response
-  * @throws [ServerRequestFailedError] if server request fails
-  */
-  async getTransactionsForAsset(params: { 
+   * Get account's transactions specified by asset and other params.
+   *
+   * @param authToken auth token of the account authenticated with the anchor
+   * @param assetCode target asset to query for
+   * @param noOlderThan response should contain transactions starting on or after this date & time
+   * @param limit response should contain at most 'limit' transactions
+   * @param kind kind of transaction that is desired. E.g.: 'deposit', 'withdrawal'
+   * @param pagingId response should contain transactions starting prior to this ID (exclusive)
+   * @param lang desired language (localization), it can also accept locale in the format 'en-US'
+   * @return list of transactions as requested by the client, sorted in time-descending order
+   * @throws [InvalidTransactionsResponseError] if Anchor returns an invalid response
+   * @throws [ServerRequestFailedError] if server request fails
+   */
+  async getTransactionsForAsset(params: {
     authToken: string;
     assetCode: string;
     noOlderThan?: string;
@@ -181,16 +185,20 @@ export class Anchor {
     const apiParams = camelToSnakeCaseObject({ lang, ...otherParams });
 
     try {
-      // TODO - use httpClient
-      const resp = await axios.get(`${transferServerEndpoint}/transactions?${queryString.stringify(apiParams)}`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
+      const resp = await this.httpClient.get(
+        `${transferServerEndpoint}/transactions?${queryString.stringify(
+          apiParams
+        )}`,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
 
       const transactions = resp.data?.transactions;
 
-      if(!transactions || !Array.isArray(transactions)) {
+      if (!transactions || !Array.isArray(transactions)) {
         throw new InvalidTransactionsResponseError(transactions);
       }
 
