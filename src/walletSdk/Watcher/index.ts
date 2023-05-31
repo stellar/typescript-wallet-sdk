@@ -240,7 +240,7 @@ export class Watcher {
     id: string;
     onMessage: (transaction) => void;
     onSuccess: (transaction) => void;
-    onError: (error: any) => void;
+    onError: (error) => void; // TOOD - add :Transaction | Error type
     timeout?: number;
     isRetry?: boolean;
     lang?: string;
