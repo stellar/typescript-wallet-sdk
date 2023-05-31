@@ -10,9 +10,9 @@ import { getUrlDomain } from "./util/url";
 // TODO - https://stellarorg.atlassian.net/browse/WAL-789?atlOrigin=eyJpIjoiZjcwNzZhOTJmNjE1NGRhNTk1NDlkOTExMTYxMDJkZmYiLCJwIjoiaiJ9
 interface ClientConfigFn {}
 interface ClientConfig {}
-class HttpClient {}
+export class HttpClient {}
 
-class Config {
+export class Config {
   app: ApplicationConfiguration;
   stellar: StellarConfiguration;
   constructor(stellarCfg, appCfg) {
@@ -24,6 +24,7 @@ class Config {
 export class Wallet {
   private cfg: Config;
   private clients = [];
+  private language: string;
 
   static TestNet = (): Wallet => {
     return new Wallet(StellarConfiguration.TestNet());
@@ -35,19 +36,28 @@ export class Wallet {
 
   constructor(
     stellarConfiguration: StellarConfiguration,
-    applicationConfiguration: ApplicationConfiguration = new ApplicationConfiguration()
+    applicationConfiguration: ApplicationConfiguration = new ApplicationConfiguration(),
+    // Defaults wallet language to "en", this will reflect in all Anchor API calls
+    language: string = "en",
   ) {
     this.cfg = new Config(stellarConfiguration, applicationConfiguration);
+    this.language = language;
   }
 
-  anchor(homeDomain: string, httpClientConfig: ClientConfigFn = null) {
+  anchor(
+    homeDomain: string, 
+    httpClientConfig: ClientConfigFn = null,
+    language: string = this.language,
+  ) {
     const url =
       homeDomain.indexOf("://") !== -1 ? homeDomain : `https://${homeDomain}`;
-    return new Anchor(
-      this.cfg,
-      getUrlDomain(url),
-      this.getClient(httpClientConfig)
-    );
+
+    return new Anchor({
+        cfg: this.cfg,
+        homeDomain: getUrlDomain(url),
+        httpClient: this.getClient(httpClientConfig),
+        language,
+    });
   }
 
   stellar() {

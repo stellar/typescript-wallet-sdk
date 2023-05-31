@@ -1,4 +1,4 @@
-import StellarSdk, { Keypair } from "stellar-sdk";
+import { Keypair } from "stellar-sdk";
 
 import sdk from "../src";
 import { ServerRequestFailedError } from "../src/walletSdk/exception";
@@ -57,7 +57,16 @@ describe("Anchor", () => {
     const assetCode = "SRT";
     const resp = await anchor
       .interactive()
-      .deposit(accountKp.publicKey(), assetCode, authToken);
+      .deposit({ 
+        accountAddress: accountKp.publicKey(), 
+        assetCode, 
+        authToken,
+        lang: "en-US",
+        extraFields:{
+          wallet_name: "Test Wallet",
+          wallet_url: "https://stellar.org/",
+        },
+      });
 
     expect(resp.url).toBeTruthy();
     expect(resp.id).toBeTruthy();
@@ -67,7 +76,16 @@ describe("Anchor", () => {
     const assetCode = "SRT";
     const resp = await anchor
       .interactive()
-      .withdraw(accountKp.publicKey(), assetCode, authToken);
+      .withdraw({ 
+        accountAddress: accountKp.publicKey(), 
+        assetCode, 
+        authToken,
+        lang: "en-US",
+        extraFields:{
+          wallet_name: "Test Wallet",
+          wallet_url: "https://stellar.org/",
+        },
+      });
 
     expect(resp.url).toBeTruthy();
     expect(resp.id).toBeTruthy();
