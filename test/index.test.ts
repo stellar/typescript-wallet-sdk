@@ -3,7 +3,8 @@ import { Keypair } from "stellar-sdk";
 
 import sdk from "../src";
 import { ServerRequestFailedError } from "../src/walletSdk/exception";
-import { TransactionStatus } from "../src/walletSdk/Anchor/Types";
+import { TransactionStatus, WatcherResponse } from "../src/walletSdk/Watcher/Types";
+import { Watcher } from "../src/walletSdk/Watcher";
 
 import { TransactionsResponse } from "../test/fixtures/TransactionsResponse";
 
@@ -67,7 +68,16 @@ describe("Anchor", () => {
     const assetCode = "SRT";
     const resp = await anchor
       .interactive()
-      .deposit(accountKp.publicKey(), assetCode, authToken);
+      .deposit({ 
+        accountAddress: accountKp.publicKey(), 
+        assetCode, 
+        authToken,
+        lang: "en-US",
+        extraFields:{
+          wallet_name: "Test Wallet",
+          wallet_url: "https://stellar.org/",
+        },
+      });
 
     expect(resp.url).toBeTruthy();
     expect(resp.id).toBeTruthy();
@@ -77,7 +87,16 @@ describe("Anchor", () => {
     const assetCode = "SRT";
     const resp = await anchor
       .interactive()
-      .withdraw(accountKp.publicKey(), assetCode, authToken);
+      .withdraw({ 
+        accountAddress: accountKp.publicKey(), 
+        assetCode, 
+        authToken,
+        lang: "en-US",
+        extraFields:{
+          wallet_name: "Test Wallet",
+          wallet_url: "https://stellar.org/",
+        },
+      });
 
     expect(resp.url).toBeTruthy();
     expect(resp.id).toBeTruthy();
@@ -89,7 +108,11 @@ describe("Anchor", () => {
     // creates new 'incomplete' deposit transaction
     const { id: transactionId } = await anchor
       .interactive()
-      .deposit(accountKp.publicKey(), assetCode, authToken);
+      .deposit({ 
+        accountAddress: accountKp.publicKey(), 
+        assetCode, 
+        authToken,
+      });
 
     // fetches transaction that has just been created
     const transaction = await anchor
@@ -178,9 +201,11 @@ describe("Anchor", () => {
 
   describe("watchAllTransactions", () => {
     let clock: sinon.SinonFakeTimers;
+    let watcher: Watcher;
 
     beforeEach(async () => {
       clock = sinon.useFakeTimers(0);
+      watcher = anchor.watcher();
     });
   
     afterEach(() => {
@@ -200,7 +225,7 @@ describe("Anchor", () => {
       jest.spyOn(anchor, "getTransactionsForAsset").mockResolvedValue(TransactionsResponse);
 
       // start watching
-      anchor.watchAllTransactions({
+      const { stop } = watcher.watchAllTransactions({
         authToken, 
         assetCode: "SRT",
         lang: "en-US",
@@ -218,6 +243,9 @@ describe("Anchor", () => {
       // 5 pending & incomplete
       expect(onMessage.callCount).toBe(5);
       expect(onError.callCount).toBe(0);
+
+      // stops watching
+      stop();
     });
   
     test("Return pending and incomplete + watchlist", async () => {
@@ -233,7 +261,7 @@ describe("Anchor", () => {
       jest.spyOn(anchor, "getTransactionsForAsset").mockResolvedValue(TransactionsResponse);
 
       // start watching
-      anchor.watchAllTransactions({
+      const { stop } = watcher.watchAllTransactions({
         authToken, 
         assetCode: "SRT",
         lang: "en-US",
@@ -257,6 +285,9 @@ describe("Anchor", () => {
       // 5 pending & incomplete + 3 from watchlist
       expect(onMessage.callCount).toBe(8);
       expect(onError.callCount).toBe(0);
+
+      // stops watching
+      stop();
     });
 
     test("Watch three transaction updates", async () => {
@@ -272,7 +303,7 @@ describe("Anchor", () => {
       jest.spyOn(anchor, "getTransactionsForAsset").mockResolvedValue(TransactionsResponse);
   
       // start watching
-      anchor.watchAllTransactions({
+      const { stop } = watcher.watchAllTransactions({
         authToken, 
         assetCode: "SRT",
         lang: "en-US",
@@ -359,8 +390,116 @@ describe("Anchor", () => {
       // 5 pending & incomplete + 1 recently completed + 1 recently refunded + 1 recently pending
       expect(onMessage.callCount).toBe(8);
       expect(onError.callCount).toBe(0);
+
+      // stops watching
+      stop();
     });
   
+    test("Stops watching after 2 transaction updates", async () => {
+      const onMessage = sinon.spy(() => {
+        expect(onMessage.callCount).toBeLessThan(8);
+      });
+  
+      const onError = sinon.spy((e) => {
+        expect(e).toBeUndefined();
+      });
+  
+      // mock default transactions response
+      jest.spyOn(anchor, "getTransactionsForAsset").mockResolvedValue(TransactionsResponse);
+  
+      // start watching
+      const { stop } = watcher.watchAllTransactions({
+        authToken, 
+        assetCode: "SRT",
+        lang: "en-US",
+        onMessage,
+        onError,
+        timeout: 1,
+      });
+  
+      // nothing should run at first (async api call in progress)
+      expect(onMessage.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+  
+      await sleep(1);
+  
+      // 5 pending & incomplete 
+      expect(onMessage.callCount).toBe(5);
+      expect(onError.callCount).toBe(0);
+  
+      // change one transaction to "completed"
+      const [firstTxA, ...restA] = TransactionsResponse;
+      let updatedTransactions = [
+        {
+          ...firstTxA,
+          status: TransactionStatus.completed,
+        },
+        ...restA,
+      ];
+  
+      // update mock with new transaction status
+      jest.spyOn(anchor, "getTransactionsForAsset").mockResolvedValue(updatedTransactions);
+  
+      clock.next();
+      await sleep(1);
+  
+      // 5 pending & incomplete + 1 recently completed
+      expect(onMessage.callCount).toBe(6);
+      expect(onError.callCount).toBe(0);
+  
+      await sleep(1);
+  
+      // 5 pending & incomplete + 1 recently completed
+      expect(onMessage.callCount).toBe(6);
+      expect(onError.callCount).toBe(0);
+  
+      // change another transaction to "refunded"
+      const [firstTxB, secondTxB, ...restB] = updatedTransactions;
+      updatedTransactions = [
+        firstTxB,
+        {
+          ...secondTxB,
+          status: TransactionStatus.refunded,
+        },
+        ...restB,
+      ];
+  
+      // update mock with new transaction status
+      jest.spyOn(anchor, "getTransactionsForAsset").mockResolvedValue(updatedTransactions);
+  
+      clock.next();
+      await sleep(1);
+  
+      // 5 pending & incomplete + 1 recently completed + 1 recently refunded
+      expect(onMessage.callCount).toBe(7);
+      expect(onError.callCount).toBe(0);
+
+      // stops watching before next transaction update
+      stop();
+
+      // change another transaction to "pending_user_transfer_start"
+      const [firstTxC, secondTxC, thirdTxC, ...restC] = updatedTransactions;
+      updatedTransactions = [
+        firstTxC,
+        secondTxC,
+        {
+          ...thirdTxC,
+          status: TransactionStatus.pending_user_transfer_start,
+        },
+        ...restC,
+      ];
+  
+      // update mock with new transaction status
+      jest.spyOn(anchor, "getTransactionsForAsset").mockResolvedValue(updatedTransactions);
+  
+      clock.next();
+      await sleep(1);
+  
+      // nothing should change or happen after watcher has stopped
+      expect(onMessage.callCount).toBe(7);
+      expect(onError.callCount).toBe(0);
+    });
+
     test("Immediate completed|refunded|expired should get messages", async () => {
       const onMessage = sinon.spy(() => {
         expect(onMessage.callCount).toBeLessThan(4);
@@ -374,7 +513,7 @@ describe("Anchor", () => {
       jest.spyOn(anchor, "getTransactionsForAsset").mockResolvedValue([]);
   
       // start watching
-      anchor.watchAllTransactions({
+      const { stop } = watcher.watchAllTransactions({
         authToken, 
         assetCode: "SRT",
         lang: "en-US",
@@ -547,6 +686,9 @@ describe("Anchor", () => {
       // no updates expected
       expect(onMessage.callCount).toBe(3);
       expect(onError.callCount).toBe(0);
+
+      // stops watching
+      stop();
     });
   });
 
