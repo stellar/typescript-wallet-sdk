@@ -12,18 +12,32 @@ import {
   InvalidTransactionsResponseError
 } from "../exception";
 import { camelToSnakeCaseObject } from "../util/camelToSnakeCase";
+import { Config, HttpClient } from "walletSdk";
 
 // Do not create this object directly, use the Wallet class.
 export class Anchor {
-  private homeDomain = "";
-  private httpClient = null;
-  private cfg;
+  private cfg: Config;
+  private homeDomain: string;
+  private httpClient: HttpClient;
   private toml: TomlInfo;
 
-  constructor(cfg, homeDomain: string, httpClient) {
+  public language: string;
+
+  constructor({ 
+    cfg, 
+    homeDomain, 
+    httpClient,
+    language, 
+  }: { 
+    cfg: Config; 
+    homeDomain: string, 
+    httpClient: HttpClient,
+    language: string,
+  }) {
+    this.cfg = cfg;
     this.homeDomain = homeDomain;
     this.httpClient = httpClient;
-    this.cfg = cfg;
+    this.language = language;
   }
 
   async getInfo(shouldRefresh?: boolean): Promise<TomlInfo> {
@@ -83,13 +97,13 @@ export class Anchor {
     id,
     stellarTransactionId,
     externalTransactionId,
-    lang,
+    lang = this.language,
   }: {
     authToken: string;
     id?: string;
     stellarTransactionId?: string;
     externalTransactionId?: string;
-    lang?: string;
+    lang: string;
   }) {
     if (!id && !stellarTransactionId && !externalTransactionId) {
       throw new MissingTransactionIdError();
@@ -108,9 +122,7 @@ export class Anchor {
       qs = { external_transaction_id: externalTransactionId };
     }
 
-    if (lang) {
-      qs = { lang, ...qs };
-    }
+    qs = { lang, ...qs };
 
     try {
       // TODO - use httpClient
@@ -155,13 +167,13 @@ export class Anchor {
     pagingId?: string;
     lang?: string;
   }) {
-    const { authToken, ...otherParams } = params;
+    const { authToken, lang = this.language, ...otherParams } = params;
 
     const toml = await this.getInfo();
     const transferServerEndpoint = toml.transferServerSep24;
 
     // Let's convert all params to snake case for the API call
-    const apiParams = camelToSnakeCaseObject(otherParams);
+    const apiParams = camelToSnakeCaseObject({ lang, ...otherParams });
 
     try {
       // TODO - use httpClient

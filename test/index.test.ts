@@ -1,4 +1,4 @@
-import StellarSdk, { Keypair } from "stellar-sdk";
+import { Keypair } from "stellar-sdk";
 
 import sdk from "../src";
 import { ServerRequestFailedError } from "../src/walletSdk/exception";

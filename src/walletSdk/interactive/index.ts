@@ -25,10 +25,10 @@ export enum FLOW_TYPE {
 
 // Do not create this object directly, use the Wallet class.
 export class Interactive {
-  private homeDomain = "";
-  private anchor: Anchor = null;
-
-  constructor(homeDomain, anchor) {
+  private homeDomain: string;
+  private anchor: Anchor;
+  
+  constructor(homeDomain: string, anchor: Anchor) {
     this.homeDomain = homeDomain;
     this.anchor = anchor;
   }
@@ -46,7 +46,7 @@ export class Interactive {
       accountAddress,
       assetCode,
       authToken,
-      lang = "en",
+      lang = this.anchor.language,
       extraFields,
       fundsAccountAddress = accountAddress,
       type,
