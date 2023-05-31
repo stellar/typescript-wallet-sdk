@@ -694,7 +694,8 @@ describe("Anchor", () => {
 
   describe("watchOneTransaction", () => {
     let clock: sinon.SinonFakeTimers;
-  
+    let watcher: Watcher;
+
     const makeTransaction = (
       eta: number,
       txStatus: TransactionStatus,
@@ -707,6 +708,7 @@ describe("Anchor", () => {
   
     beforeEach(async () => {
       clock = sinon.useFakeTimers(0);
+      watcher = anchor.watcher();
     });
   
     afterEach(() => {
@@ -732,7 +734,7 @@ describe("Anchor", () => {
       jest.spyOn(anchor, "getTransactionBy").mockResolvedValue(successfulTransaction);
   
       // start watching
-      anchor.watchOneTransaction({
+      const { stop: stop1 } = watcher.watchOneTransaction({
         authToken,
         assetCode: "SRT",
         id: successfulTransaction.id,
@@ -755,13 +757,16 @@ describe("Anchor", () => {
       expect(onSuccess.callCount).toBe(1);
       expect(onError.callCount).toBe(0);
 
+      // stops watching transaction
+      stop1();
+
       const refundedTransaction = makeTransaction(0, TransactionStatus.refunded);
 
       // queue up a success
       jest.spyOn(anchor, "getTransactionBy").mockResolvedValue(refundedTransaction);
 
       // start watching
-      anchor.watchOneTransaction({
+      const { stop: stop2 } = watcher.watchOneTransaction({
         authToken,
         assetCode: "SRT",
         id: refundedTransaction.id,
@@ -784,13 +789,16 @@ describe("Anchor", () => {
       expect(onSuccess.callCount).toBe(2);
       expect(onError.callCount).toBe(0);
 
+      // stops watching transaction
+      stop2();
+
       const expiredTransaction = makeTransaction(0, TransactionStatus.expired);
 
       // queue up a success
       jest.spyOn(anchor, "getTransactionBy").mockResolvedValue(expiredTransaction);
 
       // start watching
-      anchor.watchOneTransaction({
+      const { stop: stop3 } = watcher.watchOneTransaction({
         authToken,
         assetCode: "SRT",
         id: expiredTransaction.id,
@@ -812,6 +820,9 @@ describe("Anchor", () => {
       expect(onMessage.callCount).toBe(0);
       expect(onSuccess.callCount).toBe(3);
       expect(onError.callCount).toBe(0);
+
+      // stops watching transaction
+      stop3();
     });
   
     test("One incomplete / pending_user_transfer_start messages", async () => {
@@ -833,7 +844,7 @@ describe("Anchor", () => {
       jest.spyOn(anchor, "getTransactionBy").mockResolvedValue(incompleteTransaction);
   
       // start watching
-      anchor.watchOneTransaction({
+      watcher.watchOneTransaction({
         authToken,
         assetCode: "SRT",
         id: incompleteTransaction.id,
@@ -862,7 +873,7 @@ describe("Anchor", () => {
       jest.spyOn(anchor, "getTransactionBy").mockResolvedValue(pendingTransaction);
 
       // start watching
-      anchor.watchOneTransaction({
+      watcher.watchOneTransaction({
         authToken,
         assetCode: "SRT",
         id: pendingTransaction.id,
@@ -906,7 +917,7 @@ describe("Anchor", () => {
       jest.spyOn(anchor, "getTransactionBy").mockResolvedValue(errorTransaction);
   
       // start watching
-      anchor.watchOneTransaction({
+      watcher.watchOneTransaction({
         authToken,
         assetCode: "SRT",
         id: errorTransaction.id,
@@ -935,7 +946,7 @@ describe("Anchor", () => {
       jest.spyOn(anchor, "getTransactionBy").mockResolvedValue(noMarketTransaction);
   
       // start watching
-      anchor.watchOneTransaction({
+      watcher.watchOneTransaction({
         authToken,
         assetCode: "SRT",
         id: noMarketTransaction.id,
@@ -987,7 +998,7 @@ describe("Anchor", () => {
         .mockResolvedValueOnce(makeTransaction(10, TransactionStatus.pending_external));
   
       // start watching
-      anchor.watchOneTransaction({
+      watcher.watchOneTransaction({
         authToken,
         assetCode: "SRT",
         id: makeTransaction(0, TransactionStatus.incomplete).id,
@@ -1052,6 +1063,77 @@ describe("Anchor", () => {
       expect(onError.callCount).toBe(0);
     });
   
+    test("Stops watching after 3 transaction updates", async () => {
+      const onMessage = sinon.spy(() => {
+        expect(onMessage.callCount).toBeLessThanOrEqual(3);
+      });
+  
+      const onSuccess = sinon.spy(() => {
+        expect(onSuccess.callCount).toBeLessThanOrEqual(0);
+      });
+
+      const onError = sinon.spy((e) => {
+        expect(e).toBeUndefined();
+      });
+  
+      // queue up several pending status updates
+      jest.spyOn(anchor, "getTransactionBy")
+        .mockResolvedValueOnce(makeTransaction(0, TransactionStatus.incomplete))
+        .mockResolvedValueOnce(makeTransaction(1, TransactionStatus.pending_user))  
+        .mockResolvedValueOnce(makeTransaction(2, TransactionStatus.pending_anchor))
+        .mockResolvedValueOnce(makeTransaction(3, TransactionStatus.pending_external))
+        .mockResolvedValueOnce(makeTransaction(4, TransactionStatus.pending_stellar))
+        .mockResolvedValueOnce(makeTransaction(5, TransactionStatus.pending_trust));
+  
+      // start watching
+      const { stop } = watcher.watchOneTransaction({
+        authToken,
+        assetCode: "SRT",
+        id: makeTransaction(0, TransactionStatus.incomplete).id,
+        onMessage,
+        onSuccess,
+        onError,
+        timeout: 1,
+        lang: "en-US",
+      });
+  
+      // nothing should run at first
+      expect(onMessage.callCount).toBe(0);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+  
+      // loop through all pending statuses updates
+      await sleep(1);
+  
+      clock.next();
+      await sleep(1);
+  
+      clock.next();
+      await sleep(1);
+  
+      // 1 incomplete + 2 pending transactions
+      expect(onMessage.callCount).toBe(3);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+
+      // stops watching after the third update
+      stop();
+
+      clock.next();
+      await sleep(1);
+  
+      clock.next();
+      await sleep(1);
+  
+      clock.next();
+      await sleep(1);
+
+      // after stopping, nothing should change or run again
+      expect(onMessage.callCount).toBe(3);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+    });
+
     test("One pending, one completed, no more after that", async () => {
       const onMessage = sinon.spy(() => {
         expect(onMessage.callCount).toBeLessThanOrEqual(1);
@@ -1073,7 +1155,7 @@ describe("Anchor", () => {
         .mockResolvedValueOnce(makeTransaction(3, TransactionStatus.pending_external));
   
       // start watching
-      anchor.watchOneTransaction({
+      watcher.watchOneTransaction({
         authToken,
         assetCode: "SRT",
         id: makeTransaction(0, TransactionStatus.pending_user_transfer_complete).id,
@@ -1137,7 +1219,7 @@ describe("Anchor", () => {
         .mockResolvedValueOnce(makeTransaction(3, TransactionStatus.pending_external));
   
       // start watching
-      anchor.watchOneTransaction({
+      watcher.watchOneTransaction({
         authToken,
         assetCode: "SRT",
         id: makeTransaction(0, TransactionStatus.pending_user_transfer_complete).id,
@@ -1202,7 +1284,7 @@ describe("Anchor", () => {
         .mockResolvedValueOnce(makeTransaction(3, TransactionStatus.pending_external));
   
       // start watching
-      anchor.watchOneTransaction({
+      watcher.watchOneTransaction({
         authToken,
         assetCode: "SRT",
         id: makeTransaction(0, TransactionStatus.pending_user_transfer_start).id,
@@ -1267,7 +1349,7 @@ describe("Anchor", () => {
         .mockResolvedValueOnce(makeTransaction(3, TransactionStatus.pending_external));
   
       // start watching
-      anchor.watchOneTransaction({
+      watcher.watchOneTransaction({
         authToken,
         assetCode: "SRT",
         id: makeTransaction(0, TransactionStatus.pending_user_transfer_start).id,
@@ -1333,7 +1415,7 @@ describe("Anchor", () => {
         .mockResolvedValueOnce(makeTransaction(4, TransactionStatus.pending_external));
   
       // start watching
-      anchor.watchOneTransaction({
+      watcher.watchOneTransaction({
         authToken,
         assetCode: "SRT",
         id: makeTransaction(0, TransactionStatus.pending_user_transfer_start).id,

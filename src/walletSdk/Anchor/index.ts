@@ -1,5 +1,4 @@
 import axios from "axios";
-import isEqual from "lodash/isEqual";
 import queryString from "query-string";
 import { StellarTomlResolver } from "stellar-sdk";
 
@@ -15,23 +14,6 @@ import {
 } from "../exception";
 import { camelToSnakeCaseObject } from "../util/camelToSnakeCase";
 import { Config, HttpClient } from "walletSdk";
-import { TransactionStatus, WatcherResponse } from "../Watcher/Types";
-
-interface WatchRegistryAsset {
-  [id: string]: boolean;
-}
-
-interface WatchOneTransactionRegistry {
-  [assetCode: string]: WatchRegistryAsset;
-}
-
-interface TransactionsRegistryAsset {
-  [id: string]: any; // TOOD - replace with Transaction type
-}
-
-interface TransactionsRegistry {
-  [assetCode: string]: TransactionsRegistryAsset;
-}
 
 // Do not create this object directly, use the Wallet class.
 export class Anchor {
@@ -41,15 +23,6 @@ export class Anchor {
   private homeDomain: string;
   private httpClient: HttpClient;
   private toml: TomlInfo;
-
-  private _oneTransactionWatcher: {
-    [assetCode: string]: {
-      [id: string]: ReturnType<typeof setTimeout>;
-    }
-  };
-
-  private _watchOneTransactionRegistry: WatchOneTransactionRegistry;
-  private _transactionsRegistry: TransactionsRegistry;
 
   constructor({ 
     cfg, 
@@ -66,10 +39,6 @@ export class Anchor {
     this.homeDomain = homeDomain;
     this.httpClient = httpClient;
     this.language = language;
-
-    this._oneTransactionWatcher = {};
-    this._watchOneTransactionRegistry = {};
-    this._transactionsRegistry = {};
   }
 
   async getInfo(shouldRefresh?: boolean): Promise<TomlInfo> {
@@ -230,132 +199,6 @@ export class Anchor {
       throw new ServerRequestFailedError(e);
     }
   }
-
-  /**
-  * Watch a transaction until it stops pending. Takes three callbacks:
-  * * onMessage - When the transaction comes back as pending_ or incomplete.
-  * * onSuccess - When the transaction comes back as completed / refunded / expired.
-  * * onError - When there's a runtime error, or the transaction comes back as
-  * no_market / too_small / too_large / error.
-  */
-  watchOneTransaction(params: {
-    authToken: string;
-    assetCode: string;
-    id: string;
-    onMessage: (transaction) => void;
-    onSuccess: (transaction) => void;
-    onError: (error: any) => void;
-    timeout?: number;
-    isRetry?: boolean;
-    lang?: string;
-  }): WatcherResponse {
-    const {
-      authToken,
-      assetCode,
-      id,
-      onMessage,
-      onSuccess,
-      onError,
-      timeout = 5000,
-      isRetry = false,
-      lang,
-    } = params;
-    // make sure to initiate registries for the given asset code
-    // to prevent 'Cannot read properties of undefined' errors
-    if(!this._transactionsRegistry[assetCode]) {
-      this._transactionsRegistry[assetCode] = {};
-    }
-    if(!this._oneTransactionWatcher[assetCode]) {
-      this._oneTransactionWatcher[assetCode] = {};
-    }
-
-    // if it's a first run, drop it in the registry for the given asset code
-    if (!isRetry) {
-      this._watchOneTransactionRegistry[assetCode] = {
-        ...(this._watchOneTransactionRegistry[assetCode] || {}),
-        [id]: true,
-      };
-    }
-
-    // do this all asynchronously (since this func needs to return a cancel fun)
-    this.getTransactionBy({ authToken, id, lang })
-      .then((transaction) => {
-        // make sure we're still watching
-        if (!this._watchOneTransactionRegistry[assetCode]?.[id]) {
-          return;
-        }
-
-        const registeredTransaction = this._transactionsRegistry[assetCode][
-          transaction.id
-        ];
-
-        // if we've had the transaction before, only report if there is a change
-        if (
-          registeredTransaction &&
-          isEqual(registeredTransaction, transaction)
-        ) {
-          return;
-        }
-
-        this._transactionsRegistry[assetCode][transaction.id] = transaction;
-
-        if (
-          transaction.status.indexOf("pending") === 0 ||
-          transaction.status === TransactionStatus.incomplete
-        ) {
-          if (this._oneTransactionWatcher[assetCode][id]) {
-            clearTimeout(this._oneTransactionWatcher[assetCode][id]);
-          }
-
-          this._oneTransactionWatcher[assetCode][id] = setTimeout(() => {
-            this.watchOneTransaction({
-              ...params,
-              isRetry: true,
-            });
-          }, timeout);
-          onMessage(transaction);
-        } else if (
-          [
-            TransactionStatus.completed, 
-            TransactionStatus.refunded,
-            TransactionStatus.expired
-          ].includes(transaction.status)
-        ) {
-          onSuccess(transaction);
-        } else {
-          onError(transaction);
-        }
-      })
-      .catch((e) => {
-        onError(e);
-      });
-
-    return {
-      refresh: () => {
-        // don't do that if we stopped watching
-        if (!this._watchOneTransactionRegistry[assetCode]?.[id]) {
-          return;
-        }
-
-        if (this._oneTransactionWatcher[assetCode][id]) {
-          clearTimeout(this._oneTransactionWatcher[assetCode][id]);
-        }
-
-        this.watchOneTransaction({
-          ...params,
-          isRetry: true,
-        });
-      },
-      stop: () => {
-        if (this._oneTransactionWatcher[assetCode][id]) {
-          this._watchOneTransactionRegistry[assetCode][id] = false;
-          clearTimeout(this._oneTransactionWatcher[assetCode][id]);
-        }
-      },
-    };
-  }
-
-  getTransaction() {}
 
   getHistory() {}
 }
