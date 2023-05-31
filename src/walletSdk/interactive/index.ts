@@ -3,16 +3,19 @@ import axios from "axios";
 import { Anchor } from "../Anchor";
 import { AssetNotSupportedError, ServerRequestFailedError } from "../exception";
 
+// Extra fields should be sent as snake_case keys
+// since the SEP api uses that format for all params
 type ExtraFields = {
-  [key: string]: string;
+  [api_key: string]: string;
 };
 
 type InteractiveParams = {
-  accountAddress: string,
-  assetCode: string,
-  authToken: string,
-  extraFields?: ExtraFields,
-  fundsAccountAddress?: string
+  accountAddress: string;
+  assetCode: string;
+  authToken: string;
+  lang?: string;
+  extraFields?: ExtraFields;
+  fundsAccountAddress?: string;
 };
 
 export enum FLOW_TYPE {
@@ -43,6 +46,7 @@ export class Interactive {
       accountAddress,
       assetCode,
       authToken,
+      lang = "en",
       extraFields,
       fundsAccountAddress = accountAddress,
       type,
@@ -68,6 +72,7 @@ export class Interactive {
         `${transferServerEndpoint}/transactions/${type}/interactive`,
         {
           asset_code: assetCode,
+          lang,
           account: fundsAccountAddress,
           ...extraFields,
         },
