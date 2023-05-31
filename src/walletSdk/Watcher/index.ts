@@ -63,6 +63,7 @@ export class Watcher {
       watchlist = [],
       timeout = 5000,
       isRetry = false,
+      lang = this.anchor.language,
       ...otherParams
     } = params;
     
@@ -86,7 +87,7 @@ export class Watcher {
       this._watchAllTransactionsRegistry[assetCode] = true;
     }
 
-    this.anchor.getTransactionsForAsset({ authToken, assetCode, ...otherParams })
+    this.anchor.getTransactionsForAsset({ authToken, assetCode, lang, ...otherParams })
       .then((transactions: any[]) => { // TOOD - replace with Transaction[] type
         // make sure we're still watching
         if (!this._watchAllTransactionsRegistry[assetCode]) {
