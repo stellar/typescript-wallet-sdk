@@ -1,4 +1,19 @@
-// TODO - https://stellarorg.atlassian.net/browse/WAL-813?atlOrigin=eyJpIjoiODBkZTQ1MDMzYTJmNDFjOWI0NDM3MTQ2YWYxNTEzNTgiLCJwIjoiaiJ9
+import StellarSdk, { Keypair, Transaction } from "stellar-sdk";
 
-export interface WalletSigner {}
-export const DefaultSigner: WalletSigner = {};
+export interface WalletSigner {
+  signWithClientAccount(txn: Transaction, account: Keypair): Transaction;
+  signWithDomainAccount(
+    transactionXDR: string,
+    networkPassPhrase: string,
+    account: Keypair
+  ): Transaction;
+}
+export const DefaultSigner: WalletSigner = {
+  signWithClientAccount: (txn, account) => {
+    txn.sign(account);
+    return txn;
+  },
+  signWithDomainAccount: (transactionXDR, networkPassPhrase, account) => {
+    throw new Error("The DefaultSigner can't sign transactions with domain");
+  },
+};

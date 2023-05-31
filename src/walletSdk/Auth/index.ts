@@ -5,19 +5,23 @@ import {
   ClientDomainWithMemoError,
   ServerRequestFailedError,
 } from "../exception";
+import { WalletSigner } from "./WalletSigner";
 
 // Do not create this object directly, use the Wallet class.
 export class Auth {
+  private cfg;
   private webAuthEndpoint = "";
   private httpClient;
 
-  constructor(webAuthEndpoint, httpClient) {
+  constructor(cfg, webAuthEndpoint, httpClient) {
+    this.cfg = cfg;
     this.webAuthEndpoint = webAuthEndpoint;
     this.httpClient = httpClient;
   }
 
   async authenticate(
     accountKp: Keypair,
+    walletSigner?: WalletSigner,
     memoId?: string,
     clientDomain?: string
   ) {
@@ -28,13 +32,17 @@ export class Auth {
     );
     const signedTx = this.sign(
       accountKp,
-      challengeResponse.transaction,
-      challengeResponse.network_passphrase
+      challengeResponse,
+      walletSigner ?? this.cfg.app.defaultSigner
     );
     return await this.getToken(signedTx);
   }
 
-  async challenge(accountKp: Keypair, memoId?: string, clientDomain?: string) {
+  private async challenge(
+    accountKp: Keypair,
+    memoId?: string,
+    clientDomain?: string
+  ) {
     if (memoId && parseInt(memoId) < 0) {
       throw new InvalidMemoError();
     }
@@ -52,17 +60,35 @@ export class Auth {
     }
   }
 
-  // TODO - add signing with client account functionality
-  sign(accountKp: Keypair, challengeTx, network) {
-    const transaction = StellarSdk.TransactionBuilder.fromXDR(
-      challengeTx,
-      network
+  private sign(
+    accountKp: Keypair,
+    challengeResponse: {
+      transaction: string;
+      network_passphrase: string;
+    },
+    walletSigner: WalletSigner
+  ) {
+    let transaction = StellarSdk.TransactionBuilder.fromXDR(
+      challengeResponse.transaction,
+      challengeResponse.network_passphrase
     );
-    transaction.sign(accountKp);
+
+    // check if verifying client domain as well
+    for (const op of transaction.operations) {
+      if (op.type === "manageData" && op.name === "client_domain") {
+        transaction = walletSigner.signWithDomainAccount(
+          challengeResponse.transaction,
+          challengeResponse.network_passphrase,
+          accountKp
+        );
+      }
+    }
+
+    walletSigner.signWithClientAccount(transaction, accountKp);
     return transaction;
   }
 
-  async getToken(signedTx) {
+  private async getToken(signedTx) {
     try {
       const resp = await this.httpClient.post(this.webAuthEndpoint, {
         transaction: signedTx.toXDR(),
