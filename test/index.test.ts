@@ -68,7 +68,16 @@ describe("Anchor", () => {
     const assetCode = "SRT";
     const resp = await anchor
       .interactive()
-      .deposit(accountKp.publicKey(), assetCode, authToken);
+      .deposit({ 
+        accountAddress: accountKp.publicKey(), 
+        assetCode, 
+        authToken,
+        lang: "en-US",
+        extraFields:{
+          wallet_name: "Test Wallet",
+          wallet_url: "https://stellar.org/",
+        },
+      });
 
     expect(resp.url).toBeTruthy();
     expect(resp.id).toBeTruthy();
@@ -78,7 +87,16 @@ describe("Anchor", () => {
     const assetCode = "SRT";
     const resp = await anchor
       .interactive()
-      .withdraw(accountKp.publicKey(), assetCode, authToken);
+      .withdraw({ 
+        accountAddress: accountKp.publicKey(), 
+        assetCode, 
+        authToken,
+        lang: "en-US",
+        extraFields:{
+          wallet_name: "Test Wallet",
+          wallet_url: "https://stellar.org/",
+        },
+      });
 
     expect(resp.url).toBeTruthy();
     expect(resp.id).toBeTruthy();
@@ -90,7 +108,11 @@ describe("Anchor", () => {
     // creates new 'incomplete' deposit transaction
     const { id: transactionId } = await anchor
       .interactive()
-      .deposit(accountKp.publicKey(), assetCode, authToken);
+      .deposit({ 
+        accountAddress: accountKp.publicKey(), 
+        assetCode, 
+        authToken,
+      });
 
     // fetches transaction that has just been created
     const transaction = await anchor
