@@ -57,7 +57,7 @@ describe("Anchor", () => {
     const assetCode = "SRT";
     const resp = await anchor
       .interactive()
-      .deposit(accountKp.publicKey(), assetCode, authToken);
+      .deposit({ accountAddress: accountKp.publicKey(), assetCode, authToken });
 
     expect(resp.url).toBeTruthy();
     expect(resp.id).toBeTruthy();
@@ -67,7 +67,7 @@ describe("Anchor", () => {
     const assetCode = "SRT";
     const resp = await anchor
       .interactive()
-      .withdraw(accountKp.publicKey(), assetCode, authToken);
+      .withdraw({ accountAddress: accountKp.publicKey(), assetCode, authToken });
 
     expect(resp.url).toBeTruthy();
     expect(resp.id).toBeTruthy();

@@ -7,6 +7,14 @@ type ExtraFields = {
   [key: string]: string;
 };
 
+type InteractiveParams = {
+  accountAddress: string,
+  assetCode: string,
+  authToken: string,
+  extraFields?: ExtraFields,
+  fundsAccountAddress?: string
+};
+
 export enum FLOW_TYPE {
   DEPOSIT = "deposit",
   WITHDRAW = "withdraw",
@@ -22,48 +30,24 @@ export class Interactive {
     this.anchor = anchor;
   }
 
-  async deposit(
-    accountAddress: string,
-    assetCode: string,
-    authToken: string,
-    extraFields?: ExtraFields,
-    fundsAccountAddress?: string
-  ) {
-    return await this.flow(
+  async deposit(params: InteractiveParams) {
+    return await this.flow({ ...params, type: FLOW_TYPE.DEPOSIT });
+  }
+
+  async withdraw(params: InteractiveParams) {
+    return await this.flow({ ...params, type: FLOW_TYPE.WITHDRAW });
+  }
+
+  async flow(params: InteractiveParams & { type: FLOW_TYPE }) {
+    const {
       accountAddress,
       assetCode,
       authToken,
-      FLOW_TYPE.DEPOSIT,
       extraFields,
-      fundsAccountAddress
-    );
-  }
+      fundsAccountAddress = accountAddress,
+      type,
+    } = params;
 
-  async withdraw(
-    accountAddress: string,
-    assetCode: string,
-    authToken: string,
-    extraFields?: ExtraFields,
-    fundsAccountAddress?: string
-  ) {
-    return await this.flow(
-      accountAddress,
-      assetCode,
-      authToken,
-      FLOW_TYPE.WITHDRAW,
-      extraFields,
-      fundsAccountAddress
-    );
-  }
-
-  async flow(
-    accountAddress: string,
-    assetCode: string,
-    authToken: string,
-    type: string,
-    extraFields?: ExtraFields,
-    fundsAccountAddress?: string
-  ) {
     const toml = await this.anchor.getInfo();
     const transferServerEndpoint = toml.transferServerSep24;
 
@@ -84,7 +68,7 @@ export class Interactive {
         `${transferServerEndpoint}/transactions/${type}/interactive`,
         {
           asset_code: assetCode,
-          account: fundsAccountAddress ? fundsAccountAddress : accountAddress,
+          account: fundsAccountAddress,
           ...extraFields,
         },
         {
