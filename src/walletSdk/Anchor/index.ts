@@ -5,6 +5,7 @@ import queryString from "query-string";
 import { Auth } from "../Auth";
 import { Interactive } from "../interactive";
 import { TomlInfo, parseToml } from "../toml";
+import { Watcher } from "../Watcher";
 import { 
   MissingTransactionIdError, 
   ServerRequestFailedError, 
@@ -60,6 +61,10 @@ export class Anchor {
 
   interactive() {
     return new Interactive(this.homeDomain, this);
+  }
+
+  watcher() {
+    return new Watcher(this);
   }
 
   async getServicesInfo(lang: string = this.language) {
