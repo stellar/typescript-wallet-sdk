@@ -62,13 +62,13 @@ export class Anchor {
     return new Interactive(this.homeDomain, this);
   }
 
-  async getServicesInfo() {
+  async getServicesInfo(lang: string = this.language) {
     const toml = await this.getInfo();
     const transferServerEndpoint = toml.transferServerSep24;
 
     try {
       // TODO - use httpClient
-      const resp = await axios.get(`${transferServerEndpoint}/info`, {
+      const resp = await axios.get(`${transferServerEndpoint}/info?lang=${lang}`, {
         headers: {
           "Content-Type": "application/json",
         },
