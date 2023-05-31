@@ -15,6 +15,7 @@ interface TransactionsRegistry {
   [assetCode: string]: TransactionsRegistryAsset;
 }
 
+// Do not create this object directly, use the Anchor class.
 export class Watcher {
   private anchor: Anchor;
 
