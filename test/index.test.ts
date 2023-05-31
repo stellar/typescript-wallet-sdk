@@ -691,4 +691,779 @@ describe("Anchor", () => {
       stop();
     });
   });
+
+  describe("watchOneTransaction", () => {
+    let clock: sinon.SinonFakeTimers;
+    let watcher: Watcher;
+
+    const makeTransaction = (
+      eta: number,
+      txStatus: TransactionStatus,
+    ) => ({
+        kind: "deposit",
+        id: "TEST",
+        status: txStatus,
+        status_eta: eta,
+    });
+  
+    beforeEach(async () => {
+      clock = sinon.useFakeTimers(0);
+      watcher = anchor.watcher();
+    });
+  
+    afterEach(() => {
+      clock.restore();
+    });
+  
+    test("One completed / refunded / expired successes", async () => {
+      const onMessage = sinon.spy(() => {
+        expect(onMessage.callCount).toBe(0);
+      });
+  
+      const onSuccess = sinon.spy(() => {
+        expect(onSuccess.callCount).toBeLessThanOrEqual(3);
+      });
+
+      const onError = sinon.spy((e) => {
+        expect(e).toBeUndefined();
+      });
+  
+      const successfulTransaction = makeTransaction(0, TransactionStatus.completed);
+
+      // queue up a success
+      jest.spyOn(anchor, "getTransactionBy").mockResolvedValue(successfulTransaction);
+  
+      // start watching
+      const { stop: stop1 } = watcher.watchOneTransaction({
+        authToken,
+        assetCode: "SRT",
+        id: successfulTransaction.id,
+        onMessage,
+        onSuccess,
+        onError,
+        timeout: 1,
+        lang: "en-US",
+      });
+  
+      // nothing should run at first
+      expect(onMessage.callCount).toBe(0);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+  
+      // wait a second, then onSuccess should call back
+      await sleep(1);
+
+      expect(onMessage.callCount).toBe(0);
+      expect(onSuccess.callCount).toBe(1);
+      expect(onError.callCount).toBe(0);
+
+      // stops watching transaction
+      stop1();
+
+      const refundedTransaction = makeTransaction(0, TransactionStatus.refunded);
+
+      // queue up a success
+      jest.spyOn(anchor, "getTransactionBy").mockResolvedValue(refundedTransaction);
+
+      // start watching
+      const { stop: stop2 } = watcher.watchOneTransaction({
+        authToken,
+        assetCode: "SRT",
+        id: refundedTransaction.id,
+        onMessage,
+        onSuccess,
+        onError,
+        timeout: 1,
+        lang: "en-US",
+      });
+  
+      // nothing should run at first
+      expect(onMessage.callCount).toBe(0);
+      expect(onSuccess.callCount).toBe(1);
+      expect(onError.callCount).toBe(0);
+  
+      // wait a second, then onSuccess should call back
+      await sleep(1);
+
+      expect(onMessage.callCount).toBe(0);
+      expect(onSuccess.callCount).toBe(2);
+      expect(onError.callCount).toBe(0);
+
+      // stops watching transaction
+      stop2();
+
+      const expiredTransaction = makeTransaction(0, TransactionStatus.expired);
+
+      // queue up a success
+      jest.spyOn(anchor, "getTransactionBy").mockResolvedValue(expiredTransaction);
+
+      // start watching
+      const { stop: stop3 } = watcher.watchOneTransaction({
+        authToken,
+        assetCode: "SRT",
+        id: expiredTransaction.id,
+        onMessage,
+        onSuccess,
+        onError,
+        timeout: 1,
+        lang: "en-US",
+      });
+  
+      // nothing should run at first
+      expect(onMessage.callCount).toBe(0);
+      expect(onSuccess.callCount).toBe(2);
+      expect(onError.callCount).toBe(0);
+  
+      // wait a second, then onSuccess should call back
+      await sleep(1);
+
+      expect(onMessage.callCount).toBe(0);
+      expect(onSuccess.callCount).toBe(3);
+      expect(onError.callCount).toBe(0);
+
+      // stops watching transaction
+      stop3();
+    });
+  
+    test("One incomplete / pending_user_transfer_start messages", async () => {
+      const onMessage = sinon.spy(() => {
+        expect(onMessage.callCount).toBeLessThanOrEqual(2);
+      });
+  
+      const onSuccess = sinon.spy(() => {
+        expect(onSuccess.callCount).toBe(0);
+      });
+
+      const onError = sinon.spy((e) => {
+        expect(e).toBeUndefined();
+      });
+
+      const incompleteTransaction = makeTransaction(0, TransactionStatus.incomplete);
+
+      // queue up an incomplete transaction response
+      jest.spyOn(anchor, "getTransactionBy").mockResolvedValue(incompleteTransaction);
+  
+      // start watching
+      watcher.watchOneTransaction({
+        authToken,
+        assetCode: "SRT",
+        id: incompleteTransaction.id,
+        onMessage,
+        onSuccess,
+        onError,
+        timeout: 1,
+        lang: "en-US",
+      });
+  
+      // nothing should run at first
+      expect(onMessage.callCount).toBe(0);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+  
+      // wait a second, then onMessage should call back
+      await sleep(1);
+
+      expect(onMessage.callCount).toBe(1);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+
+      const pendingTransaction = makeTransaction(0, TransactionStatus.pending_user_transfer_start);
+
+      // queue up a pending transaction response
+      jest.spyOn(anchor, "getTransactionBy").mockResolvedValue(pendingTransaction);
+
+      // start watching
+      watcher.watchOneTransaction({
+        authToken,
+        assetCode: "SRT",
+        id: pendingTransaction.id,
+        onMessage,
+        onSuccess,
+        onError,
+        timeout: 1,
+        lang: "en-US",
+      });
+  
+      // nothing should run at first
+      expect(onMessage.callCount).toBe(1);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+  
+      // wait a second, then onMessage should call back
+      await sleep(1);
+
+      expect(onMessage.callCount).toBe(2);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+    });
+  
+    test("One error / no_market errors", async () => {
+      const onMessage = sinon.spy(() => {
+        expect(onMessage.callCount).toBe(0);
+      });
+  
+      const onSuccess = sinon.spy(() => {
+        expect(onSuccess.callCount).toBe(0);
+      });
+
+      const onError = sinon.spy((e) => {
+        expect(e).toBeTruthy();
+        expect(onError.callCount).toBeLessThanOrEqual(2);
+      });
+
+      const errorTransaction = makeTransaction(0, TransactionStatus.error);
+
+      // queue up an error transaction response
+      jest.spyOn(anchor, "getTransactionBy").mockResolvedValue(errorTransaction);
+  
+      // start watching
+      watcher.watchOneTransaction({
+        authToken,
+        assetCode: "SRT",
+        id: errorTransaction.id,
+        onMessage,
+        onSuccess,
+        onError,
+        timeout: 1,
+        lang: "en-US",
+      });
+  
+      // nothing should run at first
+      expect(onMessage.callCount).toBe(0);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+  
+      // wait a second, then onMessage should call back
+      await sleep(1);
+
+      expect(onMessage.callCount).toBe(0);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(1);
+
+      const noMarketTransaction = makeTransaction(0, TransactionStatus.no_market);
+
+      // queue up a "no market" transaction response
+      jest.spyOn(anchor, "getTransactionBy").mockResolvedValue(noMarketTransaction);
+  
+      // start watching
+      watcher.watchOneTransaction({
+        authToken,
+        assetCode: "SRT",
+        id: noMarketTransaction.id,
+        onMessage,
+        onSuccess,
+        onError,
+        timeout: 1,
+        lang: "en-US",
+      });
+  
+      // nothing should run at first
+      expect(onMessage.callCount).toBe(0);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(1);
+  
+      // wait a second, then onMessage should call back
+      await sleep(1);
+
+      expect(onMessage.callCount).toBe(0);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(2);
+    });
+  
+    test("Several pending transactions, one completed, no more after that", async () => {
+      const onMessage = sinon.spy(() => {
+        expect(onMessage.callCount).toBeLessThanOrEqual(8);
+      });
+  
+      const onSuccess = sinon.spy(() => {
+        expect(onSuccess.callCount).toBeLessThanOrEqual(1);
+      });
+
+      const onError = sinon.spy((e) => {
+        expect(e).toBeUndefined();
+      });
+  
+      // queue up several pending status updates
+      jest.spyOn(anchor, "getTransactionBy")
+        .mockResolvedValueOnce(makeTransaction(0, TransactionStatus.incomplete))
+        .mockResolvedValueOnce(makeTransaction(1, TransactionStatus.pending_user))  
+        .mockResolvedValueOnce(makeTransaction(2, TransactionStatus.pending_anchor))
+        .mockResolvedValueOnce(makeTransaction(3, TransactionStatus.pending_external))
+        .mockResolvedValueOnce(makeTransaction(4, TransactionStatus.pending_stellar))
+        .mockResolvedValueOnce(makeTransaction(5, TransactionStatus.pending_trust))
+        .mockResolvedValueOnce(makeTransaction(6, TransactionStatus.pending_user_transfer_start))
+        .mockResolvedValueOnce(makeTransaction(7, TransactionStatus.pending_user_transfer_complete))
+        .mockResolvedValueOnce(makeTransaction(8, TransactionStatus.completed))
+        .mockResolvedValueOnce(makeTransaction(9, TransactionStatus.pending_anchor))
+        .mockResolvedValueOnce(makeTransaction(10, TransactionStatus.pending_external));
+  
+      // start watching
+      watcher.watchOneTransaction({
+        authToken,
+        assetCode: "SRT",
+        id: makeTransaction(0, TransactionStatus.incomplete).id,
+        onMessage,
+        onSuccess,
+        onError,
+        timeout: 1,
+        lang: "en-US",
+      });
+  
+      // nothing should run at first
+      expect(onMessage.callCount).toBe(0);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+  
+      // loop through all pending statuses updates
+      await sleep(1);
+  
+      clock.next();
+      await sleep(1);
+  
+      clock.next();
+      await sleep(1);
+  
+      clock.next();
+      await sleep(1);
+  
+      clock.next();
+      await sleep(1);
+  
+      clock.next();
+      await sleep(1);
+  
+      clock.next();
+      await sleep(1);
+
+      clock.next();
+      await sleep(1);
+
+      // 1 incomplete + 7 pending transactions
+      expect(onMessage.callCount).toBe(8);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+
+      clock.next();
+      await sleep(1);
+
+      // the next time a success should happen
+      expect(onMessage.callCount).toBe(8);
+      expect(onSuccess.callCount).toBe(1);
+      expect(onError.callCount).toBe(0);
+
+      clock.next();
+      await sleep(1);
+
+      clock.next();
+      await sleep(1);
+
+      // after success, nothing should change or run again
+      expect(onMessage.callCount).toBe(8);
+      expect(onSuccess.callCount).toBe(1);
+      expect(onError.callCount).toBe(0);
+    });
+  
+    test("Stops watching after 3 transaction updates", async () => {
+      const onMessage = sinon.spy(() => {
+        expect(onMessage.callCount).toBeLessThanOrEqual(3);
+      });
+  
+      const onSuccess = sinon.spy(() => {
+        expect(onSuccess.callCount).toBeLessThanOrEqual(0);
+      });
+
+      const onError = sinon.spy((e) => {
+        expect(e).toBeUndefined();
+      });
+  
+      // queue up several pending status updates
+      jest.spyOn(anchor, "getTransactionBy")
+        .mockResolvedValueOnce(makeTransaction(0, TransactionStatus.incomplete))
+        .mockResolvedValueOnce(makeTransaction(1, TransactionStatus.pending_user))  
+        .mockResolvedValueOnce(makeTransaction(2, TransactionStatus.pending_anchor))
+        .mockResolvedValueOnce(makeTransaction(3, TransactionStatus.pending_external))
+        .mockResolvedValueOnce(makeTransaction(4, TransactionStatus.pending_stellar))
+        .mockResolvedValueOnce(makeTransaction(5, TransactionStatus.pending_trust));
+  
+      // start watching
+      const { stop } = watcher.watchOneTransaction({
+        authToken,
+        assetCode: "SRT",
+        id: makeTransaction(0, TransactionStatus.incomplete).id,
+        onMessage,
+        onSuccess,
+        onError,
+        timeout: 1,
+        lang: "en-US",
+      });
+  
+      // nothing should run at first
+      expect(onMessage.callCount).toBe(0);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+  
+      // loop through all pending statuses updates
+      await sleep(1);
+  
+      clock.next();
+      await sleep(1);
+  
+      clock.next();
+      await sleep(1);
+  
+      // 1 incomplete + 2 pending transactions
+      expect(onMessage.callCount).toBe(3);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+
+      // stops watching after the third update
+      stop();
+
+      clock.next();
+      await sleep(1);
+  
+      clock.next();
+      await sleep(1);
+  
+      clock.next();
+      await sleep(1);
+
+      // after stopping, nothing should change or run again
+      expect(onMessage.callCount).toBe(3);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+    });
+
+    test("One pending, one completed, no more after that", async () => {
+      const onMessage = sinon.spy(() => {
+        expect(onMessage.callCount).toBeLessThanOrEqual(1);
+      });
+  
+      const onSuccess = sinon.spy(() => {
+        expect(onSuccess.callCount).toBeLessThanOrEqual(1);
+      });
+
+      const onError = sinon.spy((e) => {
+        expect(e).toBeUndefined();
+      });
+  
+      // queue up transactions
+      jest.spyOn(anchor, "getTransactionBy")
+        .mockResolvedValueOnce(makeTransaction(0, TransactionStatus.pending_user_transfer_complete))
+        .mockResolvedValueOnce(makeTransaction(1, TransactionStatus.completed))
+        .mockResolvedValueOnce(makeTransaction(2, TransactionStatus.pending_anchor))
+        .mockResolvedValueOnce(makeTransaction(3, TransactionStatus.pending_external));
+  
+      // start watching
+      watcher.watchOneTransaction({
+        authToken,
+        assetCode: "SRT",
+        id: makeTransaction(0, TransactionStatus.pending_user_transfer_complete).id,
+        onMessage,
+        onSuccess,
+        onError,
+        timeout: 1,
+        lang: "en-US",
+      });
+    
+      // nothing should run at first
+      expect(onMessage.callCount).toBe(0);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+      
+      await sleep(1);
+  
+      // wait a second, then the pending should resolve
+      expect(onMessage.callCount).toBe(1);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+  
+      clock.next();
+      await sleep(1);
+  
+      // the second time, a success should happen
+      expect(onMessage.callCount).toBe(1);
+      expect(onSuccess.callCount).toBe(1);
+      expect(onError.callCount).toBe(0);
+  
+      clock.next();
+      await sleep(1);
+
+      clock.next();
+      await sleep(1);
+  
+      // after success, nothing should change or run again
+      expect(onMessage.callCount).toBe(1);
+      expect(onSuccess.callCount).toBe(1);
+      expect(onError.callCount).toBe(0);
+    });
+  
+    test("One pending, one refunded, no more after that", async () => {
+      const onMessage = sinon.spy(() => {
+        expect(onMessage.callCount).toBeLessThanOrEqual(1);
+      });
+  
+      const onSuccess = sinon.spy(() => {
+        expect(onSuccess.callCount).toBeLessThanOrEqual(1);
+      });
+
+      const onError = sinon.spy((e) => {
+        expect(e).toBeUndefined();
+      });
+  
+      // queue up transactions
+      jest.spyOn(anchor, "getTransactionBy")
+        .mockResolvedValueOnce(makeTransaction(0, TransactionStatus.pending_user_transfer_complete))
+        .mockResolvedValueOnce(makeTransaction(1, TransactionStatus.refunded))
+        .mockResolvedValueOnce(makeTransaction(2, TransactionStatus.pending_anchor))
+        .mockResolvedValueOnce(makeTransaction(3, TransactionStatus.pending_external));
+  
+      // start watching
+      watcher.watchOneTransaction({
+        authToken,
+        assetCode: "SRT",
+        id: makeTransaction(0, TransactionStatus.pending_user_transfer_complete).id,
+        onMessage,
+        onSuccess,
+        onError,
+        timeout: 1,
+        lang: "en-US",
+      });
+    
+      // nothing should run at first
+      expect(onMessage.callCount).toBe(0);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+      
+      await sleep(1);
+  
+      // wait a second, then the pending should resolve
+      expect(onMessage.callCount).toBe(1);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+  
+      clock.next();
+      await sleep(1);
+  
+      // the second time, a success should happen
+      expect(onMessage.callCount).toBe(1);
+      expect(onSuccess.callCount).toBe(1);
+      expect(onError.callCount).toBe(0);
+  
+      clock.next();
+      await sleep(1);
+
+      clock.next();
+      await sleep(1);
+  
+      // after success, nothing should change or run again
+      expect(onMessage.callCount).toBe(1);
+      expect(onSuccess.callCount).toBe(1);
+      expect(onError.callCount).toBe(0);
+    });
+  
+    test("One pending, one error, no more after that", async () => {
+      const onMessage = sinon.spy(() => {
+        expect(onMessage.callCount).toBeLessThanOrEqual(1);
+      });
+  
+      const onSuccess = sinon.spy(() => {
+        expect(onSuccess.callCount).toBe(0);
+      });
+
+      const onError = sinon.spy((e) => {
+        expect(e).toBeTruthy();
+        expect(onError.callCount).toBeLessThanOrEqual(1);
+      });
+  
+      // queue up transactions
+      jest.spyOn(anchor, "getTransactionBy")
+        .mockResolvedValueOnce(makeTransaction(0, TransactionStatus.pending_user_transfer_start))
+        .mockResolvedValueOnce(makeTransaction(1, TransactionStatus.error))
+        .mockResolvedValueOnce(makeTransaction(2, TransactionStatus.pending_anchor))
+        .mockResolvedValueOnce(makeTransaction(3, TransactionStatus.pending_external));
+  
+      // start watching
+      watcher.watchOneTransaction({
+        authToken,
+        assetCode: "SRT",
+        id: makeTransaction(0, TransactionStatus.pending_user_transfer_start).id,
+        onMessage,
+        onSuccess,
+        onError,
+        timeout: 1,
+        lang: "en-US",
+      });
+    
+      // nothing should run at first
+      expect(onMessage.callCount).toBe(0);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+      
+      await sleep(1);
+  
+      // wait a second, then the pending should resolve
+      expect(onMessage.callCount).toBe(1);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+  
+      clock.next();
+      await sleep(1);
+  
+      // the second time, a error should happen
+      expect(onMessage.callCount).toBe(1);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(1);
+  
+      clock.next();
+      await sleep(1);
+
+      clock.next();
+      await sleep(1);
+  
+      // after error, nothing should change or run again
+      expect(onMessage.callCount).toBe(1);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(1);
+    });
+
+    test("One pending, one no_market, no more after that", async () => {
+      const onMessage = sinon.spy(() => {
+        expect(onMessage.callCount).toBeLessThanOrEqual(1);
+      });
+  
+      const onSuccess = sinon.spy(() => {
+        expect(onSuccess.callCount).toBe(0);
+      });
+
+      const onError = sinon.spy((e) => {
+        expect(e).toBeTruthy();
+        expect(onError.callCount).toBeLessThanOrEqual(1);
+      });
+  
+      // queue up transactions
+      jest.spyOn(anchor, "getTransactionBy")
+        .mockResolvedValueOnce(makeTransaction(0, TransactionStatus.pending_user_transfer_start))
+        .mockResolvedValueOnce(makeTransaction(1, TransactionStatus.no_market))
+        .mockResolvedValueOnce(makeTransaction(2, TransactionStatus.pending_anchor))
+        .mockResolvedValueOnce(makeTransaction(3, TransactionStatus.pending_external));
+  
+      // start watching
+      watcher.watchOneTransaction({
+        authToken,
+        assetCode: "SRT",
+        id: makeTransaction(0, TransactionStatus.pending_user_transfer_start).id,
+        onMessage,
+        onSuccess,
+        onError,
+        timeout: 1,
+        lang: "en-US",
+      });
+    
+      // nothing should run at first
+      expect(onMessage.callCount).toBe(0);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+      
+      await sleep(1);
+  
+      // wait a second, then the pending should resolve
+      expect(onMessage.callCount).toBe(1);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+  
+      clock.next();
+      await sleep(1);
+  
+      // the second time, a error should happen
+      expect(onMessage.callCount).toBe(1);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(1);
+  
+      clock.next();
+      await sleep(1);
+
+      clock.next();
+      await sleep(1);
+  
+      // after error, nothing should change or run again
+      expect(onMessage.callCount).toBe(1);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(1);
+    });
+  
+    test("Two pending, one error, no more after that", async () => {
+      const onMessage = sinon.spy(() => {
+        expect(onMessage.callCount).toBeLessThanOrEqual(2);
+      });
+  
+      const onSuccess = sinon.spy(() => {
+        expect(onSuccess.callCount).toBe(0);
+      });
+
+      const onError = sinon.spy((e) => {
+        expect(e).toBeTruthy();
+        expect(onError.callCount).toBeLessThanOrEqual(1);
+      });
+  
+      // queue up transactions
+      jest.spyOn(anchor, "getTransactionBy")
+        .mockResolvedValueOnce(makeTransaction(0, TransactionStatus.pending_user_transfer_start))
+        .mockResolvedValueOnce(makeTransaction(1, TransactionStatus.pending_user_transfer_complete))
+        .mockResolvedValueOnce(makeTransaction(2, TransactionStatus.error))
+        .mockResolvedValueOnce(makeTransaction(3, TransactionStatus.pending_anchor))
+        .mockResolvedValueOnce(makeTransaction(4, TransactionStatus.pending_external));
+  
+      // start watching
+      watcher.watchOneTransaction({
+        authToken,
+        assetCode: "SRT",
+        id: makeTransaction(0, TransactionStatus.pending_user_transfer_start).id,
+        onMessage,
+        onSuccess,
+        onError,
+        timeout: 1,
+        lang: "en-US",
+      });
+  
+      // nothing should run at first
+      expect(onMessage.callCount).toBe(0);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+  
+      await sleep(1);
+  
+      // wait a second, then the pending should resolve
+      expect(onMessage.callCount).toBe(1);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+  
+      clock.next();
+      await sleep(1);
+  
+      // the next time, another pending
+      expect(onMessage.callCount).toBe(2);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+  
+      clock.next();
+      await sleep(1);
+  
+      // the next time, an error
+      expect(onMessage.callCount).toBe(2);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(1);
+  
+      clock.next();
+      await sleep(1);
+
+      clock.next();
+      await sleep(1);
+  
+      // after error, nothing should change or run again
+      expect(onMessage.callCount).toBe(2);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onError.callCount).toBe(1);
+    });
+  });
 });

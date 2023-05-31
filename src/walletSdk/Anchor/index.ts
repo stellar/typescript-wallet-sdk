@@ -1,6 +1,6 @@
-import { StellarTomlResolver } from "stellar-sdk";
 import axios from "axios";
 import queryString from "query-string";
+import { StellarTomlResolver } from "stellar-sdk";
 
 import { Auth } from "../Auth";
 import { Interactive } from "../interactive";
@@ -17,12 +17,12 @@ import { Config, HttpClient } from "walletSdk";
 
 // Do not create this object directly, use the Wallet class.
 export class Anchor {
+  public language: string;
+
   private cfg: Config;
   private homeDomain: string;
   private httpClient: HttpClient;
   private toml: TomlInfo;
-
-  public language: string;
 
   constructor({ 
     cfg, 
