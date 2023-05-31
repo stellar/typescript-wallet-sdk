@@ -47,7 +47,7 @@ export class Watcher {
     authToken: string;
     assetCode: string;
     onMessage: (transaction) => void;
-    onError: (error: any) => void;
+    onError: (error) => void; // TOOD - add :Transaction | Error type
     watchlist?: string[];
     timeout?: number;
     isRetry?: boolean;
