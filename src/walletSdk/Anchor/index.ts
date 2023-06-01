@@ -11,6 +11,7 @@ import {
   ServerRequestFailedError,
   InvalidTransactionResponseError,
   InvalidTransactionsResponseError,
+  MissingAuthenticationError,
 } from "../exception";
 import { camelToSnakeCaseObject } from "../util/camelToSnakeCase";
 import { Config } from "walletSdk";
@@ -18,6 +19,7 @@ import { Config } from "walletSdk";
 // Do not create this object directly, use the Wallet class.
 export class Anchor {
   public language: string;
+  public authToken?: string;
 
   private cfg: Config;
   private homeDomain: string;
@@ -59,6 +61,12 @@ export class Anchor {
     return new Auth(this.cfg, tomlInfo.webAuthEndpoint, this.httpClient);
   }
 
+  // Sets authentication token that should be used in all Anchor requests
+  // unless an explicit `authToken` value is provided as function param
+  setAuthToken(token: string) {
+    this.authToken = token;
+  }
+
   interactive() {
     return new Interactive(this.homeDomain, this, this.httpClient);
   }
@@ -95,23 +103,28 @@ export class Anchor {
    * @param stellarTransactionId stellar transaction ID
    * @param externalTransactionId external transaction ID
    * @return transaction object
+   * @throws [MissingAuthenticationError] if authToken not provided
    * @throws [MissingTransactionIdError] if none of the id params is provided
    * @throws [InvalidTransactionResponseError] if Anchor returns an invalid transaction
    * @throws [ServerRequestFailedError] if server request fails
    */
   async getTransactionBy({
-    authToken,
+    authToken = this.authToken,
     id,
     stellarTransactionId,
     externalTransactionId,
     lang = this.language,
   }: {
-    authToken: string;
+    authToken?: string;
     id?: string;
     stellarTransactionId?: string;
     externalTransactionId?: string;
     lang: string;
   }) {
+    if (!authToken) {
+      throw new MissingAuthenticationError();
+    }
+
     if (!id && !stellarTransactionId && !externalTransactionId) {
       throw new MissingTransactionIdError();
     }
@@ -164,11 +177,12 @@ export class Anchor {
    * @param pagingId response should contain transactions starting prior to this ID (exclusive)
    * @param lang desired language (localization), it can also accept locale in the format 'en-US'
    * @return list of transactions as requested by the client, sorted in time-descending order
+   * @throws [MissingAuthenticationError] if authToken not provided
    * @throws [InvalidTransactionsResponseError] if Anchor returns an invalid response
    * @throws [ServerRequestFailedError] if server request fails
    */
   async getTransactionsForAsset(params: {
-    authToken: string;
+    authToken?: string;
     assetCode: string;
     noOlderThan?: string;
     limit?: number;
@@ -176,7 +190,15 @@ export class Anchor {
     pagingId?: string;
     lang?: string;
   }) {
-    const { authToken, lang = this.language, ...otherParams } = params;
+    const {
+      authToken = this.authToken, 
+      lang = this.language, 
+      ...otherParams 
+    } = params;
+
+    if (!authToken) {
+      throw new MissingAuthenticationError();
+    }
 
     const toml = await this.getInfo();
     const transferServerEndpoint = toml.transferServerSep24;

@@ -26,6 +26,14 @@ export class ClientDomainWithMemoError extends Error {
     }
 }
 
+// TODO - test how error is being printed
+export class MissingAuthenticationError extends Error {
+    constructor() {
+        super(`Authentication is required. Either provide an 'authToken' value as function param or set it through Anchor's 'setAuthToken'.`);
+        Object.setPrototypeOf(this, MissingAuthenticationError.prototype);
+    }
+}
+
 export class MissingTransactionIdError extends Error {
     constructor() {
         super(`One of id, stellarTransactionId or externalTransactionId is required`);

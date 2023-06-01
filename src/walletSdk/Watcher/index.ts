@@ -16,7 +16,7 @@ interface WatchAllTransactionsRegistry {
 }
 
 interface TransactionsRegistryAsset {
-  [id: string]: any; // TOOD - replace with Transaction type
+  [id: string]: any; // TODO - replace with Transaction type
 }
 
 interface TransactionsRegistry {
@@ -62,10 +62,10 @@ export class Watcher {
   * watcher will always react to transactions whose ids are in the watchlist.
   */
   watchAllTransactions(params: {
-    authToken: string;
     assetCode: string;
     onMessage: (transaction) => void;
-    onError: (error) => void; // TOOD - add :Transaction | Error type
+    onError: (error) => void; // TODO - add :Transaction | Error type
+    authToken?: string;
     watchlist?: string[];
     timeout?: number;
     isRetry?: boolean;
@@ -74,10 +74,10 @@ export class Watcher {
     lang?: string;
   }): WatcherResponse {
     const {
-      authToken,
       assetCode,
       onMessage,
       onError,
+      authToken = this.anchor.authToken,
       watchlist = [],
       timeout = 5000,
       isRetry = false,
@@ -106,7 +106,7 @@ export class Watcher {
     }
 
     this.anchor.getTransactionsForAsset({ authToken, assetCode, lang, ...otherParams })
-      .then((transactions: any[]) => { // TOOD - replace with Transaction[] type
+      .then((transactions: any[]) => { // TODO - replace with Transaction[] type
         // make sure we're still watching
         if (!this._watchAllTransactionsRegistry[assetCode]) {
           return;
@@ -235,23 +235,23 @@ export class Watcher {
   * no_market / too_small / too_large / error.
   */
   watchOneTransaction(params: {
-    authToken: string;
     assetCode: string;
     id: string;
     onMessage: (transaction) => void;
     onSuccess: (transaction) => void;
-    onError: (error) => void; // TOOD - add :Transaction | Error type
+    onError: (error) => void; // TODO - add :Transaction | Error type
+    authToken?: string;
     timeout?: number;
     isRetry?: boolean;
     lang?: string;
   }): WatcherResponse {
     const {
-      authToken,
       assetCode,
       id,
       onMessage,
       onSuccess,
       onError,
+      authToken = this.anchor.authToken,
       timeout = 5000,
       isRetry = false,
       lang = this.anchor.language,

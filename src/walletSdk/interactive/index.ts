@@ -1,5 +1,9 @@
 import { Anchor } from "../Anchor";
-import { AssetNotSupportedError, ServerRequestFailedError } from "../exception";
+import { 
+  AssetNotSupportedError, 
+  MissingAuthenticationError, 
+  ServerRequestFailedError 
+} from "../exception";
 
 // Extra fields should be sent as snake_case keys
 // since the SEP api spec uses that format for all params
@@ -10,7 +14,7 @@ type ExtraFields = {
 type InteractiveParams = {
   accountAddress: string;
   assetCode: string;
-  authToken: string;
+  authToken?: string;
   lang?: string;
   extraFields?: ExtraFields;
   fundsAccountAddress?: string;
@@ -45,12 +49,16 @@ export class Interactive {
     const {
       accountAddress,
       assetCode,
-      authToken,
+      authToken = this.anchor.authToken,
       lang = this.anchor.language,
       extraFields,
       fundsAccountAddress = accountAddress,
       type,
     } = params;
+
+    if (!authToken) {
+      throw new MissingAuthenticationError();
+    }
 
     const toml = await this.anchor.getInfo();
     const transferServerEndpoint = toml.transferServerSep24;
