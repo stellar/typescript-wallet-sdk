@@ -11,9 +11,21 @@ import {
   ServerRequestFailedError,
   InvalidTransactionResponseError,
   InvalidTransactionsResponseError,
+  AssetNotSupportedError,
 } from "../exception";
 import { camelToSnakeCaseObject } from "../util/camelToSnakeCase";
 import { Config } from "walletSdk";
+import { TransactionStatus } from "../Watcher/Types";
+
+type GetTransactionsParams = {
+  authToken: string;
+  assetCode: string;
+  noOlderThan?: string;
+  limit?: number;
+  kind?: string;
+  pagingId?: string;
+  lang?: string;
+};
 
 // Do not create this object directly, use the Wallet class.
 export class Anchor {
@@ -167,15 +179,7 @@ export class Anchor {
    * @throws [InvalidTransactionsResponseError] if Anchor returns an invalid response
    * @throws [ServerRequestFailedError] if server request fails
    */
-  async getTransactionsForAsset(params: {
-    authToken: string;
-    assetCode: string;
-    noOlderThan?: string;
-    limit?: number;
-    kind?: string;
-    pagingId?: string;
-    lang?: string;
-  }) {
+  async getTransactionsForAsset(params: GetTransactionsParams) {
     const { authToken, lang = this.language, ...otherParams } = params;
 
     const toml = await this.getInfo();
@@ -208,5 +212,38 @@ export class Anchor {
     }
   }
 
-  getHistory() {}
+  /**
+   * Get all successfully finished (either completed or refunded) account transactions for specified
+   * asset. Optional field implementation depends on anchor.
+   *
+   * @param authToken auth token of the account authenticated with the anchor
+   * @param assetCode target asset to query for
+   * @param noOlderThan response should contain transactions starting on or after this date & time
+   * @param limit response should contain at most 'limit' transactions
+   * @param kind kind of transaction that is desired. E.g.: 'deposit', 'withdrawal'
+   * @param pagingId response should contain transactions starting prior to this ID (exclusive)
+   * @param lang desired language (localization), it can also accept locale in the format 'en-US'
+   * @return list of filtered transactions that achieved a final state (completed or refunded)
+   * @throws [AssetNotSupportedError] if asset is not supported by the anchor 
+   * @throws [InvalidTransactionsResponseError] if Anchor returns an invalid response
+   * @throws [ServerRequestFailedError] if server request fails
+   */    
+  async getHistory(params: GetTransactionsParams) {
+    const { assetCode } = params;
+
+    const toml = await this.getInfo();
+    if (!toml.currencies?.find(({ code }) => code === assetCode)) {
+      throw new AssetNotSupportedError(null, assetCode);
+    }
+
+    const transactions = await this.getTransactionsForAsset(params);
+
+    const finishedTransactions = transactions
+      .filter(({ status }) => [
+        TransactionStatus.completed, 
+        TransactionStatus.refunded
+      ].includes(status));
+
+    return finishedTransactions;
+  }
 }
