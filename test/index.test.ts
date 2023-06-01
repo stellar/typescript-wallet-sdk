@@ -58,6 +58,7 @@ describe("Anchor", () => {
     accountKp = Keypair.fromSecret(
       "SDXC3OHSJZEQIXKEWFDNEZEQ7SW5DWBPW7RKUWI36ILY3QZZ6VER7TXV"
     );
+    anchor.setAuthToken(authToken);
   });
   it("should give TOML info", async () => {
     const resp = await anchor.getInfo();
@@ -69,6 +70,7 @@ describe("Anchor", () => {
     const auth = await anchor.auth();
 
     authToken = await auth.authenticate(accountKp);
+
     expect(authToken).toBeTruthy();
     expect(typeof authToken).toBe("string");
   });
@@ -122,7 +124,6 @@ describe("Anchor", () => {
     const resp = await anchor.interactive().deposit({
       accountAddress: accountKp.publicKey(),
       assetCode,
-      authToken,
       lang: "en-US",
       extraFields: {
         wallet_name: "Test Wallet",
@@ -139,7 +140,6 @@ describe("Anchor", () => {
     const resp = await anchor.interactive().withdraw({
       accountAddress: accountKp.publicKey(),
       assetCode,
-      authToken,
       lang: "en-US",
       extraFields: {
         wallet_name: "Test Wallet",
@@ -158,12 +158,10 @@ describe("Anchor", () => {
     const { id: transactionId } = await anchor.interactive().deposit({
       accountAddress: accountKp.publicKey(),
       assetCode,
-      authToken,
     });
 
     // fetches transaction that has just been created
     const transaction = await anchor.getTransactionBy({
-      authToken,
       id: transactionId,
     });
 
@@ -182,7 +180,6 @@ describe("Anchor", () => {
     await expect(async () => {
       const nonExistingTransactionId = "da8575e9-edc6-4f99-98cf-2b302f203cc7";
       await anchor.getTransactionBy({
-        authToken,
         id: nonExistingTransactionId,
       });
     }).rejects.toThrowError(ServerRequestFailedError);
@@ -190,7 +187,6 @@ describe("Anchor", () => {
 
   it("should fetch 5 existing transactions by token code", async () => {
     const transactions = await anchor.getTransactionsForAsset({
-      authToken,
       assetCode: "SRT",
       limit: 5,
       lang: "en-US",
@@ -206,7 +202,6 @@ describe("Anchor", () => {
 
   it("should fetch 3 existing deposit transactions by token code", async () => {
     const transactions = await anchor.getTransactionsForAsset({
-      authToken,
       assetCode: "SRT",
       limit: 3,
       kind: "deposit",
@@ -222,7 +217,6 @@ describe("Anchor", () => {
 
   it("should fetch 2 existing withdrawal transactions by token code", async () => {
     const transactions = await anchor.getTransactionsForAsset({
-      authToken,
       assetCode: "SRT",
       limit: 2,
       kind: "withdrawal",
@@ -239,7 +233,6 @@ describe("Anchor", () => {
   it("should error fetching transactions with invalid pading id", async () => {
     await expect(async () => {
       await anchor.getTransactionsForAsset({
-        authToken,
         assetCode: "SRT",
         lang: "en-US",
         pagingId: "randomPagingId",
@@ -276,7 +269,6 @@ describe("Anchor", () => {
 
       // start watching
       const { stop } = watcher.watchAllTransactions({
-        authToken,
         assetCode: "SRT",
         lang: "en-US",
         onMessage,
@@ -314,7 +306,6 @@ describe("Anchor", () => {
 
       // start watching
       const { stop } = watcher.watchAllTransactions({
-        authToken,
         assetCode: "SRT",
         lang: "en-US",
         onMessage,
@@ -358,7 +349,6 @@ describe("Anchor", () => {
 
       // start watching
       const { stop } = watcher.watchAllTransactions({
-        authToken,
         assetCode: "SRT",
         lang: "en-US",
         onMessage,
@@ -471,7 +461,6 @@ describe("Anchor", () => {
 
       // start watching
       const { stop } = watcher.watchAllTransactions({
-        authToken,
         assetCode: "SRT",
         lang: "en-US",
         onMessage,
@@ -582,7 +571,6 @@ describe("Anchor", () => {
 
       // start watching
       const { stop } = watcher.watchAllTransactions({
-        authToken,
         assetCode: "SRT",
         lang: "en-US",
         onMessage,
@@ -826,7 +814,6 @@ describe("Anchor", () => {
 
       // start watching
       const { stop: stop1 } = watcher.watchOneTransaction({
-        authToken,
         assetCode: "SRT",
         id: successfulTransaction.id,
         onMessage,
@@ -863,7 +850,6 @@ describe("Anchor", () => {
 
       // start watching
       const { stop: stop2 } = watcher.watchOneTransaction({
-        authToken,
         assetCode: "SRT",
         id: refundedTransaction.id,
         onMessage,
@@ -897,7 +883,6 @@ describe("Anchor", () => {
 
       // start watching
       const { stop: stop3 } = watcher.watchOneTransaction({
-        authToken,
         assetCode: "SRT",
         id: expiredTransaction.id,
         onMessage,
@@ -948,7 +933,6 @@ describe("Anchor", () => {
 
       // start watching
       watcher.watchOneTransaction({
-        authToken,
         assetCode: "SRT",
         id: incompleteTransaction.id,
         onMessage,
@@ -982,7 +966,6 @@ describe("Anchor", () => {
 
       // start watching
       watcher.watchOneTransaction({
-        authToken,
         assetCode: "SRT",
         id: pendingTransaction.id,
         onMessage,
@@ -1028,7 +1011,6 @@ describe("Anchor", () => {
 
       // start watching
       watcher.watchOneTransaction({
-        authToken,
         assetCode: "SRT",
         id: errorTransaction.id,
         onMessage,
@@ -1062,7 +1044,6 @@ describe("Anchor", () => {
 
       // start watching
       watcher.watchOneTransaction({
-        authToken,
         assetCode: "SRT",
         id: noMarketTransaction.id,
         onMessage,
@@ -1133,7 +1114,6 @@ describe("Anchor", () => {
 
       // start watching
       watcher.watchOneTransaction({
-        authToken,
         assetCode: "SRT",
         id: makeTransaction(0, TransactionStatus.incomplete).id,
         onMessage,
@@ -1232,7 +1212,6 @@ describe("Anchor", () => {
 
       // start watching
       const { stop } = watcher.watchOneTransaction({
-        authToken,
         assetCode: "SRT",
         id: makeTransaction(0, TransactionStatus.incomplete).id,
         onMessage,
@@ -1308,7 +1287,6 @@ describe("Anchor", () => {
 
       // start watching
       watcher.watchOneTransaction({
-        authToken,
         assetCode: "SRT",
         id: makeTransaction(0, TransactionStatus.pending_user_transfer_complete)
           .id,
@@ -1380,7 +1358,6 @@ describe("Anchor", () => {
 
       // start watching
       watcher.watchOneTransaction({
-        authToken,
         assetCode: "SRT",
         id: makeTransaction(0, TransactionStatus.pending_user_transfer_complete)
           .id,
@@ -1453,7 +1430,6 @@ describe("Anchor", () => {
 
       // start watching
       watcher.watchOneTransaction({
-        authToken,
         assetCode: "SRT",
         id: makeTransaction(0, TransactionStatus.pending_user_transfer_start)
           .id,
@@ -1526,7 +1502,6 @@ describe("Anchor", () => {
 
       // start watching
       watcher.watchOneTransaction({
-        authToken,
         assetCode: "SRT",
         id: makeTransaction(0, TransactionStatus.pending_user_transfer_start)
           .id,
@@ -1602,7 +1577,6 @@ describe("Anchor", () => {
 
       // start watching
       watcher.watchOneTransaction({
-        authToken,
         assetCode: "SRT",
         id: makeTransaction(0, TransactionStatus.pending_user_transfer_start)
           .id,
