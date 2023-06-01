@@ -3,7 +3,7 @@ import http from "http";
 import sinon from "sinon";
 
 import sdk from "../src";
-import { ServerRequestFailedError } from "../src/walletSdk/exception";
+import { MissingAuthenticationError, ServerRequestFailedError } from "../src/walletSdk/exception";
 import {
   TransactionStatus,
   WatcherResponse,
@@ -60,12 +60,14 @@ describe("Anchor", () => {
     );
     anchor.setAuthToken(authToken);
   });
+
   it("should give TOML info", async () => {
     const resp = await anchor.getInfo();
 
     expect(resp.webAuthEndpoint).toBe("https://testanchor.stellar.org/auth");
     expect(resp.currencies.length).toBe(2);
   });
+  
   it("should be able to authenticate", async () => {
     const auth = await anchor.auth();
 
@@ -73,6 +75,26 @@ describe("Anchor", () => {
 
     expect(authToken).toBeTruthy();
     expect(typeof authToken).toBe("string");
+  });
+  
+  it("throw error if authentication token is missing", async () => {
+    await expect(async () => {
+      await anchor.interactive().deposit({
+        assetCode: "SRT",
+        accountAddress: accountKp.publicKey(),
+        authToken: "",
+      });
+    }).rejects.toThrowError(MissingAuthenticationError);
+  });
+
+  it("server request should fail with invalid authentication token", async () => {
+    await expect(async () => {
+      await anchor.interactive().deposit({
+        assetCode: "SRT",
+        accountAddress: accountKp.publicKey(),
+        authToken: "invalid-token",
+      });
+    }).rejects.toThrowError(ServerRequestFailedError);
   });
 
   it("should be able to authenticate with client domain", async () => {
