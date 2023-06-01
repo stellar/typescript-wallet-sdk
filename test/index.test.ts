@@ -3,7 +3,7 @@ import http from "http";
 import sinon from "sinon";
 
 import sdk from "../src";
-import { ServerRequestFailedError } from "../src/walletSdk/exception";
+import { AssetNotSupportedError, ServerRequestFailedError } from "../src/walletSdk/exception";
 import {
   TransactionStatus,
   WatcherResponse,
@@ -245,6 +245,57 @@ describe("Anchor", () => {
         pagingId: "randomPagingId",
       });
     }).rejects.toThrowError(ServerRequestFailedError);
+  });
+
+  it("should fetch only finished transactions", async () => {
+    // mock TOML response to include the "SRT" currency
+    jest
+      .spyOn(anchor, "getInfo")
+      .mockResolvedValue({
+        networkPassphrase: 'Test SDF Network ; September 2015',
+        transferServerSep24: 'https://testanchor.stellar.org/sep24',
+        webAuthEndpoint: 'https://testanchor.stellar.org/auth',
+        accounts: [
+          'GCSGSR6KQQ5BP2FXVPWRL6SWPUSFWLVONLIBJZUKTVQB5FYJFVL6XOXE',
+          'GDRND2IUXVMHZ4XTB2RZ4AJ3AOLON3WTAOC23XEASB56NHDFW3ED57TW'
+        ],
+        documentation: {
+          orgName: 'Stellar Development Foundation',
+          orgUrl: 'https://stellar.org',
+          orgGithub: 'stellar',
+        },
+        principals: [],
+        currencies: [{ code: "SRT" }, { code: "USDC" }],
+        validators: []
+      });
+
+    // mock transactions response so we have a few completed/refunded
+    jest
+      .spyOn(anchor, "getTransactionsForAsset")
+      .mockResolvedValue(TransactionsResponse);
+
+    const transactions = await anchor.getHistory({
+      authToken,
+      assetCode: "SRT",
+    });
+
+    expect(transactions.length).toBeGreaterThan(0);
+
+    transactions.forEach(({ status }) => {
+      expect([
+        TransactionStatus.completed, 
+        TransactionStatus.refunded
+      ].includes(status)).toBeTruthy();
+    });
+  });
+
+  it("should error fetching history for unsupported asset", async () => {
+    await expect(async () => {
+      await anchor.getHistory({
+        authToken,
+        assetCode: "ABC",
+      });
+    }).rejects.toThrowError(AssetNotSupportedError);
   });
 
   describe("watchAllTransactions", () => {

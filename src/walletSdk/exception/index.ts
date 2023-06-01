@@ -1,13 +1,13 @@
 export class ServerRequestFailedError extends Error {
     constructor(e) {
-        super(`server request failed with error: ${e}`);
+        super(`Server request failed with error: ${e}`);
         Object.setPrototypeOf(this, ServerRequestFailedError.prototype);
     }
 }
 
 export class AssetNotSupportedError extends Error {
     constructor(type, assetCode) {
-        super(`asset ${assetCode} not supported for ${type}`);
+        super(`Asset ${assetCode} not supported` + (type ? ` for ${type}` : ""));
         Object.setPrototypeOf(this, AssetNotSupportedError.prototype);
     }
 }
