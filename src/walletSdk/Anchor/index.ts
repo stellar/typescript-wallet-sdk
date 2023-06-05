@@ -122,7 +122,7 @@ export class Anchor {
     id?: string;
     stellarTransactionId?: string;
     externalTransactionId?: string;
-    lang: string;
+    lang?: string;
   }) {
     if (!id && !stellarTransactionId && !externalTransactionId) {
       throw new MissingTransactionIdError();
