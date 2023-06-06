@@ -16,6 +16,7 @@ import {
 import { camelToSnakeCaseObject } from "../util/camelToSnakeCase";
 import { Config } from "walletSdk";
 import { TransactionStatus } from "../Watcher/Types";
+import { AnchorTransaction, AnchorServiceInfo } from "./Types";
 
 type GetTransactionsParams = {
   authToken: string;
@@ -66,20 +67,22 @@ export class Anchor {
     return parsedToml;
   }
 
-  async auth() {
+  async auth(): Promise<Auth> {
     const tomlInfo = await this.getInfo();
     return new Auth(this.cfg, tomlInfo.webAuthEndpoint, this.httpClient);
   }
 
-  interactive() {
+  interactive(): Interactive {
     return new Interactive(this.homeDomain, this, this.httpClient);
   }
 
-  watcher() {
+  watcher(): Watcher {
     return new Watcher(this);
   }
 
-  async getServicesInfo(lang: string = this.language) {
+  async getServicesInfo(
+    lang: string = this.language
+  ): Promise<AnchorServiceInfo> {
     const toml = await this.getInfo();
     const transferServerEndpoint = toml.transferServerSep24;
 
@@ -123,7 +126,7 @@ export class Anchor {
     stellarTransactionId?: string;
     externalTransactionId?: string;
     lang?: string;
-  }) {
+  }): Promise<AnchorTransaction> {
     if (!id && !stellarTransactionId && !externalTransactionId) {
       throw new MissingTransactionIdError();
     }
@@ -179,7 +182,9 @@ export class Anchor {
    * @throws [InvalidTransactionsResponseError] if Anchor returns an invalid response
    * @throws [ServerRequestFailedError] if server request fails
    */
-  async getTransactionsForAsset(params: GetTransactionsParams) {
+  async getTransactionsForAsset(
+    params: GetTransactionsParams
+  ): Promise<AnchorTransaction[]> {
     const { authToken, lang = this.language, ...otherParams } = params;
 
     const toml = await this.getInfo();
@@ -227,8 +232,11 @@ export class Anchor {
    * @throws [AssetNotSupportedError] if asset is not supported by the anchor 
    * @throws [InvalidTransactionsResponseError] if Anchor returns an invalid response
    * @throws [ServerRequestFailedError] if server request fails
-   */    
-  async getHistory(params: GetTransactionsParams) {
+   */
+
+  async getHistory(
+    params: GetTransactionsParams
+  ): Promise<AnchorTransaction[]> {
     const { assetCode } = params;
 
     const toml = await this.getInfo();
