@@ -10,6 +10,7 @@ export interface AnchorServiceInfo {
 
 interface BaseTransaction {
   id: string;
+  kind: string;
   status: TransactionStatus;
   more_info_url: string;
   started_at: string;
@@ -48,7 +49,6 @@ export interface WithdrawTransaction extends ProcessingAnchorTransaction {
 }
 
 interface ErrorTransaction extends ProcessingAnchorTransaction {
-  kind: string;
   from?: string;
   to?: string;
   deposit_memo?: string;
