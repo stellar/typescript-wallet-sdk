@@ -1,4 +1,5 @@
 import { MemoType } from "stellar-sdk";
+import { Optional } from "utility-types";
 import { TransactionStatus } from "../Watcher/Types";
 
 export interface AnchorServiceInfo {
@@ -48,16 +49,8 @@ export interface WithdrawTransaction extends ProcessingAnchorTransaction {
   withdraw_anchor_account: string;
 }
 
-interface ErrorTransaction extends ProcessingAnchorTransaction {
-  from?: string;
-  to?: string;
-  deposit_memo?: string;
-  deposit_memo_type?: MemoType;
-  claimable_balance_id?: string;
-  withdraw_memo?: string;
-  withdraw_memo_type?: MemoType;
-  withdraw_anchor_account?: string;
-}
+interface ErrorTransaction
+  extends Optional<DepositTransaction & WithdrawTransaction> {}
 
 export type AnchorTransaction =
   | DepositTransaction
