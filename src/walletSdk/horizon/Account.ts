@@ -20,6 +20,11 @@ export class PublicKeypair extends AccountKeypair {
   constructor(keypair: Keypair) {
     super(keypair);
   }
+
+  static fromString = (str: string) => {
+    const kp = Keypair.fromPublicKey(str);
+    return new PublicKeypair(kp);
+  };
 }
 
 export class SigningKeypair extends AccountKeypair {

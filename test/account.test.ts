@@ -5,6 +5,7 @@ import StellarSdk, {
   FeeBumpTransaction,
   Networks,
 } from "stellar-sdk";
+import { PublicKeypair } from "../src/walletSdk/horizon/Account";
 
 import sdk from "../src";
 const { walletSdk } = sdk;
@@ -25,5 +26,11 @@ describe("Account", () => {
     expect(tx.signatures.length).toBe(1);
     tx.sign(kp.keypair);
     expect(tx.signatures.length).toBe(2);
+  });
+  it("can init from string", () => {
+    const kp = PublicKeypair.fromString(
+      "GCPECGTX5RZWBJNH7Q3FNN4742R7OKMSP6G4ECCUX7Q5IGDCYYG2I447"
+    );
+    expect(kp.publicKey).toBeTruthy();
   });
 });
