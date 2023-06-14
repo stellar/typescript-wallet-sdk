@@ -12,7 +12,7 @@ export class AccountService {
     this.network = cfg.stellar.network;
   }
 
-  createKeypair() {
+  createKeypair(): SigningKeypair {
     return new SigningKeypair(Keypair.random());
   }
 }
