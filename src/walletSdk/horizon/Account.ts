@@ -21,7 +21,7 @@ export class PublicKeypair extends AccountKeypair {
     super(keypair);
   }
 
-  static fromPublicKey = (str: string) => {
+  static fromPublicKey = (str: string): PublicKeypair => {
     return new PublicKeypair(Keypair.fromPublicKey(str));
   };
 }
