@@ -21,9 +21,8 @@ export class PublicKeypair extends AccountKeypair {
     super(keypair);
   }
 
-  static fromString = (str: string) => {
-    const kp = Keypair.fromPublicKey(str);
-    return new PublicKeypair(kp);
+  static fromPublicKey = (str: string) => {
+    return new PublicKeypair(Keypair.fromPublicKey(str));
   };
 }
 

@@ -28,7 +28,7 @@ describe("Account", () => {
     expect(tx.signatures.length).toBe(2);
   });
   it("can init from string", () => {
-    const kp = PublicKeypair.fromString(
+    const kp = PublicKeypair.fromPublicKey(
       "GCPECGTX5RZWBJNH7Q3FNN4742R7OKMSP6G4ECCUX7Q5IGDCYYG2I447"
     );
     expect(kp.publicKey).toBeTruthy();
