@@ -49,8 +49,4 @@ export class SigningKeypair extends AccountKeypair {
     transaction.sign(this.keypair);
     return transaction;
   }
-
-  toString(): string {
-    return `${this.constructor.name}(address=${this.publicKey})`;
-  }
 }
