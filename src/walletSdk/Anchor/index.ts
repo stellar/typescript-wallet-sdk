@@ -69,7 +69,12 @@ export class Anchor {
 
   async auth(): Promise<Auth> {
     const tomlInfo = await this.getInfo();
-    return new Auth(this.cfg, tomlInfo.webAuthEndpoint, this.httpClient);
+    return new Auth(
+      this.cfg,
+      tomlInfo.webAuthEndpoint,
+      this.homeDomain,
+      this.httpClient
+    );
   }
 
   interactive(): Interactive {

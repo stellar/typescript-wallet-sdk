@@ -11,11 +11,13 @@ import { WalletSigner } from "./WalletSigner";
 export class Auth {
   private cfg;
   private webAuthEndpoint = "";
+  private homeDomain;
   private httpClient;
 
-  constructor(cfg, webAuthEndpoint, httpClient) {
+  constructor(cfg, webAuthEndpoint, homeDomain, httpClient) {
     this.cfg = cfg;
     this.webAuthEndpoint = webAuthEndpoint;
+    this.homeDomain = homeDomain;
     this.httpClient = httpClient;
   }
 
@@ -51,7 +53,9 @@ export class Auth {
     }
     const url = `${this.webAuthEndpoint}?account=${accountKp.publicKey()}${
       memoId ? `&memo=${memoId}` : ""
-    }${clientDomain ? `&client_domain=${clientDomain}` : ""}`;
+    }${clientDomain ? `&client_domain=${clientDomain}` : ""}${
+      this.homeDomain ? `&home_domain=${this.homeDomain}` : ""
+    }`;
     try {
       const auth = await this.httpClient.get(url);
       return auth.data;
