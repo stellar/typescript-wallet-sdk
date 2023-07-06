@@ -11,8 +11,8 @@ import {
   InvalidTransactionsResponseError,
   AssetNotSupportedError,
 } from "../Exceptions";
-import { Interactive } from "../Interactivee";
-import { TomlInfo, parseToml } from "../Tomll";
+import { Interactive } from "../Interactive";
+import { TomlInfo, parseToml } from "../Toml";
 import { 
   AnchorServiceInfo, 
   AnchorTransaction, 
@@ -21,7 +21,7 @@ import {
   TransactionStatus 
 } from "../Types";
 import { Watcher } from "../Watcher";
-import { camelToSnakeCaseObject } from "../Utill/camelToSnakeCase";
+import { camelToSnakeCaseObject } from "../Util/camelToSnakeCase";
 
 
 // Let's keep this constructor type private as
