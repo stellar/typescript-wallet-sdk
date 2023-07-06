@@ -1,5 +1,5 @@
 import { Anchor } from "../Anchor";
-import { AssetNotSupportedError, ServerRequestFailedError } from "../Exception";
+import { AssetNotSupportedError, ServerRequestFailedError } from "../Exceptions";
 
 // Extra fields should be sent as snake_case keys
 // since the SEP api spec uses that format for all params

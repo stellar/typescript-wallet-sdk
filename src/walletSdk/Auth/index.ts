@@ -6,7 +6,7 @@ import {
   InvalidMemoError,
   ClientDomainWithMemoError,
   ServerRequestFailedError,
-} from "../Exception";
+} from "../Exceptions";
 import { 
   AuthenticateParams, 
   AuthToken, 
@@ -83,8 +83,9 @@ export class Auth {
       this.homeDomain ? `&home_domain=${this.homeDomain}` : ""
     }`;
     try {
-      const auth = await this.httpClient.get(url);
-      return auth.data as ChallengeResponse;
+      const resp = await this.httpClient.get(url);
+      const challengeResponse: ChallengeResponse = resp.data;
+      return challengeResponse;
     } catch (e) {
       throw new ServerRequestFailedError(e);
     }
@@ -120,7 +121,8 @@ export class Auth {
       const resp = await this.httpClient.post(this.webAuthEndpoint, {
         transaction: signedTransaction.toXDR(),
       });
-      return resp.data.token as AuthToken;
+      const authToken: AuthToken = resp.data.token;
+      return authToken;
     } catch (e) {
       throw new ServerRequestFailedError(e);
     }

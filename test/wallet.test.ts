@@ -3,7 +3,7 @@ import http from "http";
 import sinon from "sinon";
 
 import sdk from "../src";
-import { AssetNotSupportedError, ServerRequestFailedError } from "../src/walletSdk/Exception";
+import { AssetNotSupportedError, ServerRequestFailedError } from "../src/walletSdk/Exceptions";
 import { Watcher } from "../src/walletSdk/Watcher";
 import { TransactionStatus } from "../src/walletSdk/Types";
 

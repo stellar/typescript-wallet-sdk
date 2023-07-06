@@ -10,7 +10,7 @@ import {
   InvalidTransactionResponseError,
   InvalidTransactionsResponseError,
   AssetNotSupportedError,
-} from "../Exception";
+} from "../Exceptions";
 import { Interactive } from "../Interactive";
 import { TomlInfo, parseToml } from "../Toml";
 import { 
@@ -100,7 +100,10 @@ export class Anchor {
           },
         }
       );
-      return resp.data;
+
+      const servicesInfo: AnchorServiceInfo = resp.data;
+      
+      return servicesInfo;
     } catch (e) {
       throw new ServerRequestFailedError(e);
     }
@@ -156,7 +159,7 @@ export class Anchor {
         }
       );
 
-      const transaction = resp.data?.transaction;
+      const transaction: AnchorTransaction = resp.data.transaction;
 
       if (!transaction || Object.keys(transaction).length === 0) {
         throw new InvalidTransactionResponseError(transaction);
@@ -215,8 +218,8 @@ export class Anchor {
           },
         }
       );
-
-      const transactions = resp.data?.transactions;
+        
+      const transactions: AnchorTransaction[] = resp.data.transactions;
 
       if (!transactions || !Array.isArray(transactions)) {
         throw new InvalidTransactionsResponseError(transactions);

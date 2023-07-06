@@ -13,6 +13,11 @@ export { Types };
 export { Anchor } from "./walletSdk/Anchor";
 export { Auth, WalletSigner, DefaultSigner } from "./walletSdk/Auth";
 
+/**
+ * Exceptions
+ */
+import * as Exceptions from "./walletSdk/Exceptions";
+export { Exceptions };
 
 // TODO - figure out why Keypair used in parent codebase throws error
 export { walletSdk, Keypair };
