@@ -1,50 +1,74 @@
-import StellarSdk, { Keypair } from "stellar-sdk";
+import { AxiosInstance } from "axios";
+import StellarSdk, { Transaction } from "stellar-sdk";
 
+import { Config } from "walletSdk";
 import {
   InvalidMemoError,
   ClientDomainWithMemoError,
   ServerRequestFailedError,
 } from "../Exception";
-import { WalletSigner } from "./WalletSigner";
+import { 
+  AuthenticateParams, 
+  AuthToken, 
+  ChallengeParams, 
+  ChallengeResponse, 
+  SignParams 
+} from "../Types";
+
+// Let's keep this constructor type private as
+// we should not create this Anchor class directly.
+type AuthParams = {
+  cfg: Config;
+  webAuthEndpoint: string;
+  homeDomain: string;
+  httpClient: AxiosInstance;
+};
 
 // Do not create this object directly, use the Wallet class.
 export class Auth {
-  private cfg;
-  private webAuthEndpoint = "";
-  private homeDomain;
-  private httpClient;
+  private cfg: Config;
+  private webAuthEndpoint: string;
+  private homeDomain: string;
+  private httpClient: AxiosInstance;
 
-  constructor(cfg, webAuthEndpoint, homeDomain, httpClient) {
+  constructor(params: AuthParams) {
+    const {
+      cfg,
+      webAuthEndpoint,
+      homeDomain,
+      httpClient,
+    } = params;
+
     this.cfg = cfg;
     this.webAuthEndpoint = webAuthEndpoint;
     this.homeDomain = homeDomain;
     this.httpClient = httpClient;
   }
 
-  async authenticate(
-    accountKp: Keypair,
-    walletSigner?: WalletSigner,
-    memoId?: string,
-    clientDomain?: string
-  ) {
-    const challengeResponse = await this.challenge(
+  async authenticate({
+    accountKp,
+    walletSigner,
+    memoId,
+    clientDomain,
+  }: AuthenticateParams): Promise<AuthToken> {
+    const challengeResponse = await this.challenge({
       accountKp,
       memoId,
       clientDomain
-    );
-    const signedTx = this.sign(
+    });
+    const signedTx = this.sign({
       accountKp,
       challengeResponse,
-      walletSigner ?? this.cfg.app.defaultSigner
-    );
+      walletSigner: walletSigner ?? this.cfg.app.defaultSigner
+    });
     return await this.getToken(signedTx);
   }
 
-  private async challenge(
-    accountKp: Keypair,
-    memoId?: string,
-    clientDomain?: string
-  ) {
+  private async challenge({
+    accountKp,
+    memoId,
+    clientDomain,
+  }: ChallengeParams): Promise<ChallengeResponse> {
     if (memoId && parseInt(memoId) < 0) {
       throw new InvalidMemoError();
     }
@@ -58,25 +82,22 @@ export class Auth {
     }`;
     try {
       const auth = await this.httpClient.get(url);
-      return auth.data;
+      return auth.data as ChallengeResponse;
     } catch (e) {
       throw new ServerRequestFailedError(e);
     }
   }
 
-  private sign(
-    accountKp: Keypair,
-    challengeResponse: {
-      transaction: string;
-      network_passphrase: string;
-    },
-    walletSigner: WalletSigner
-  ) {
-    let transaction = StellarSdk.TransactionBuilder.fromXDR(
+  private sign({
+    accountKp,
+    challengeResponse,
+    walletSigner,
+  }: SignParams): Transaction {
+    let transaction: Transaction = StellarSdk.TransactionBuilder.fromXDR(
       challengeResponse.transaction,
       challengeResponse.network_passphrase
     );
-
+      
     // check if verifying client domain as well
     for (const op of transaction.operations) {
       if (op.type === "manageData" && op.name === "client_domain") {
@@ -92,12 +113,12 @@ export class Auth {
     return transaction;
   }
 
-  private async getToken(signedTx) {
+  private async getToken(signedTx: Transaction): Promise<AuthToken> {
     try {
       const resp = await this.httpClient.post(this.webAuthEndpoint, {
         transaction: signedTx.toXDR(),
       });
-      return resp.data.token;
+      return resp.data.token as AuthToken;
     } catch (e) {
       throw new ServerRequestFailedError(e);
     }

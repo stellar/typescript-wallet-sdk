@@ -1,10 +1,4 @@
-import StellarSdk, {
-  Keypair,
-  TransactionBuilder,
-  Transaction,
-  FeeBumpTransaction,
-  Networks,
-} from "stellar-sdk";
+import { TransactionBuilder, Networks } from "stellar-sdk";
 import { PublicKeypair } from "../src/walletSdk/Horizon/Account";
 
 import sdk from "../src";

@@ -65,7 +65,7 @@ describe("Anchor", () => {
   it("should be able to authenticate", async () => {
     const auth = await anchor.auth();
 
-    authToken = await auth.authenticate(accountKp);
+    authToken = await auth.authenticate({ accountKp });
     expect(authToken).toBeTruthy();
     expect(typeof authToken).toBe("string");
   });
@@ -97,12 +97,11 @@ describe("Anchor", () => {
     };
 
     // because using dummy sk and not real demo wallet sk, lets just check that signing is called
-    const challengeResponse = await auth.challenge(
+    const challengeResponse = await auth.challenge({
       accountKp,
-      "",
-      "demo-wallet-server.stellar.org"
-    );
-    const txn = auth.sign(accountKp, challengeResponse, walletSigner);
+      clientDomain: "demo-wallet-server.stellar.org"
+    });
+    const txn = auth.sign({ accountKp, challengeResponse, walletSigner });
     expect(txn).toBeTruthy();
     expect(signedByClient).toBe(true);
     expect(signedByDomain).toBe(true);

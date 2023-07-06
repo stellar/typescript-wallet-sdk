@@ -1,8 +1,8 @@
 import isEqual from "lodash/isEqual";
 
-import { Anchor } from "walletSdk/Anchor";
+import { Anchor } from "../Anchor";
+import { TransactionStatus } from "../Types";
 import { WatcherResponse } from "./Types";
-import { TransactionStatus } from "walletSdk/Types";
 
 interface WatchRegistryAsset {
   [id: string]: boolean;

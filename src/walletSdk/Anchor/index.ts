@@ -3,25 +3,26 @@ import queryString from "query-string";
 import { StellarTomlResolver } from "stellar-sdk";
 
 import { Config } from "walletSdk";
-import { Auth } from "walletSdk/Auth";
+import { Auth } from "../Auth";
 import {
   MissingTransactionIdError,
   ServerRequestFailedError,
   InvalidTransactionResponseError,
   InvalidTransactionsResponseError,
   AssetNotSupportedError,
-} from "walletSdk/Exception";
-import { Interactive } from "walletSdk/Interactive";
-import { TomlInfo, parseToml } from "walletSdk/Toml";
+} from "../Exception";
+import { Interactive } from "../Interactive";
+import { TomlInfo, parseToml } from "../Toml";
 import { 
   AnchorServiceInfo, 
   AnchorTransaction, 
   GetTransactionParams, 
   GetTransactionsParams, 
   TransactionStatus 
-} from "walletSdk/Types";
-import { Watcher } from "walletSdk/Watcher";
-import { camelToSnakeCaseObject } from "walletSdk/Util/camelToSnakeCase";
+} from "../Types";
+import { Watcher } from "../Watcher";
+import { camelToSnakeCaseObject } from "../Util/camelToSnakeCase";
+
 
 // Let's keep this constructor type private as
 // we should not create this Anchor class directly.
@@ -70,12 +71,12 @@ export class Anchor {
 
   async auth(): Promise<Auth> {
     const tomlInfo = await this.getInfo();
-    return new Auth(
-      this.cfg,
-      tomlInfo.webAuthEndpoint,
-      this.homeDomain,
-      this.httpClient
-    );
+    return new Auth({
+      cfg: this.cfg,
+      webAuthEndpoint: tomlInfo.webAuthEndpoint,
+      homeDomain: this.homeDomain,
+      httpClient: this.httpClient
+    });
   }
 
   interactive(): Interactive {
@@ -118,14 +119,13 @@ export class Anchor {
    * @throws [InvalidTransactionResponseError] if Anchor returns an invalid transaction
    * @throws [ServerRequestFailedError] if server request fails
    */
-  async getTransactionBy(params: GetTransactionParams): Promise<AnchorTransaction> {
-    const {
-      authToken,
-      id,
-      stellarTransactionId,
-      externalTransactionId,
-      lang = this.language,
-    } = params;
+  async getTransactionBy({
+    authToken,
+    id,
+    stellarTransactionId,
+    externalTransactionId,
+    lang = this.language,
+  }: GetTransactionParams): Promise<AnchorTransaction> {
 
     if (!id && !stellarTransactionId && !externalTransactionId) {
       throw new MissingTransactionIdError();
@@ -182,18 +182,27 @@ export class Anchor {
    * @throws [InvalidTransactionsResponseError] if Anchor returns an invalid response
    * @throws [ServerRequestFailedError] if server request fails
    */
-  async getTransactionsForAsset(params: GetTransactionsParams): Promise<AnchorTransaction[]> {
-    const { 
-      authToken, 
-      lang = this.language, 
-      ...otherParams 
-    } = params;
-
+  async getTransactionsForAsset({
+    authToken,
+    assetCode,
+    noOlderThan,
+    limit,
+    kind,
+    pagingId,
+    lang = this.language,
+  }: GetTransactionsParams): Promise<AnchorTransaction[]> {
     const toml = await this.getInfo();
     const transferServerEndpoint = toml.transferServerSep24;
 
     // Let's convert all params to snake case for the API call
-    const apiParams = camelToSnakeCaseObject({ lang, ...otherParams });
+    const apiParams = camelToSnakeCaseObject({
+      assetCode,
+      noOlderThan,
+      limit,
+      kind,
+      pagingId,
+      lang,
+    });
 
     try {
       const resp = await this.httpClient.get(
@@ -236,15 +245,29 @@ export class Anchor {
    * @throws [ServerRequestFailedError] if server request fails
    */
 
-  async getHistory(params: GetTransactionsParams): Promise<AnchorTransaction[]> {
-    const { assetCode } = params;
-
+  async getHistory({
+    authToken,
+    assetCode,
+    noOlderThan,
+    limit,
+    kind,
+    pagingId,
+    lang = this.language,
+  }: GetTransactionsParams): Promise<AnchorTransaction[]> {
     const toml = await this.getInfo();
     if (!toml.currencies?.find(({ code }) => code === assetCode)) {
       throw new AssetNotSupportedError(null, assetCode);
     }
 
-    const transactions = await this.getTransactionsForAsset(params);
+    const transactions = await this.getTransactionsForAsset({
+      authToken,
+      assetCode,
+      noOlderThan,
+      limit,
+      kind,
+      pagingId,
+      lang,
+    });
 
     const finishedTransactions = transactions
       .filter(({ status }) => [
