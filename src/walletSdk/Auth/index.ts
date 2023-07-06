@@ -12,8 +12,10 @@ import {
   AuthToken, 
   ChallengeParams, 
   ChallengeResponse, 
-  SignParams 
+  SignParams,
 } from "../Types";
+
+export { WalletSigner, DefaultSigner } from "./WalletSigner";
 
 // Let's keep this constructor type private as
 // we should not create this Anchor class directly.
@@ -56,12 +58,12 @@ export class Auth {
       memoId,
       clientDomain
     });
-    const signedTx = this.sign({
+    const signedTransaction = this.sign({
       accountKp,
       challengeResponse,
       walletSigner: walletSigner ?? this.cfg.app.defaultSigner
     });
-    return await this.getToken(signedTx);
+    return this.getToken(signedTransaction);
   }
 
   private async challenge({
@@ -101,22 +103,22 @@ export class Auth {
     // check if verifying client domain as well
     for (const op of transaction.operations) {
       if (op.type === "manageData" && op.name === "client_domain") {
-        transaction = walletSigner.signWithDomainAccount(
-          challengeResponse.transaction,
-          challengeResponse.network_passphrase,
+        transaction = walletSigner.signWithDomainAccount({
+          transactionXDR: challengeResponse.transaction,
+          networkPassphrase: challengeResponse.network_passphrase,
           accountKp
-        );
+        });
       }
     }
 
-    walletSigner.signWithClientAccount(transaction, accountKp);
+    walletSigner.signWithClientAccount({ transaction, accountKp });
     return transaction;
   }
 
-  private async getToken(signedTx: Transaction): Promise<AuthToken> {
+  private async getToken(signedTransaction: Transaction): Promise<AuthToken> {
     try {
       const resp = await this.httpClient.post(this.webAuthEndpoint, {
-        transaction: signedTx.toXDR(),
+        transaction: signedTransaction.toXDR(),
       });
       return resp.data.token as AuthToken;
     } catch (e) {

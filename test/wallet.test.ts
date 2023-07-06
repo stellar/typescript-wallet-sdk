@@ -8,6 +8,7 @@ import { Watcher } from "../src/walletSdk/Watcher";
 import { TransactionStatus } from "../src/walletSdk/Types";
 
 import { TransactionsResponse } from "../test/fixtures/TransactionsResponse";
+import { WalletSigner } from "../src/walletSdk/Auth/WalletSigner";
 
 const originalSetTimeout = global.setTimeout;
 function sleep(time: number) {
@@ -75,20 +76,20 @@ describe("Anchor", () => {
     let signedByClient = false;
     let signedByDomain = false;
 
-    const walletSigner = {
-      signWithClientAccount: (txn, account) => {
-        txn.sign(account);
+    const walletSigner: WalletSigner = {
+      signWithClientAccount: ({ transaction, accountKp }) => {
+        transaction.sign(accountKp);
         signedByClient = true;
-        return txn;
+        return transaction;
       },
-      signWithDomainAccount: (transactionXDR, networkPassPhrase, account) => {
+      signWithDomainAccount: ({ transactionXDR, networkPassphrase, accountKp }) => {
         // dummy secret key for signing
         const clientDomainKp = Keypair.fromSecret(
           "SC7PKBRGRI5X4XP4QICBZ2NL67VUJJVKFKXDTGSPI3SQYZGC4NZWONIH"
         );
         const transaction = StellarSdk.TransactionBuilder.fromXDR(
           transactionXDR,
-          networkPassPhrase
+          networkPassphrase
         );
         transaction.sign(clientDomainKp);
         signedByDomain = true;

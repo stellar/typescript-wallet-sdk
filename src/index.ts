@@ -11,7 +11,7 @@ export { Types };
  * Classes
  */
 export { Anchor } from "./walletSdk/Anchor";
-export { Auth } from "./walletSdk/Auth";
+export { Auth, WalletSigner, DefaultSigner } from "./walletSdk/Auth";
 
 
 // TODO - figure out why Keypair used in parent codebase throws error

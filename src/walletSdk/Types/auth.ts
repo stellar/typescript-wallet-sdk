@@ -1,4 +1,4 @@
-import { Keypair } from "stellar-sdk";
+import { Keypair, Transaction } from "stellar-sdk";
 import { WalletSigner } from "../Auth/WalletSigner";
 
 export type AuthenticateParams = {
@@ -28,4 +28,15 @@ export type SignParams = {
   accountKp: Keypair;
   challengeResponse: ChallengeResponse;
   walletSigner: WalletSigner;
+}
+
+export type SignWithClientAccountParams = {
+  transaction: Transaction;
+  accountKp: Keypair;
+}
+
+export type SignWithDomainAccountParams = {
+  transactionXDR: XdrEncodedTransaction;
+  networkPassphrase: NetworkPassphrase;
+  accountKp: Keypair;
 }

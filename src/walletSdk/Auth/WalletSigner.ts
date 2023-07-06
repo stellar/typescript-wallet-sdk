@@ -1,19 +1,28 @@
-import StellarSdk, { Keypair, Transaction } from "stellar-sdk";
+import { Transaction } from "stellar-sdk";
+import { 
+  SignWithClientAccountParams, 
+  SignWithDomainAccountParams 
+} from "../Types";
 
 export interface WalletSigner {
-  signWithClientAccount(txn: Transaction, account: Keypair): Transaction;
-  signWithDomainAccount(
-    transactionXDR: string,
-    networkPassPhrase: string,
-    account: Keypair
-  ): Transaction;
+  signWithClientAccount({ 
+    transaction, 
+    accountKp 
+  }: SignWithClientAccountParams): Transaction;
+
+  signWithDomainAccount({
+    transactionXDR,
+    networkPassphrase,
+    accountKp
+  }: SignWithDomainAccountParams): Transaction;
 }
+
 export const DefaultSigner: WalletSigner = {
-  signWithClientAccount: (txn, account) => {
-    txn.sign(account);
-    return txn;
+  signWithClientAccount: ({ transaction, accountKp }) => {
+    transaction.sign(accountKp);
+    return transaction;
   },
-  signWithDomainAccount: (transactionXDR, networkPassPhrase, account) => {
-    throw new Error("The DefaultSigner can't sign transactions with domain");
+  signWithDomainAccount: () => {
+    throw new Error("The DefaultSigner can't sign transactions with domain account");
   },
 };
