@@ -3,8 +3,8 @@ import queryString from "query-string";
 import { StellarTomlResolver } from "stellar-sdk";
 
 import { Auth } from "../Auth";
-import { Interactive } from "../interactive";
-import { TomlInfo, parseToml } from "../toml";
+import { Interactive } from "../Interactive";
+import { TomlInfo, parseToml } from "../Toml";
 import { Watcher } from "../Watcher";
 import {
   MissingTransactionIdError,
@@ -12,8 +12,8 @@ import {
   InvalidTransactionResponseError,
   InvalidTransactionsResponseError,
   AssetNotSupportedError,
-} from "../exception";
-import { camelToSnakeCaseObject } from "../util/camelToSnakeCase";
+} from "../Exception";
+import { camelToSnakeCaseObject } from "../Util/camelToSnakeCase";
 import { Config } from "walletSdk";
 import { TransactionStatus } from "../Watcher/Types";
 import { AnchorTransaction, AnchorServiceInfo } from "./Types";

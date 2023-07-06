@@ -3,10 +3,10 @@ import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
 
 import { Anchor } from "./Anchor";
 import { WalletSigner, DefaultSigner } from "./Auth/WalletSigner";
-import { Stellar } from "./horizon/Stellar";
-import { NETWORK_URLS } from "./horizon/constants";
-import { Recovery } from "./recovery/Recovery";
-import { getUrlDomain } from "./util/url";
+import { Stellar } from "./Horizon/Stellar";
+import { NETWORK_URLS } from "./Horizon/constants";
+import { Recovery } from "./Recovery";
+import { getUrlDomain } from "./Util/url";
 
 /* tslint:disable-next-line:no-var-requires */
 const version = require("../../package.json").version;

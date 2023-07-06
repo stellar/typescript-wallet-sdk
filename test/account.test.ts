@@ -5,7 +5,7 @@ import StellarSdk, {
   FeeBumpTransaction,
   Networks,
 } from "stellar-sdk";
-import { PublicKeypair } from "../src/walletSdk/horizon/Account";
+import { PublicKeypair } from "../src/walletSdk/Horizon/Account";
 
 import sdk from "../src";
 const { walletSdk } = sdk;

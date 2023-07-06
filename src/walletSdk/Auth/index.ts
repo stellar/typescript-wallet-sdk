@@ -4,7 +4,7 @@ import {
   InvalidMemoError,
   ClientDomainWithMemoError,
   ServerRequestFailedError,
-} from "../exception";
+} from "../Exception";
 import { WalletSigner } from "./WalletSigner";
 
 // Do not create this object directly, use the Wallet class.
