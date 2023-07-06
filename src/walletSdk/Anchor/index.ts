@@ -2,30 +2,34 @@ import { AxiosInstance } from "axios";
 import queryString from "query-string";
 import { StellarTomlResolver } from "stellar-sdk";
 
-import { Auth } from "../Auth";
-import { Interactive } from "../Interactive";
-import { TomlInfo, parseToml } from "../Toml";
-import { Watcher } from "../Watcher";
+import { Config } from "walletSdk";
+import { Auth } from "walletSdk/Auth";
 import {
   MissingTransactionIdError,
   ServerRequestFailedError,
   InvalidTransactionResponseError,
   InvalidTransactionsResponseError,
   AssetNotSupportedError,
-} from "../Exception";
-import { camelToSnakeCaseObject } from "../Util/camelToSnakeCase";
-import { Config } from "walletSdk";
-import { AnchorServiceInfo, AnchorTransaction, TransactionStatus } from "walletSdk/Types";
+} from "walletSdk/Exception";
+import { Interactive } from "walletSdk/Interactive";
+import { TomlInfo, parseToml } from "walletSdk/Toml";
+import { 
+  AnchorServiceInfo, 
+  AnchorTransaction, 
+  GetTransactionParams, 
+  GetTransactionsParams, 
+  TransactionStatus 
+} from "walletSdk/Types";
+import { Watcher } from "walletSdk/Watcher";
+import { camelToSnakeCaseObject } from "walletSdk/Util/camelToSnakeCase";
 
-
-type GetTransactionsParams = {
-  authToken: string;
-  assetCode: string;
-  noOlderThan?: string;
-  limit?: number;
-  kind?: string;
-  pagingId?: string;
-  lang?: string;
+// Let's keep this constructor type private as
+// we should not create this Anchor class directly.
+type AnchorParams = {
+  cfg: Config;
+  homeDomain: string;
+  httpClient: AxiosInstance;
+  language: string;
 };
 
 // Do not create this object directly, use the Wallet class.
@@ -37,17 +41,14 @@ export class Anchor {
   private httpClient: AxiosInstance;
   private toml: TomlInfo;
 
-  constructor({
-    cfg,
-    homeDomain,
-    httpClient,
-    language,
-  }: {
-    cfg: Config;
-    homeDomain: string;
-    httpClient: AxiosInstance;
-    language: string;
-  }) {
+  constructor(params: AnchorParams) {
+    const {
+      cfg,
+      homeDomain,
+      httpClient,
+      language,
+    } = params;
+
     this.cfg = cfg;
     this.homeDomain = homeDomain;
     this.httpClient = httpClient;
@@ -85,9 +86,7 @@ export class Anchor {
     return new Watcher(this);
   }
 
-  async getServicesInfo(
-    lang: string = this.language
-  ): Promise<AnchorServiceInfo> {
+  async getServicesInfo(lang: string = this.language): Promise<AnchorServiceInfo> {
     const toml = await this.getInfo();
     const transferServerEndpoint = toml.transferServerSep24;
 
@@ -119,19 +118,15 @@ export class Anchor {
    * @throws [InvalidTransactionResponseError] if Anchor returns an invalid transaction
    * @throws [ServerRequestFailedError] if server request fails
    */
-  async getTransactionBy({
-    authToken,
-    id,
-    stellarTransactionId,
-    externalTransactionId,
-    lang = this.language,
-  }: {
-    authToken: string;
-    id?: string;
-    stellarTransactionId?: string;
-    externalTransactionId?: string;
-    lang?: string;
-  }): Promise<AnchorTransaction> {
+  async getTransactionBy(params: GetTransactionParams): Promise<AnchorTransaction> {
+    const {
+      authToken,
+      id,
+      stellarTransactionId,
+      externalTransactionId,
+      lang = this.language,
+    } = params;
+
     if (!id && !stellarTransactionId && !externalTransactionId) {
       throw new MissingTransactionIdError();
     }
@@ -187,10 +182,12 @@ export class Anchor {
    * @throws [InvalidTransactionsResponseError] if Anchor returns an invalid response
    * @throws [ServerRequestFailedError] if server request fails
    */
-  async getTransactionsForAsset(
-    params: GetTransactionsParams
-  ): Promise<AnchorTransaction[]> {
-    const { authToken, lang = this.language, ...otherParams } = params;
+  async getTransactionsForAsset(params: GetTransactionsParams): Promise<AnchorTransaction[]> {
+    const { 
+      authToken, 
+      lang = this.language, 
+      ...otherParams 
+    } = params;
 
     const toml = await this.getInfo();
     const transferServerEndpoint = toml.transferServerSep24;
@@ -239,9 +236,7 @@ export class Anchor {
    * @throws [ServerRequestFailedError] if server request fails
    */
 
-  async getHistory(
-    params: GetTransactionsParams
-  ): Promise<AnchorTransaction[]> {
+  async getHistory(params: GetTransactionsParams): Promise<AnchorTransaction[]> {
     const { assetCode } = params;
 
     const toml = await this.getInfo();

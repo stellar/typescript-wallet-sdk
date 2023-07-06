@@ -81,6 +81,24 @@ export interface Payment {
   fee: string;
 }
 
+export type GetTransactionParams = {
+  authToken: string;
+  id?: string;
+  stellarTransactionId?: string;
+  externalTransactionId?: string;
+  lang?: string;
+};
+
+export type GetTransactionsParams = {
+  authToken: string;
+  assetCode: string;
+  noOlderThan?: string;
+  limit?: number;
+  kind?: string;
+  pagingId?: string;
+  lang?: string;
+};
+
 export enum TransactionStatus {
   /**
    * There is not yet enough information for this transaction to be initiated. Perhaps the user has
