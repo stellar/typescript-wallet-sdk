@@ -4,11 +4,8 @@ import sinon from "sinon";
 
 import sdk from "../src";
 import { AssetNotSupportedError, ServerRequestFailedError } from "../src/walletSdk/Exception";
-import {
-  TransactionStatus,
-  WatcherResponse,
-} from "../src/walletSdk/Watcher/Types";
 import { Watcher } from "../src/walletSdk/Watcher";
+import { TransactionStatus } from "../src/walletSdk/Types";
 
 import { TransactionsResponse } from "../test/fixtures/TransactionsResponse";
 

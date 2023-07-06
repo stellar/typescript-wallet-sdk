@@ -15,8 +15,8 @@ import {
 } from "../Exception";
 import { camelToSnakeCaseObject } from "../Util/camelToSnakeCase";
 import { Config } from "walletSdk";
-import { TransactionStatus } from "../Watcher/Types";
-import { AnchorTransaction, AnchorServiceInfo } from "./Types";
+import { AnchorServiceInfo, AnchorTransaction, TransactionStatus } from "walletSdk/Types";
+
 
 type GetTransactionsParams = {
   authToken: string;

@@ -4,25 +4,9 @@ import { Keypair } from "stellar-sdk";
 /**
  * Types
  */
-// import * as Types from "./types";
+import * as Types from "./walletSdk/Types";
 
-// export { Types };
-
-// /**
-//  * Constants
-//  */
-// export { EffectType } from "./constants/data";
-// export { KeyType } from "./constants/keys";
-// export { TransferResponseType, TransactionStatus } from "./constants/transfers";
-// export { ApprovalResponseStatus, ActionResult } from "./constants/sep8";
-
-// /**
-//  * Classes
-//  */
-// export { KeyManager } from "./KeyManager";
-// export { KeyManagerPlugins } from "./KeyManagerPlugins";
-// export { DepositProvider, getKycUrl, WithdrawProvider } from "./transfers";
-
+export { Types };
 
 // TODO - figure out why Keypair used in parent codebase throws error
 export { walletSdk, Keypair };
