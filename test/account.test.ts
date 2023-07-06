@@ -1,5 +1,5 @@
 import { TransactionBuilder, Networks } from "stellar-sdk";
-import { PublicKeypair } from "../src/walletSdk/Horizon/Account";
+import { PublicKeypair } from "../src/walletSdk/Horizonn/Account";
 
 import sdk from "../src";
 const { walletSdk } = sdk;
