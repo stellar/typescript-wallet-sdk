@@ -4,7 +4,7 @@ import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
 import { Anchor } from "./Anchor";
 import { WalletSigner, DefaultSigner } from "./Auth/WalletSigner";
 import { Stellar } from "./Horizon/Stellar";
-import { NETWORK_URLS } from "./Horizon/constants";
+import { NETWORK_URLS } from "./Types";
 import { Recovery } from "./Recovery";
 import { getUrlDomain } from "./Util/url";
 

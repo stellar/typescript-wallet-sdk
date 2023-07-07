@@ -16,28 +16,26 @@ class AccountKeypair {
 }
 
 export class PublicKeypair extends AccountKeypair {
-  keypair: Keypair;
   constructor(keypair: Keypair) {
     super(keypair);
   }
 
-  static fromPublicKey = (str: string): PublicKeypair => {
-    return new PublicKeypair(Keypair.fromPublicKey(str));
-  };
+  static fromPublicKey = (publicKey: string): PublicKeypair => {
+    return new PublicKeypair(Keypair.fromPublicKey(publicKey));
+  }
 }
 
 export class SigningKeypair extends AccountKeypair {
-  keypair: Keypair;
   constructor(keypair: Keypair) {
     if (!keypair.canSign()) {
-      throw new Error("This keypair doesn't have a private key and can't sign");
+      throw new Error("This keypair doesn't have a secret key and can't sign");
     }
     super(keypair);
   }
 
-  static fromSecret = (secret: string): SigningKeypair => {
-    return new SigningKeypair(Keypair.fromSecret(secret));
-  };
+  static fromSecret = (secretKey: string): SigningKeypair => {
+    return new SigningKeypair(Keypair.fromSecret(secretKey));
+  }
 
   get secretKey(): string {
     return this.keypair.secret();

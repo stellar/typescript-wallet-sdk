@@ -12,6 +12,12 @@ export { Types };
  */
 export { Anchor } from "./walletSdk/Anchor";
 export { Auth, WalletSigner, DefaultSigner } from "./walletSdk/Auth";
+export { 
+  PublicKeypair, 
+  SigningKeypair, 
+  AccountService, 
+  Stellar 
+} from "./walletSdk/Horizon";
 
 /**
  * Exceptions
