@@ -6,7 +6,7 @@ import { WalletSigner, DefaultSigner } from "./Auth/WalletSigner";
 import { Stellar } from "./Horizon/Stellar";
 import { NETWORK_URLS } from "./Types";
 import { Recovery } from "./Recovery";
-import { getUrlDomain } from "./Util/url";
+import { getUrlDomain } from "./Utils";
 
 /* tslint:disable-next-line:no-var-requires */
 const version = require("../../package.json").version;

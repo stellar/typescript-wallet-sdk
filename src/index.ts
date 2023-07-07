@@ -22,6 +22,12 @@ export { Interactive } from "./walletSdk/Interactive";
 export { Recovery } from "./walletSdk/Recovery";
 
 /**
+ * Utils
+ */
+import * as Utils from "./walletSdk/Utils";
+export { Utils };
+
+/**
  * Exceptions
  */
 import * as Exceptions from "./walletSdk/Exceptions";
