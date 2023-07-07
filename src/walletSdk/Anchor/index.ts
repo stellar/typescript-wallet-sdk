@@ -80,7 +80,7 @@ export class Anchor {
   }
 
   interactive(): Interactive {
-    return new Interactive(this.homeDomain, this, this.httpClient);
+    return new Interactive({ anchor: this, httpClient: this.httpClient});
   }
 
   watcher(): Watcher {

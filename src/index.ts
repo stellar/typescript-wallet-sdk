@@ -18,6 +18,7 @@ export {
   AccountService, 
   Stellar 
 } from "./walletSdk/Horizon";
+export { Interactive } from "./walletSdk/Interactive";
 
 /**
  * Exceptions

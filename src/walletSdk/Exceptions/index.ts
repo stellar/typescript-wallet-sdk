@@ -1,5 +1,5 @@
-import { AnchorTransaction } from "../Types";
-import { FLOW_TYPE } from "../Interactive";
+import { AnchorTransaction, FLOW_TYPE } from "../Types";
+
 
 export class ServerRequestFailedError extends Error {
     constructor(e: Error) {

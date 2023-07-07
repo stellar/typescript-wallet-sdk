@@ -1,47 +1,79 @@
+import { AxiosInstance } from "axios";
+
 import { Anchor } from "../Anchor";
-import { AssetNotSupportedError, ServerRequestFailedError } from "../Exceptions";
+import { 
+  AssetNotSupportedError, 
+  ServerRequestFailedError 
+} from "../Exceptions";
+import { 
+  FLOW_TYPE, 
+  InteractivePostParams, 
+  InteractivePostResponse 
+} from "../Types";
 
-// Extra fields should be sent as snake_case keys
-// since the SEP api spec uses that format for all params
-type ExtraFields = {
-  [api_key: string]: string;
-};
-
+// Let's keep this constructor type private as
+// we should not create this Interactive class directly.
 type InteractiveParams = {
-  accountAddress: string;
-  assetCode: string;
-  authToken: string;
-  lang?: string;
-  extraFields?: ExtraFields;
-  fundsAccountAddress?: string;
+  anchor: Anchor;
+  httpClient: AxiosInstance;
 };
-
-export enum FLOW_TYPE {
-  DEPOSIT = "deposit",
-  WITHDRAW = "withdraw",
-}
 
 // Do not create this object directly, use the Wallet class.
 export class Interactive {
-  private homeDomain: string;
   private anchor: Anchor;
-  private httpClient;
+  private httpClient: AxiosInstance;
 
-  constructor(homeDomain, anchor, httpClient) {
-    this.homeDomain = homeDomain;
+  constructor(params: InteractiveParams) {
+    const {
+      anchor,
+      httpClient,
+    } = params;
+
     this.anchor = anchor;
     this.httpClient = httpClient;
   }
 
-  async deposit(params: InteractiveParams) {
-    return await this.flow({ ...params, type: FLOW_TYPE.DEPOSIT });
+  async deposit({
+    accountAddress,
+    assetCode,
+    authToken,
+    lang,
+    extraFields,
+    fundsAccountAddress,
+  }: InteractivePostParams): Promise<InteractivePostResponse> {
+    return this.flow({
+      accountAddress,
+      assetCode,
+      authToken,
+      lang,
+      extraFields,
+      fundsAccountAddress,
+      type: FLOW_TYPE.DEPOSIT,
+    });
   }
 
-  async withdraw(params: InteractiveParams) {
-    return await this.flow({ ...params, type: FLOW_TYPE.WITHDRAW });
+  async withdraw({
+    accountAddress,
+    assetCode,
+    authToken,
+    lang,
+    extraFields,
+    fundsAccountAddress,
+  }: InteractivePostParams): Promise<InteractivePostResponse> {
+    return this.flow({
+      accountAddress,
+      assetCode,
+      authToken,
+      lang,
+      extraFields,
+      fundsAccountAddress,
+      type: FLOW_TYPE.WITHDRAW,
+    });
   }
 
-  async flow(params: InteractiveParams & { type: FLOW_TYPE }) {
+  private async flow(
+    params: InteractivePostParams & { type: FLOW_TYPE }
+  ): Promise<InteractivePostResponse> {
     const {
       accountAddress,
       assetCode,
@@ -57,7 +89,7 @@ export class Interactive {
 
     const serviceInfo = await this.anchor.getServicesInfo();
 
-    let assets;
+    let assets: string[];
     if (type === FLOW_TYPE.DEPOSIT) {
       assets = Object.keys(serviceInfo.deposit);
     } else {
@@ -84,7 +116,9 @@ export class Interactive {
         }
       );
 
-      return resp.data;
+      const interactiveResponse: InteractivePostResponse = resp.data;
+
+      return interactiveResponse;
     } catch (e) {
       throw new ServerRequestFailedError(e);
     }
