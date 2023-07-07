@@ -7,6 +7,12 @@ export { Types };
 /**
  * Classes
  */
+export { 
+  Wallet, 
+  Config, 
+  StellarConfiguration, 
+  ApplicationConfiguration 
+} from "./walletSdk";
 export { Anchor } from "./walletSdk/Anchor";
 export { Auth, WalletSigner, DefaultSigner } from "./walletSdk/Auth";
 export { 

@@ -25,10 +25,10 @@ describe("Wallet", () => {
   });
   it("should be able return a client", async () => {
     let appConfig = new walletSdk.ApplicationConfiguration();
-    let wal = new walletSdk.Wallet(
-      walletSdk.StellarConfiguration.TestNet(),
-      appConfig
-    );
+    let wal = new walletSdk.Wallet({
+      stellarConfiguration: walletSdk.StellarConfiguration.TestNet(),
+      applicationConfiguration: appConfig
+    });
 
     let client = wal.getClient();
 
@@ -42,7 +42,7 @@ describe("Wallet", () => {
 describe("SEP-24 flow", () => {
   it("should init a wallet with network and domain", () => {
     const Wal = walletSdk.Wallet.TestNet();
-    Wal.anchor("anchor-domain");
+    Wal.anchor({ homeDomain: "anchor-domain" });
   });
 });
 
@@ -52,7 +52,7 @@ let authToken;
 describe("Anchor", () => {
   beforeEach(() => {
     const Wal = walletSdk.Wallet.TestNet();
-    anchor = Wal.anchor("testanchor.stellar.org");
+    anchor = Wal.anchor({ homeDomain: "testanchor.stellar.org" });
     accountKp = Keypair.fromSecret(
       "SDXC3OHSJZEQIXKEWFDNEZEQ7SW5DWBPW7RKUWI36ILY3QZZ6VER7TXV"
     );
