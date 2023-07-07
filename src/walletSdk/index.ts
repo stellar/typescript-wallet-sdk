@@ -66,13 +66,13 @@ export class Wallet {
     return new Stellar(this.cfg);
   }
 
-  recover(servers, httpClientConfig: AxiosRequestConfig = {}) {
-    return new Recovery(
-      this.cfg,
-      this.stellar(),
-      this.getClient(httpClientConfig),
+  recover(servers: Server[], httpClientConfig: AxiosRequestConfig = {}) {
+    return new Recovery({
+      cfg: this.cfg,
+      stellar: this.stellar(),
+      httpClient: this.getClient(httpClientConfig),
       servers
-    );
+    });
   }
 
   getClient(httpClientConfig: AxiosRequestConfig = {}) {

@@ -19,6 +19,7 @@ export {
   Stellar 
 } from "./walletSdk/Horizon";
 export { Interactive } from "./walletSdk/Interactive";
+export { Recovery } from "./walletSdk/Recovery";
 
 /**
  * Exceptions
