@@ -17,7 +17,7 @@ import {
 
 export { WalletSigner, DefaultSigner } from "./WalletSigner";
 
-// Let's keep this constructor type private as
+// Let's prevent exporting this constructor type as
 // we should not create this Anchor class directly.
 type AuthParams = {
   cfg: Config;

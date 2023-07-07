@@ -11,7 +11,7 @@ import {
   InteractivePostResponse 
 } from "../Types";
 
-// Let's keep this constructor type private as
+// Let's prevent exporting this constructor type as
 // we should not create this Interactive class directly.
 type InteractiveParams = {
   anchor: Anchor;

@@ -23,8 +23,7 @@ import {
 import { Watcher } from "../Watcher";
 import { camelToSnakeCaseObject, parseToml } from "../Utils";
 
-
-// Let's keep this constructor type private as
+// Let's prevent exporting this constructor type as
 // we should not create this Anchor class directly.
 type AnchorParams = {
   cfg: Config;

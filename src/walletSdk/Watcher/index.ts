@@ -1,8 +1,13 @@
 import isEqual from "lodash/isEqual";
 
 import { Anchor } from "../Anchor";
-import { TransactionStatus } from "../Types";
-import { WatcherResponse } from "./Types";
+import { 
+  AnchorTransaction, 
+  TransactionStatus, 
+  WatchTransactionParams, 
+  WatchTransactionsParams, 
+  WatcherResponse 
+} from "../Types";
 
 interface WatchRegistryAsset {
   [id: string]: boolean;
@@ -62,29 +67,30 @@ export class Watcher {
   * You may also provide an array of transaction ids, `watchlist`, and this
   * watcher will always react to transactions whose ids are in the watchlist.
   */
-  watchAllTransactions(params: {
-    authToken: string;
-    assetCode: string;
-    onMessage: (transaction) => void;
-    onError: (error) => void; // TOOD - add :Transaction | Error type
-    watchlist?: string[];
-    timeout?: number;
-    isRetry?: boolean;
-    noOlderThan?: string;
-    kind?: string;
-    lang?: string;
-  }): WatcherResponse {
-    const {
+  watchAllTransactions({
+    authToken,
+    assetCode,
+    onMessage,
+    onError,
+    watchlist = [],
+    timeout = 5000,
+    isRetry = false,
+    lang = this.anchor.language,
+    kind,
+    noOlderThan,
+  }: WatchTransactionsParams): WatcherResponse {
+    const allParams = {
       authToken,
       assetCode,
       onMessage,
       onError,
-      watchlist = [],
-      timeout = 5000,
-      isRetry = false,
-      lang = this.anchor.language,
-      ...otherParams
-    } = params;
+      watchlist,
+      timeout,
+      isRetry,
+      lang,
+      kind,
+      noOlderThan,
+    };
     
     // make an object map out of watchlist
     const watchlistMap = watchlist.reduce(
@@ -106,8 +112,13 @@ export class Watcher {
       this._watchAllTransactionsRegistry[assetCode] = true;
     }
 
-    this.anchor.getTransactionsForAsset({ authToken, assetCode, lang, ...otherParams })
-      .then((transactions: any[]) => { // TOOD - replace with Transaction[] type
+    this.anchor.getTransactionsForAsset({ 
+      authToken, 
+      assetCode, 
+      lang, 
+      kind, 
+      noOlderThan 
+    }).then((transactions: AnchorTransaction[]) => {
         // make sure we're still watching
         if (!this._watchAllTransactionsRegistry[assetCode]) {
           return;
@@ -192,7 +203,7 @@ export class Watcher {
         }
         this._allTransactionsWatcher = setTimeout(() => {
           this.watchAllTransactions({
-            ...params,
+            ...allParams,
             isRetry: true,
          });
         }, timeout);
@@ -213,7 +224,7 @@ export class Watcher {
         }
 
         this.watchAllTransactions({
-          ...params,
+          ...allParams,
           isRetry: true,
        });
       },
@@ -235,28 +246,28 @@ export class Watcher {
   * * onError - When there's a runtime error, or the transaction comes back as
   * no_market / too_small / too_large / error.
   */
-  watchOneTransaction(params: {
-    authToken: string;
-    assetCode: string;
-    id: string;
-    onMessage: (transaction) => void;
-    onSuccess: (transaction) => void;
-    onError: (error) => void; // TOOD - add :Transaction | Error type
-    timeout?: number;
-    isRetry?: boolean;
-    lang?: string;
-  }): WatcherResponse {
-    const {
+  watchOneTransaction({
+    authToken,
+    assetCode,
+    id,
+    onMessage,
+    onSuccess,
+    onError,
+    timeout = 5000,
+    isRetry = false,
+    lang = this.anchor.language,
+  }: WatchTransactionParams): WatcherResponse {
+    const allParams = {
       authToken,
       assetCode,
       id,
       onMessage,
       onSuccess,
       onError,
-      timeout = 5000,
-      isRetry = false,
-      lang = this.anchor.language,
-    } = params;
+      timeout,
+      isRetry,
+      lang,
+    };
 
     // make sure to initiate registries for the given asset code
     // to prevent 'Cannot read properties of undefined' errors
@@ -277,7 +288,7 @@ export class Watcher {
 
     // do this all asynchronously (since this func needs to return a cancel fun)
     this.anchor.getTransactionBy({ authToken, id, lang })
-      .then((transaction) => {
+      .then((transaction: AnchorTransaction) => {
         // make sure we're still watching
         if (!this._watchOneTransactionRegistry[assetCode]?.[id]) {
           return;
@@ -307,7 +318,7 @@ export class Watcher {
 
           this._oneTransactionWatcher[assetCode][id] = setTimeout(() => {
             this.watchOneTransaction({
-              ...params,
+              ...allParams,
               isRetry: true,
             });
           }, timeout);
@@ -340,7 +351,7 @@ export class Watcher {
         }
 
         this.watchOneTransaction({
-          ...params,
+          ...allParams,
           isRetry: true,
         });
       },

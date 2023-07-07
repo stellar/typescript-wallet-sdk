@@ -5,7 +5,7 @@ import { Server } from "stellar-sdk";
 import { Config } from "walletSdk";
 import { Stellar } from "../Horizon";
 
-// Let's keep this constructor type private as
+// Let's prevent exporting this constructor type as
 // we should not create this Recovery class directly.
 type RecoveryParams = {
   cfg: Config;
