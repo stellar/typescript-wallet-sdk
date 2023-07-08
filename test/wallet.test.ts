@@ -3,14 +3,12 @@ import http from "http";
 import sinon from "sinon";
 
 import sdk from "../src";
-import { AssetNotSupportedError, ServerRequestFailedError } from "../src/walletSdk/exception";
-import {
-  TransactionStatus,
-  WatcherResponse,
-} from "../src/walletSdk/Watcher/Types";
+import { AssetNotSupportedError, ServerRequestFailedError } from "../src/walletSdk/Exceptions";
 import { Watcher } from "../src/walletSdk/Watcher";
+import { TransactionStatus } from "../src/walletSdk/Types";
 
 import { TransactionsResponse } from "../test/fixtures/TransactionsResponse";
+import { WalletSigner } from "../src/walletSdk/Auth/WalletSigner";
 
 const originalSetTimeout = global.setTimeout;
 function sleep(time: number) {
@@ -27,10 +25,10 @@ describe("Wallet", () => {
   });
   it("should be able return a client", async () => {
     let appConfig = new walletSdk.ApplicationConfiguration();
-    let wal = new walletSdk.Wallet(
-      walletSdk.StellarConfiguration.TestNet(),
-      appConfig
-    );
+    let wal = new walletSdk.Wallet({
+      stellarConfiguration: walletSdk.StellarConfiguration.TestNet(),
+      applicationConfiguration: appConfig
+    });
 
     let client = wal.getClient();
 
@@ -44,7 +42,7 @@ describe("Wallet", () => {
 describe("SEP-24 flow", () => {
   it("should init a wallet with network and domain", () => {
     const Wal = walletSdk.Wallet.TestNet();
-    Wal.anchor("anchor-domain");
+    Wal.anchor({ homeDomain: "anchor-domain" });
   });
 });
 
@@ -54,7 +52,7 @@ let authToken;
 describe("Anchor", () => {
   beforeEach(() => {
     const Wal = walletSdk.Wallet.TestNet();
-    anchor = Wal.anchor("testanchor.stellar.org");
+    anchor = Wal.anchor({ homeDomain: "testanchor.stellar.org" });
     accountKp = Keypair.fromSecret(
       "SDXC3OHSJZEQIXKEWFDNEZEQ7SW5DWBPW7RKUWI36ILY3QZZ6VER7TXV"
     );
@@ -68,7 +66,7 @@ describe("Anchor", () => {
   it("should be able to authenticate", async () => {
     const auth = await anchor.auth();
 
-    authToken = await auth.authenticate(accountKp);
+    authToken = await auth.authenticate({ accountKp });
     expect(authToken).toBeTruthy();
     expect(typeof authToken).toBe("string");
   });
@@ -78,20 +76,20 @@ describe("Anchor", () => {
     let signedByClient = false;
     let signedByDomain = false;
 
-    const walletSigner = {
-      signWithClientAccount: (txn, account) => {
-        txn.sign(account);
+    const walletSigner: WalletSigner = {
+      signWithClientAccount: ({ transaction, accountKp }) => {
+        transaction.sign(accountKp);
         signedByClient = true;
-        return txn;
+        return transaction;
       },
-      signWithDomainAccount: (transactionXDR, networkPassPhrase, account) => {
+      signWithDomainAccount: ({ transactionXDR, networkPassphrase, accountKp }) => {
         // dummy secret key for signing
         const clientDomainKp = Keypair.fromSecret(
           "SC7PKBRGRI5X4XP4QICBZ2NL67VUJJVKFKXDTGSPI3SQYZGC4NZWONIH"
         );
         const transaction = StellarSdk.TransactionBuilder.fromXDR(
           transactionXDR,
-          networkPassPhrase
+          networkPassphrase
         );
         transaction.sign(clientDomainKp);
         signedByDomain = true;
@@ -100,12 +98,11 @@ describe("Anchor", () => {
     };
 
     // because using dummy sk and not real demo wallet sk, lets just check that signing is called
-    const challengeResponse = await auth.challenge(
+    const challengeResponse = await auth.challenge({
       accountKp,
-      "",
-      "demo-wallet-server.stellar.org"
-    );
-    const txn = auth.sign(accountKp, challengeResponse, walletSigner);
+      clientDomain: "demo-wallet-server.stellar.org"
+    });
+    const txn = auth.sign({ accountKp, challengeResponse, walletSigner });
     expect(txn).toBeTruthy();
     expect(signedByClient).toBe(true);
     expect(signedByDomain).toBe(true);

@@ -1,12 +1,15 @@
+import { AnchorTransaction, FLOW_TYPE } from "../Types";
+
+
 export class ServerRequestFailedError extends Error {
-    constructor(e) {
+    constructor(e: Error) {
         super(`Server request failed with error: ${e}`);
         Object.setPrototypeOf(this, ServerRequestFailedError.prototype);
     }
 }
 
 export class AssetNotSupportedError extends Error {
-    constructor(type, assetCode) {
+    constructor(type: FLOW_TYPE, assetCode: string) {
         super(`Asset ${assetCode} not supported` + (type ? ` for ${type}` : ""));
         Object.setPrototypeOf(this, AssetNotSupportedError.prototype);
     }
@@ -34,14 +37,14 @@ export class MissingTransactionIdError extends Error {
 }
 
 export class InvalidTransactionResponseError extends Error {
-    constructor(transactionResponse) {
+    constructor(transactionResponse: AnchorTransaction) {
         super(`Invalid transaction in response data: ${JSON.stringify(transactionResponse)}`);
         Object.setPrototypeOf(this, InvalidTransactionResponseError.prototype);
     }
 }
 
 export class InvalidTransactionsResponseError extends Error {
-    constructor(transactionsResponse) {
+    constructor(transactionsResponse: AnchorTransaction[]) {
         super(`Invalid transactions in response data: ${JSON.stringify(transactionsResponse)}`);
         Object.setPrototypeOf(this, InvalidTransactionsResponseError.prototype);
     }

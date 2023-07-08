@@ -1,12 +1,19 @@
-import StellarSdk, { Networks, Server } from "stellar-sdk";
 import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
+import { Networks, Server } from "stellar-sdk";
 
 import { Anchor } from "./Anchor";
-import { WalletSigner, DefaultSigner } from "./Auth/WalletSigner";
-import { Stellar } from "./horizon/Stellar";
-import { NETWORK_URLS } from "./horizon/constants";
-import { Recovery } from "./recovery/Recovery";
-import { getUrlDomain } from "./util/url";
+import { DefaultSigner, WalletSigner } from "./Auth";
+import { Stellar } from "./Horizon";
+import { Recovery } from "./Recovery";
+import { 
+  ConfigParams, 
+  StellarConfigurationParams, 
+  WalletAnchor, 
+  WalletParams, 
+  WalletRecovery,
+  NETWORK_URLS
+} from "./Types";
+import { getUrlDomain } from "./Utils";
 
 /* tslint:disable-next-line:no-var-requires */
 const version = require("../../package.json").version;
@@ -15,42 +22,37 @@ const walletHeaders = {
   "X-Client-Version": version,
 };
 
-export class Config {
-  app: ApplicationConfiguration;
-  stellar: StellarConfiguration;
-  constructor(stellarCfg, appCfg) {
-    this.stellar = stellarCfg;
-    this.app = appCfg;
-  }
-}
-
 export class Wallet {
   private cfg: Config;
   private language: string;
 
   static TestNet = (): Wallet => {
-    return new Wallet(StellarConfiguration.TestNet());
+    return new Wallet({ 
+      stellarConfiguration: StellarConfiguration.TestNet() 
+    });
   };
 
   static MainNet = (): Wallet => {
-    return new Wallet(StellarConfiguration.MainNet());
+    return new Wallet({ 
+      stellarConfiguration: StellarConfiguration.MainNet() 
+    });
   };
 
-  constructor(
-    stellarConfiguration: StellarConfiguration,
-    applicationConfiguration: ApplicationConfiguration = new ApplicationConfiguration(),
+  constructor({
+    stellarConfiguration,
+    applicationConfiguration = new ApplicationConfiguration(),
     // Defaults wallet language to "en", this will reflect in all Anchor API calls
-    language: string = "en"
-  ) {
-    this.cfg = new Config(stellarConfiguration, applicationConfiguration);
+    language = "en"
+  }: WalletParams) {
+    this.cfg = new Config({ stellarConfiguration, applicationConfiguration });
     this.language = language;
   }
 
-  anchor(
-    homeDomain: string,
-    httpClientConfig: AxiosRequestConfig = {},
-    language: string = this.language
-  ) {
+  anchor({
+    homeDomain,
+    httpClientConfig = {},
+    language = this.language
+  }: WalletAnchor): Anchor {
     const url =
       homeDomain.indexOf("://") !== -1 ? homeDomain : `https://${homeDomain}`;
 
@@ -66,16 +68,19 @@ export class Wallet {
     return new Stellar(this.cfg);
   }
 
-  recover(servers, httpClientConfig: AxiosRequestConfig = {}) {
-    return new Recovery(
-      this.cfg,
-      this.stellar(),
-      this.getClient(httpClientConfig),
+  recovery({ 
+    servers, 
+    httpClientConfig = {} 
+  }: WalletRecovery): Recovery {
+    return new Recovery({
+      cfg: this.cfg,
+      stellar: this.stellar(),
+      httpClient: this.getClient(httpClientConfig),
       servers
-    );
+    });
   }
 
-  getClient(httpClientConfig: AxiosRequestConfig = {}) {
+  getClient(httpClientConfig: AxiosRequestConfig = {}): AxiosInstance {
     return axios.create({
       headers: {
         ...walletHeaders,
@@ -86,6 +91,21 @@ export class Wallet {
   }
 }
 
+
+export class Config {
+  stellar: StellarConfiguration;
+  app: ApplicationConfiguration;
+
+  constructor({ 
+    stellarConfiguration, 
+    applicationConfiguration 
+  }: ConfigParams) {
+    this.stellar = stellarConfiguration;
+    this.app = applicationConfiguration;
+  }
+}
+
+
 export class StellarConfiguration {
   server: Server;
   network: Networks;
@@ -93,24 +113,36 @@ export class StellarConfiguration {
   baseFee: number;
 
   static TestNet = (): StellarConfiguration => {
-    return new StellarConfiguration(Networks.TESTNET, NETWORK_URLS.TESTNET);
+    return new StellarConfiguration({ 
+      network: Networks.TESTNET, 
+      horizonUrl: NETWORK_URLS.TESTNET 
+    });
   };
 
   static MainNet = (): StellarConfiguration => {
-    return new StellarConfiguration(Networks.PUBLIC, NETWORK_URLS.PUBLIC);
+    return new StellarConfiguration({ 
+      network: Networks.PUBLIC, 
+      horizonUrl: NETWORK_URLS.PUBLIC 
+    });
   };
 
-  constructor(network, horizonUrl, baseFee = 100) {
+  constructor({ 
+    network, 
+    horizonUrl, 
+    baseFee = 100 
+  }: StellarConfigurationParams) {
     this.network = network;
-    this.baseFee = baseFee;
     this.horizonUrl = horizonUrl;
+    this.baseFee = baseFee;
     this.server = new Server(horizonUrl);
   }
 }
 
+
 export class ApplicationConfiguration {
   defaultSigner: WalletSigner;
   defaultClient: AxiosInstance;
+
   constructor(defaultSigner: WalletSigner = DefaultSigner) {
     this.defaultSigner = defaultSigner;
     this.defaultClient = axios.create({

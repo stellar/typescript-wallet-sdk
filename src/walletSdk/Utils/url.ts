@@ -7,6 +7,6 @@ if (typeof window === "undefined") {
   Url = window.URL;
 }
 
-export const getUrlDomain = (url) => {
+export const getUrlDomain = (url: string) => {
   return new Url(url).host;
 };

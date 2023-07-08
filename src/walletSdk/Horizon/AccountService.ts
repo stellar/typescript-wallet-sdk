@@ -1,7 +1,7 @@
 import { Keypair, Networks, Server } from "stellar-sdk";
 
-import { SigningKeypair } from "./Account";
 import { Config } from "walletSdk";
+import { SigningKeypair } from "./Account";
 
 // Do not create this object directly, use the Wallet class.
 export class AccountService {
