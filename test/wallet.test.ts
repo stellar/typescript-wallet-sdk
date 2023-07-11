@@ -1,6 +1,7 @@
 import StellarSdk, { Keypair } from "stellar-sdk";
 import http from "http";
 import sinon from "sinon";
+import axios, { AxiosInstance } from "axios";
 
 import sdk from "../src";
 import { AssetNotSupportedError, ServerRequestFailedError } from "../src/walletSdk/Exceptions";
@@ -8,7 +9,10 @@ import { Watcher } from "../src/walletSdk/Watcher";
 import { TransactionStatus } from "../src/walletSdk/Types";
 
 import { TransactionsResponse } from "../test/fixtures/TransactionsResponse";
-import { WalletSigner } from "../src/walletSdk/Auth/WalletSigner";
+import {
+  WalletSigner,
+  DefaultSigner
+} from "../src/walletSdk/Auth/WalletSigner";
 import { SigningKeypair } from "../src/walletSdk/Horizon/Account";
 
 const originalSetTimeout = global.setTimeout;
@@ -30,12 +34,20 @@ describe("Wallet", () => {
       stellarConfiguration: walletSdk.StellarConfiguration.TestNet(),
       applicationConfiguration: appConfig
     });
-
-    let client = wal.getClient();
-
-    // custom client
-    client = wal.getClient({
-      httpAgent: new http.Agent({ keepAlive: false }),
+  });
+  it("should be able to customize a client", async () => {
+    const customClient: AxiosInstance = axios.create({
+      baseURL: "https://some-url.com/api",
+      timeout: 1000,
+      headers: { "X-Custom-Header": "foobar" },
+    });
+    let appConfig = new walletSdk.ApplicationConfiguration(
+      DefaultSigner,
+      customClient
+    );
+    let wal = new walletSdk.Wallet({
+      stellarConfiguration: walletSdk.StellarConfiguration.TestNet(),
+      applicationConfiguration: appConfig,
     });
   });
 });
@@ -1709,8 +1721,7 @@ describe("Http client", () => {
     const accountKp = Keypair.fromSecret(
       "SDXC3OHSJZEQIXKEWFDNEZEQ7SW5DWBPW7RKUWI36ILY3QZZ6VER7TXV"
     );
-    const wal = walletSdk.Wallet.TestNet();
-    const client = wal.getClient();
+    const client = walletSdk.DefaultClient;
 
     const resp = await client.get(
       `http://testanchor.stellar.org/auth?account=${accountKp.publicKey()}`
