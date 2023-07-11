@@ -192,7 +192,6 @@ And it can now be used for authentication with client domain:
 const authToken = await auth.authenticate({
   accountKp,
   walletSigner: demoWalletSigner,
-  memoId: "",
   clientDomain: "demo-wallet-server.stellar.org",
 });
 ```
