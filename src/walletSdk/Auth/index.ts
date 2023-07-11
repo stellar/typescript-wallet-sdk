@@ -7,11 +7,11 @@ import {
   ClientDomainWithMemoError,
   ServerRequestFailedError,
 } from "../Exceptions";
-import {
-  AuthenticateParams,
-  AuthToken,
-  ChallengeParams,
-  ChallengeResponse,
+import { 
+  AuthenticateParams, 
+  AuthToken, 
+  ChallengeParams, 
+  ChallengeResponse, 
   SignParams,
 } from "../Types";
 
@@ -34,7 +34,12 @@ export class Auth {
   private httpClient: AxiosInstance;
 
   constructor(params: AuthParams) {
-    const { cfg, webAuthEndpoint, homeDomain, httpClient } = params;
+    const {
+      cfg,
+      webAuthEndpoint,
+      homeDomain,
+      httpClient,
+    } = params;
 
     this.cfg = cfg;
     this.webAuthEndpoint = webAuthEndpoint;
@@ -51,12 +56,12 @@ export class Auth {
     const challengeResponse = await this.challenge({
       accountKp,
       memoId,
-      clientDomain,
+      clientDomain
     });
     const signedTransaction = await this.sign({
       accountKp,
       challengeResponse,
-      walletSigner: walletSigner ?? this.cfg.app.defaultSigner,
+      walletSigner: walletSigner ?? this.cfg.app.defaultSigner
     });
     return this.getToken(signedTransaction);
   }
@@ -97,14 +102,14 @@ export class Auth {
       challengeResponse.transaction,
       challengeResponse.network_passphrase
     );
-
+      
     // check if verifying client domain as well
     for (const op of transaction.operations) {
       if (op.type === "manageData" && op.name === "client_domain") {
         transaction = await walletSigner.signWithDomainAccount({
           transactionXDR: challengeResponse.transaction,
           networkPassphrase: challengeResponse.network_passphrase,
-          accountKp,
+          accountKp
         });
       }
     }
