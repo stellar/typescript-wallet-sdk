@@ -3,6 +3,7 @@
 <!--- TOC -->
 
 * [Getting started](#getting-started)
+  * [Configuring client](#configuring-client)
 * [Anchor](#anchor)
   * [Add client domain signing](#add-client-domain-signing)
     * [Example](#example)
@@ -34,7 +35,7 @@ let wallet = new Wallet({
 
 ### Configuring client
 
-The Wallet SDK uses the [axios client](https://axios-http.com/docs/intro) for all network requests. A custom client can be configured as so, otherwise a default client is used:
+The Wallet SDK uses the [axios client](https://axios-http.com/docs/intro) for all network requests. A default client is used by default, or a custom client can given and configured like so:
 
 ```typescript
 const customClient: AxiosInstance = axios.create({
