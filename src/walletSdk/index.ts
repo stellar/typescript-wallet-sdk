@@ -48,11 +48,7 @@ export class Wallet {
     this.language = language;
   }
 
-  anchor({
-    homeDomain,
-    httpClientConfig = {},
-    language = this.language
-  }: WalletAnchor): Anchor {
+  anchor({ homeDomain, language = this.language }: WalletAnchor): Anchor {
     const url =
       homeDomain.indexOf("://") !== -1 ? homeDomain : `https://${homeDomain}`;
 
@@ -68,10 +64,7 @@ export class Wallet {
     return new Stellar(this.cfg);
   }
 
-  recovery({ 
-    servers, 
-    httpClientConfig = {} 
-  }: WalletRecovery): Recovery {
+  recovery({ servers }: WalletRecovery): Recovery {
     return new Recovery({
       cfg: this.cfg,
       stellar: this.stellar(),

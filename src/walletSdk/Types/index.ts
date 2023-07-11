@@ -11,13 +11,11 @@ export type WalletParams = {
 
 export type WalletAnchor = {
   homeDomain: string;
-  httpClientConfig?: AxiosRequestConfig;
   language?: string;
 };
 
 export type WalletRecovery = {
   servers: Server[]; 
-  httpClientConfig?: AxiosRequestConfig;
 };
 
 export type ConfigParams = { 
