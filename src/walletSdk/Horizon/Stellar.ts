@@ -16,6 +16,11 @@ abstract class CommonTransactionBuilder {
   // ALEC TODO - any
   // private abstract operations: Array<any>;
 }
+
+class SponsoringBuilder extends CommonTransactionBuilder {
+
+}
+
 class TransactionBuilder extends CommonTransactionBuilder {
   // ALEC TODO - types
   private network;
@@ -41,15 +46,15 @@ class TransactionBuilder extends CommonTransactionBuilder {
     // // ALEC TODO - make sure right type
     this.maxBaseFeeInStroops = cfg.stellar.baseFee;
     this.operations = [];
-    // ALEC TODO
     this.builder = new StellarTransactionBuilder(sourceAccount, {
       fee: baseFee,
+      timebounds,
+      networkPassphrase: cfg.stellar.network,
     });
 
     this.sourceAccount = sourceAccount;
   }
 
-  // ALEC TODO - what does = building in kotlin mean?
   createAccount(newAccount: AccountKeypair, startingBalance: number = 1) {
     if (startingBalance < 1) {
       // ALEC TODO - error
@@ -67,7 +72,12 @@ class TransactionBuilder extends CommonTransactionBuilder {
     return this;
   }
 
+  sponsoring(sponsorAccount, sponsoredAccount){
+
+  }
+
   build(): Transaction {
+    console.log("calling build"); // ALEC TODO - remove
     this.operations.forEach((op) => {
       this.builder.addOperation(op);
     });

@@ -48,10 +48,10 @@ describe("Stellar", () => {
       minTime: 0,
       maxTime: 1,
     });
-    console.log({ builder }); // ALEC TODO - remove
+    // console.log({ builder }); // ALEC TODO - remove
 
-    const test = builder.createAccount(kp, 2);
-    console.log({ test }); // ALEC TODO - remove
+    // const test = builder.createAccount(kp, 2);
+    // console.log({ test }); // ALEC TODO - remove
 
     const tx = builder.createAccount(kp, 2).build();
     console.log({ tx }); // ALEC TODO - remove
