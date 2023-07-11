@@ -32,6 +32,26 @@ let wallet = new Wallet({
 });
 ```
 
+### Configuring client
+
+The Wallet SDK uses the [axios client](https://axios-http.com/docs/intro) for all network requests. A custom client can be configured as so, otherwise a default client is used:
+
+```typescript
+const customClient: AxiosInstance = axios.create({
+  baseURL: "https://some-url.com/api",
+  timeout: 1000,
+  headers: { "X-Custom-Header": "foobar" },
+});
+let appConfig = new ApplicationConfiguration(
+  DefaultSigner,
+  customClient
+);
+let wal = new Wallet({
+  stellarConfiguration: StellarConfiguration.TestNet(),
+  applicationConfiguration: appConfig,
+});
+  ```
+
 ## Anchor
 
 Build on and off ramps with anchors for deposits and withdrawals.
@@ -139,21 +159,21 @@ First, create an object using the `WalletSigner` interface, and define both the 
 
 ```typescript
 const demoWalletSigner: WalletSigner = {
-      signWithClientAccount: ({ transaction, accountKp }) => {
-        transaction.sign(accountKp);
-        return transaction;
-      },
-      signWithDomainAccount: async ({
-        transactionXDR,
-        networkPassphrase,
-        accountKp,
-      }) => {
-        return await axios.post("https://demo-wallet-server.stellar.org/sign", {
-          transactionXDR,
-          networkPassphrase,
-        });
-      },
-    };
+  signWithClientAccount: ({ transaction, accountKp }) => {
+    transaction.sign(accountKp);
+    return transaction;
+  },
+  signWithDomainAccount: async ({
+    transactionXDR,
+    networkPassphrase,
+    accountKp,
+  }) => {
+    return await axios.post("https://demo-wallet-server.stellar.org/sign", {
+      transactionXDR,
+      networkPassphrase,
+    });
+  },
+};
 ```
 
 Wallet can now use this class:
@@ -169,11 +189,11 @@ const wallet = new walletSdk.Wallet({
 And it can now be used for authentication with client domain:
 ```typescript
 const authToken = await auth.authenticate({
-      accountKp,
-      walletSigner: demoWalletSigner,
-      memoId: "",
-      clientDomain: "demo-wallet-server.stellar.org",
-    });
+  accountKp,
+  walletSigner: demoWalletSigner,
+  memoId: "",
+  clientDomain: "demo-wallet-server.stellar.org",
+});
 ```
 
 
