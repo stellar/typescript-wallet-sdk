@@ -1,3 +1,5 @@
+# Wallet SDK usage guide
+
 <!--- TOC -->
 
 * [Getting started](#getting-started)
