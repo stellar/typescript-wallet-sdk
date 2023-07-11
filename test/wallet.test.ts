@@ -1,6 +1,7 @@
 import StellarSdk, { Keypair } from "stellar-sdk";
 import http from "http";
 import sinon from "sinon";
+import axios, { AxiosInstance } from "axios";
 
 import sdk from "../src";
 import { AssetNotSupportedError, ServerRequestFailedError } from "../src/walletSdk/Exceptions";
@@ -8,7 +9,11 @@ import { Watcher } from "../src/walletSdk/Watcher";
 import { TransactionStatus } from "../src/walletSdk/Types";
 
 import { TransactionsResponse } from "../test/fixtures/TransactionsResponse";
-import { WalletSigner } from "../src/walletSdk/Auth/WalletSigner";
+import {
+  WalletSigner,
+  DefaultSigner
+} from "../src/walletSdk/Auth/WalletSigner";
+import { SigningKeypair } from "../src/walletSdk/Horizon/Account";
 
 const originalSetTimeout = global.setTimeout;
 function sleep(time: number) {
@@ -29,12 +34,20 @@ describe("Wallet", () => {
       stellarConfiguration: walletSdk.StellarConfiguration.TestNet(),
       applicationConfiguration: appConfig
     });
-
-    let client = wal.getClient();
-
-    // custom client
-    client = wal.getClient({
-      httpAgent: new http.Agent({ keepAlive: false }),
+  });
+  it("should be able to customize a client", async () => {
+    const customClient: AxiosInstance = axios.create({
+      baseURL: "https://some-url.com/api",
+      timeout: 1000,
+      headers: { "X-Custom-Header": "foobar" },
+    });
+    let appConfig = new walletSdk.ApplicationConfiguration(
+      DefaultSigner,
+      customClient
+    );
+    let wal = new walletSdk.Wallet({
+      stellarConfiguration: walletSdk.StellarConfiguration.TestNet(),
+      applicationConfiguration: appConfig,
     });
   });
 });
@@ -53,7 +66,7 @@ describe("Anchor", () => {
   beforeEach(() => {
     const Wal = walletSdk.Wallet.TestNet();
     anchor = Wal.anchor({ homeDomain: "testanchor.stellar.org" });
-    accountKp = Keypair.fromSecret(
+    accountKp = SigningKeypair.fromSecret(
       "SDXC3OHSJZEQIXKEWFDNEZEQ7SW5DWBPW7RKUWI36ILY3QZZ6VER7TXV"
     );
   });
@@ -78,11 +91,11 @@ describe("Anchor", () => {
 
     const walletSigner: WalletSigner = {
       signWithClientAccount: ({ transaction, accountKp }) => {
-        transaction.sign(accountKp);
+        transaction.sign(accountKp.keypair);
         signedByClient = true;
         return transaction;
       },
-      signWithDomainAccount: ({ transactionXDR, networkPassphrase, accountKp }) => {
+      signWithDomainAccount: async ({ transactionXDR, networkPassphrase, accountKp }) => {
         // dummy secret key for signing
         const clientDomainKp = Keypair.fromSecret(
           "SC7PKBRGRI5X4XP4QICBZ2NL67VUJJVKFKXDTGSPI3SQYZGC4NZWONIH"
@@ -102,7 +115,7 @@ describe("Anchor", () => {
       accountKp,
       clientDomain: "demo-wallet-server.stellar.org"
     });
-    const txn = auth.sign({ accountKp, challengeResponse, walletSigner });
+    const txn = await auth.sign({ accountKp, challengeResponse, walletSigner });
     expect(txn).toBeTruthy();
     expect(signedByClient).toBe(true);
     expect(signedByDomain).toBe(true);
@@ -117,7 +130,7 @@ describe("Anchor", () => {
   it("should give interactive deposit url", async () => {
     const assetCode = "SRT";
     const resp = await anchor.interactive().deposit({
-      accountAddress: accountKp.publicKey(),
+      accountAddress: accountKp.publicKey,
       assetCode,
       authToken,
       lang: "en-US",
@@ -134,7 +147,7 @@ describe("Anchor", () => {
   it("should give interactive withdraw url", async () => {
     const assetCode = "SRT";
     const resp = await anchor.interactive().withdraw({
-      accountAddress: accountKp.publicKey(),
+      accountAddress: accountKp.publicKey,
       assetCode,
       authToken,
       lang: "en-US",
@@ -153,7 +166,7 @@ describe("Anchor", () => {
 
     // creates new 'incomplete' deposit transaction
     const { id: transactionId } = await anchor.interactive().deposit({
-      accountAddress: accountKp.publicKey(),
+      accountAddress: accountKp.publicKey,
       assetCode,
       authToken,
     });
@@ -1708,8 +1721,7 @@ describe("Http client", () => {
     const accountKp = Keypair.fromSecret(
       "SDXC3OHSJZEQIXKEWFDNEZEQ7SW5DWBPW7RKUWI36ILY3QZZ6VER7TXV"
     );
-    const wal = walletSdk.Wallet.TestNet();
-    const client = wal.getClient();
+    const client = walletSdk.DefaultClient;
 
     const resp = await client.get(
       `http://testanchor.stellar.org/auth?account=${accountKp.publicKey()}`

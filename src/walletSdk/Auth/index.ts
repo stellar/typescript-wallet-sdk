@@ -58,7 +58,7 @@ export class Auth {
       memoId,
       clientDomain
     });
-    const signedTransaction = this.sign({
+    const signedTransaction = await this.sign({
       accountKp,
       challengeResponse,
       walletSigner: walletSigner ?? this.cfg.app.defaultSigner
@@ -77,7 +77,9 @@ export class Auth {
     if (clientDomain && memoId) {
       throw new ClientDomainWithMemoError();
     }
-    const url = `${this.webAuthEndpoint}?account=${accountKp.publicKey()}${
+    const url = `${
+      this.webAuthEndpoint
+    }?account=${accountKp.keypair.publicKey()}${
       memoId ? `&memo=${memoId}` : ""
     }${clientDomain ? `&client_domain=${clientDomain}` : ""}${
       this.homeDomain ? `&home_domain=${this.homeDomain}` : ""
@@ -91,11 +93,11 @@ export class Auth {
     }
   }
 
-  private sign({
+  private async sign({
     accountKp,
     challengeResponse,
     walletSigner,
-  }: SignParams): Transaction {
+  }: SignParams): Promise<Transaction> {
     let transaction: Transaction = StellarSdk.TransactionBuilder.fromXDR(
       challengeResponse.transaction,
       challengeResponse.network_passphrase
@@ -104,7 +106,7 @@ export class Auth {
     // check if verifying client domain as well
     for (const op of transaction.operations) {
       if (op.type === "manageData" && op.name === "client_domain") {
-        transaction = walletSigner.signWithDomainAccount({
+        transaction = await walletSigner.signWithDomainAccount({
           transactionXDR: challengeResponse.transaction,
           networkPassphrase: challengeResponse.network_passphrase,
           accountKp

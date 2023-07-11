@@ -1,20 +1,21 @@
 import { Keypair, Transaction } from "stellar-sdk";
 import { WalletSigner } from "../Auth/WalletSigner";
+import { AccountKeypair } from "../Horizon/Account";
 
 export type AuthenticateParams = {
-  accountKp: Keypair;
+  accountKp: AccountKeypair;
   walletSigner?: WalletSigner;
   memoId?: string;
   clientDomain?: string;
-}
+};
 
 export type AuthToken = string;
 
 export type ChallengeParams = {
-  accountKp: Keypair;
+  accountKp: AccountKeypair;
   memoId?: string;
   clientDomain?: string;
-}
+};
 
 export type XdrEncodedTransaction = string;
 export type NetworkPassphrase = string;
@@ -22,21 +23,21 @@ export type NetworkPassphrase = string;
 export type ChallengeResponse = {
   transaction: XdrEncodedTransaction;
   network_passphrase: NetworkPassphrase;
-}
+};
 
 export type SignParams = {
-  accountKp: Keypair;
+  accountKp: AccountKeypair;
   challengeResponse: ChallengeResponse;
   walletSigner: WalletSigner;
-}
+};
 
 export type SignWithClientAccountParams = {
   transaction: Transaction;
-  accountKp: Keypair;
-}
+  accountKp: AccountKeypair;
+};
 
 export type SignWithDomainAccountParams = {
   transactionXDR: XdrEncodedTransaction;
   networkPassphrase: NetworkPassphrase;
-  accountKp: Keypair;
-}
+  accountKp: AccountKeypair;
+};

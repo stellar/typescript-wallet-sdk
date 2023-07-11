@@ -48,18 +48,14 @@ export class Wallet {
     this.language = language;
   }
 
-  anchor({
-    homeDomain,
-    httpClientConfig = {},
-    language = this.language
-  }: WalletAnchor): Anchor {
+  anchor({ homeDomain, language = this.language }: WalletAnchor): Anchor {
     const url =
       homeDomain.indexOf("://") !== -1 ? homeDomain : `https://${homeDomain}`;
 
     return new Anchor({
       cfg: this.cfg,
       homeDomain: getUrlDomain(url),
-      httpClient: this.getClient(httpClientConfig),
+      httpClient: this.cfg.app.defaultClient,
       language,
     });
   }
@@ -68,25 +64,12 @@ export class Wallet {
     return new Stellar(this.cfg);
   }
 
-  recovery({ 
-    servers, 
-    httpClientConfig = {} 
-  }: WalletRecovery): Recovery {
+  recovery({ servers }: WalletRecovery): Recovery {
     return new Recovery({
       cfg: this.cfg,
       stellar: this.stellar(),
-      httpClient: this.getClient(httpClientConfig),
+      httpClient: this.cfg.app.defaultClient,
       servers
-    });
-  }
-
-  getClient(httpClientConfig: AxiosRequestConfig = {}): AxiosInstance {
-    return axios.create({
-      headers: {
-        ...walletHeaders,
-        ...httpClientConfig.headers,
-      },
-      ...httpClientConfig,
     });
   }
 }
@@ -138,17 +121,18 @@ export class StellarConfiguration {
   }
 }
 
+export const DefaultClient = axios.create({
+  headers: {
+    ...walletHeaders,
+  },
+});
 
 export class ApplicationConfiguration {
   defaultSigner: WalletSigner;
   defaultClient: AxiosInstance;
 
-  constructor(defaultSigner: WalletSigner = DefaultSigner) {
-    this.defaultSigner = defaultSigner;
-    this.defaultClient = axios.create({
-      headers: {
-        ...walletHeaders,
-      },
-    });
+  constructor(defaultSigner?: WalletSigner, defaultClient?: AxiosInstance) {
+    this.defaultSigner = defaultSigner || DefaultSigner;
+    this.defaultClient = defaultClient || DefaultClient;
   }
 }
