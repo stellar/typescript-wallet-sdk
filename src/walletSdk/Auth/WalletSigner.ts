@@ -1,20 +1,20 @@
 import { Transaction } from "stellar-sdk";
-import { 
-  SignWithClientAccountParams, 
-  SignWithDomainAccountParams 
+import {
+  SignWithClientAccountParams,
+  SignWithDomainAccountParams,
 } from "../Types";
 
 export interface WalletSigner {
-  signWithClientAccount({ 
-    transaction, 
-    accountKp 
+  signWithClientAccount({
+    transaction,
+    accountKp,
   }: SignWithClientAccountParams): Transaction;
 
   signWithDomainAccount({
     transactionXDR,
     networkPassphrase,
-    accountKp
-  }: SignWithDomainAccountParams): Transaction;
+    accountKp,
+  }: SignWithDomainAccountParams): Promise<Transaction>;
 }
 
 export const DefaultSigner: WalletSigner = {
@@ -22,7 +22,9 @@ export const DefaultSigner: WalletSigner = {
     transaction.sign(accountKp.keypair);
     return transaction;
   },
-  signWithDomainAccount: () => {
-    throw new Error("The DefaultSigner can't sign transactions with domain account");
+  signWithDomainAccount: async () => {
+    throw new Error(
+      "The DefaultSigner can't sign transactions with domain account"
+    );
   },
 };

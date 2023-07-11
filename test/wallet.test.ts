@@ -83,7 +83,7 @@ describe("Anchor", () => {
         signedByClient = true;
         return transaction;
       },
-      signWithDomainAccount: ({ transactionXDR, networkPassphrase, accountKp }) => {
+      signWithDomainAccount: async ({ transactionXDR, networkPassphrase, accountKp }) => {
         // dummy secret key for signing
         const clientDomainKp = Keypair.fromSecret(
           "SC7PKBRGRI5X4XP4QICBZ2NL67VUJJVKFKXDTGSPI3SQYZGC4NZWONIH"
@@ -103,7 +103,7 @@ describe("Anchor", () => {
       accountKp,
       clientDomain: "demo-wallet-server.stellar.org"
     });
-    const txn = auth.sign({ accountKp, challengeResponse, walletSigner });
+    const txn = await auth.sign({ accountKp, challengeResponse, walletSigner });
     expect(txn).toBeTruthy();
     expect(signedByClient).toBe(true);
     expect(signedByDomain).toBe(true);
