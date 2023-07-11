@@ -1,3 +1,16 @@
+<!--- TOC -->
+
+* [Getting started](#getting-started)
+* [Anchor](#anchor)
+  * [Add client domain signing](#add-client-domain-signing)
+    * [Example](#example)
+* [Build on Stellar](#build-on-stellar)
+  * [Account service](#account-service)
+  * [Transaction builder](#transaction-builder)
+* [Recovery](#recovery)
+
+<!--- END -->
+
 ## Getting Started
 
 First, a root Wallet object should be created. This is a core class, that provides all functionality available in the current SDK. Later, it will be shown, how to use the wallet object to access methods.
@@ -103,6 +116,65 @@ let { stop } = watcher.watchOneTransaction({
 stop();
 ```
 
+### Add client domain signing
+
+One of the features being supported
+by [SEP-10 Authentication](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0010.md)
+is verifying client domain. This enables anchor to recognize that user request was made using a specific client.
+
+Functionality of signing with client domain is enabled by the [WalletSigner](../wallet-sdk/src/walletsdk/Auth/WalletSigner.ts). You can use the `DefaultSigner` class as a baseline for your implementation. The main method that needs to be implemented is `signWithDomainAccount`.
+
+Implementation should make a request to a backend server containing the client domain private key. Server returns signed transaction, finishing the flow.
+
+For your wallet signer to be used, it's required to set it in this SDK. It's recommended to set it globally via `ApplicationConfiguration` `defaultSigner` [option](../wallet-sdk/src/walletsdk/index.ts).
+Alternatively, it can be passed to the `authenticate` call of the `Auth` class.
+
+#### Example
+
+In the example below, [Stellar demo wallet](https://demo-wallet.stellar.org) will be used as a client domain. Server-side implementation, responsible for signing transaction can be found [here](https://github.com/stellar/stellar-demo-wallet/tree/master/packages/demo-wallet-server).  
+
+First, create an object using the `WalletSigner` interface, and define both the signWithClientAccount and a signWithDomainAccount method.
+
+```typescript
+const demoWalletSigner: WalletSigner = {
+      signWithClientAccount: ({ transaction, accountKp }) => {
+        transaction.sign(accountKp);
+        return transaction;
+      },
+      signWithDomainAccount: async ({
+        transactionXDR,
+        networkPassphrase,
+        accountKp,
+      }) => {
+        return await axios.post("https://demo-wallet-server.stellar.org/sign", {
+          transactionXDR,
+          networkPassphrase,
+        });
+      },
+    };
+```
+
+Wallet can now use this class:
+```typescript
+const wallet = new walletSdk.Wallet({
+  stellarConfiguration: walletSdk.StellarConfiguration.TestNet(),
+  applicationConfiguration: new walletSdk.ApplicationConfiguration(
+    demoWalletSigner
+  ),
+});
+```
+
+And it can now be used for authentication with client domain:
+```typescript
+const authToken = await auth.authenticate({
+      accountKp,
+      walletSigner: demoWalletSigner,
+      memoId: "",
+      clientDomain: "demo-wallet-server.stellar.org",
+    });
+```
+
+
 ## Build on Stellar
 
 Once the Wallet is configured, you can use the following:
@@ -202,3 +274,5 @@ coming soon:
 ### Fee bump transaction
 
 ### Using XDR to exchange transaction data between server and client
+
+## Recovery
