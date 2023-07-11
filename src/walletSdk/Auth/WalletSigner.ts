@@ -19,7 +19,7 @@ export interface WalletSigner {
 
 export const DefaultSigner: WalletSigner = {
   signWithClientAccount: ({ transaction, accountKp }) => {
-    transaction.sign(accountKp);
+    transaction.sign(accountKp.keypair);
     return transaction;
   },
   signWithDomainAccount: () => {

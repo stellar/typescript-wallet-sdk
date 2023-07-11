@@ -77,7 +77,9 @@ export class Auth {
     if (clientDomain && memoId) {
       throw new ClientDomainWithMemoError();
     }
-    const url = `${this.webAuthEndpoint}?account=${accountKp.publicKey()}${
+    const url = `${
+      this.webAuthEndpoint
+    }?account=${accountKp.keypair.publicKey()}${
       memoId ? `&memo=${memoId}` : ""
     }${clientDomain ? `&client_domain=${clientDomain}` : ""}${
       this.homeDomain ? `&home_domain=${this.homeDomain}` : ""

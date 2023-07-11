@@ -9,6 +9,7 @@ import { TransactionStatus } from "../src/walletSdk/Types";
 
 import { TransactionsResponse } from "../test/fixtures/TransactionsResponse";
 import { WalletSigner } from "../src/walletSdk/Auth/WalletSigner";
+import { SigningKeypair } from "../src/walletSdk/Horizon/Account";
 
 const originalSetTimeout = global.setTimeout;
 function sleep(time: number) {
@@ -53,7 +54,7 @@ describe("Anchor", () => {
   beforeEach(() => {
     const Wal = walletSdk.Wallet.TestNet();
     anchor = Wal.anchor({ homeDomain: "testanchor.stellar.org" });
-    accountKp = Keypair.fromSecret(
+    accountKp = SigningKeypair.fromSecret(
       "SDXC3OHSJZEQIXKEWFDNEZEQ7SW5DWBPW7RKUWI36ILY3QZZ6VER7TXV"
     );
   });
@@ -78,7 +79,7 @@ describe("Anchor", () => {
 
     const walletSigner: WalletSigner = {
       signWithClientAccount: ({ transaction, accountKp }) => {
-        transaction.sign(accountKp);
+        transaction.sign(accountKp.keypair);
         signedByClient = true;
         return transaction;
       },
@@ -117,7 +118,7 @@ describe("Anchor", () => {
   it("should give interactive deposit url", async () => {
     const assetCode = "SRT";
     const resp = await anchor.interactive().deposit({
-      accountAddress: accountKp.publicKey(),
+      accountAddress: accountKp.publicKey,
       assetCode,
       authToken,
       lang: "en-US",
@@ -134,7 +135,7 @@ describe("Anchor", () => {
   it("should give interactive withdraw url", async () => {
     const assetCode = "SRT";
     const resp = await anchor.interactive().withdraw({
-      accountAddress: accountKp.publicKey(),
+      accountAddress: accountKp.publicKey,
       assetCode,
       authToken,
       lang: "en-US",
@@ -153,7 +154,7 @@ describe("Anchor", () => {
 
     // creates new 'incomplete' deposit transaction
     const { id: transactionId } = await anchor.interactive().deposit({
-      accountAddress: accountKp.publicKey(),
+      accountAddress: accountKp.publicKey,
       assetCode,
       authToken,
     });

@@ -1,6 +1,6 @@
 import { Keypair, Transaction, FeeBumpTransaction } from "stellar-sdk";
 
-class AccountKeypair {
+export class AccountKeypair {
   keypair: Keypair;
   constructor(keypair: Keypair) {
     this.keypair = keypair;
