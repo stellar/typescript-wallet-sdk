@@ -13,16 +13,18 @@ export interface WalletSigner {
   signWithDomainAccount({
     transactionXDR,
     networkPassphrase,
-    accountKp
-  }: SignWithDomainAccountParams): Transaction;
+    accountKp,
+  }: SignWithDomainAccountParams): Promise<Transaction>;
 }
 
 export const DefaultSigner: WalletSigner = {
   signWithClientAccount: ({ transaction, accountKp }) => {
-    transaction.sign(accountKp);
+    transaction.sign(accountKp.keypair);
     return transaction;
   },
-  signWithDomainAccount: () => {
-    throw new Error("The DefaultSigner can't sign transactions with domain account");
+  signWithDomainAccount: async () => {
+    throw new Error(
+      "The DefaultSigner can't sign transactions with domain account"
+    );
   },
 };
