@@ -55,6 +55,7 @@ describe("Stellar", () => {
       let failed;
       try {
         await stellar.submitTransaction(tx);
+        await stellar.server.loadAccount(param.sourceAddress.publicKey);
       } catch (e) {
         failed = true;
       }
