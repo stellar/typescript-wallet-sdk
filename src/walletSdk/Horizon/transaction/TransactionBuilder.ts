@@ -56,8 +56,6 @@ export class TransactionBuilder {
     return this;
   }
 
-  sponsoring(sponsorAccount, sponsoredAccount) {}
-
   build(): Transaction {
     this.operations.forEach((op) => {
       this.builder.addOperation(op);
