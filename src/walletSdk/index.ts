@@ -5,13 +5,13 @@ import { Anchor } from "./Anchor";
 import { DefaultSigner, WalletSigner } from "./Auth";
 import { Stellar } from "./Horizon";
 import { Recovery } from "./Recovery";
-import { 
-  ConfigParams, 
-  StellarConfigurationParams, 
-  WalletAnchor, 
-  WalletParams, 
+import {
+  ConfigParams,
+  StellarConfigurationParams,
+  WalletAnchor,
+  WalletParams,
   WalletRecovery,
-  NETWORK_URLS
+  NETWORK_URLS,
 } from "./Types";
 import { getUrlDomain } from "./Utils";
 
@@ -27,14 +27,14 @@ export class Wallet {
   private language: string;
 
   static TestNet = (): Wallet => {
-    return new Wallet({ 
-      stellarConfiguration: StellarConfiguration.TestNet() 
+    return new Wallet({
+      stellarConfiguration: StellarConfiguration.TestNet(),
     });
   };
 
   static MainNet = (): Wallet => {
-    return new Wallet({ 
-      stellarConfiguration: StellarConfiguration.MainNet() 
+    return new Wallet({
+      stellarConfiguration: StellarConfiguration.MainNet(),
     });
   };
 
@@ -42,7 +42,7 @@ export class Wallet {
     stellarConfiguration,
     applicationConfiguration = new ApplicationConfiguration(),
     // Defaults wallet language to "en", this will reflect in all Anchor API calls
-    language = "en"
+    language = "en",
   }: WalletParams) {
     this.cfg = new Config({ stellarConfiguration, applicationConfiguration });
     this.language = language;
@@ -69,54 +69,55 @@ export class Wallet {
       cfg: this.cfg,
       stellar: this.stellar(),
       httpClient: this.cfg.app.defaultClient,
-      servers
+      servers,
     });
   }
 }
-
 
 export class Config {
   stellar: StellarConfiguration;
   app: ApplicationConfiguration;
 
-  constructor({ 
-    stellarConfiguration, 
-    applicationConfiguration 
+  constructor({
+    stellarConfiguration,
+    applicationConfiguration,
   }: ConfigParams) {
     this.stellar = stellarConfiguration;
     this.app = applicationConfiguration;
   }
 }
 
-
 export class StellarConfiguration {
   server: Server;
   network: Networks;
   horizonUrl: string;
   baseFee: number;
+  defaultTimeout: number;
 
   static TestNet = (): StellarConfiguration => {
-    return new StellarConfiguration({ 
-      network: Networks.TESTNET, 
-      horizonUrl: NETWORK_URLS.TESTNET 
+    return new StellarConfiguration({
+      network: Networks.TESTNET,
+      horizonUrl: NETWORK_URLS.TESTNET,
     });
   };
 
   static MainNet = (): StellarConfiguration => {
-    return new StellarConfiguration({ 
-      network: Networks.PUBLIC, 
-      horizonUrl: NETWORK_URLS.PUBLIC 
+    return new StellarConfiguration({
+      network: Networks.PUBLIC,
+      horizonUrl: NETWORK_URLS.PUBLIC,
     });
   };
 
-  constructor({ 
-    network, 
-    horizonUrl, 
-    baseFee = 100 
+  constructor({
+    network,
+    horizonUrl,
+    baseFee = 100,
+    defaultTimeout = 180,
   }: StellarConfigurationParams) {
     this.network = network;
     this.horizonUrl = horizonUrl;
     this.baseFee = baseFee;
+    this.defaultTimeout = defaultTimeout;
     this.server = new Server(horizonUrl);
   }
 }

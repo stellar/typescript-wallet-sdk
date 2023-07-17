@@ -1,89 +1,12 @@
-import StellarSdk, {
-  TransactionBuilder as StellarTransactionBuilder,
-  Account as StellarAccount,
-  Transaction,
-  Server,
-} from "stellar-sdk";
+import { Account as StellarAccount, Server, Transaction } from "stellar-sdk";
 import { Config } from "walletSdk";
 import { AccountService } from "./AccountService";
-import { AccountKeypair } from "./Account";
-
-// ALEC TODO - move all this stuff
-// ALEC TODO - need this base class?
-// ALEC TODO - abstract class?
-abstract class CommonTransactionBuilder {
-  // ALEC TODO - need?
-  // ALEC TODO - any
-  // private abstract operations: Array<any>;
-}
-
-class SponsoringBuilder extends CommonTransactionBuilder {
-
-}
-
-class TransactionBuilder extends CommonTransactionBuilder {
-  // ALEC TODO - types
-  private network;
-  private maxBaseFeeInStroops;
-  // ALEC TODO - any
-  private operations: Array<any>;
-  private builder: StellarTransactionBuilder;
-
-  // ALEC TODO - move to Common?
-  sourceAccount: any;
-
-  // ALEC TODO - any
-  constructor(
-    cfg: Config,
-    sourceAccount: any,
-    baseFee: any,
-    memo: any,
-    timebounds: any
-  ) {
-    // ALEC TODO - parent constructor
-    super();
-    this.network = cfg.stellar.network;
-    // // ALEC TODO - make sure right type
-    this.maxBaseFeeInStroops = cfg.stellar.baseFee;
-    this.operations = [];
-    this.builder = new StellarTransactionBuilder(sourceAccount, {
-      fee: baseFee,
-      timebounds,
-      networkPassphrase: cfg.stellar.network,
-    });
-
-    this.sourceAccount = sourceAccount;
-  }
-
-  createAccount(newAccount: AccountKeypair, startingBalance: number = 1) {
-    if (startingBalance < 1) {
-      // ALEC TODO - error
-      throw new Error("insufficient starting balance");
-    }
-
-    this.operations.push(
-      StellarSdk.Operation.createAccount({
-        destination: newAccount.publicKey,
-        startingBalance: startingBalance.toString(),
-        // ALEC TODO - how to make sure works if not given, need a default
-        source: this.sourceAccount.publicKey,
-      })
-    );
-    return this;
-  }
-
-  sponsoring(sponsorAccount, sponsoredAccount){
-
-  }
-
-  build(): Transaction {
-    console.log("calling build"); // ALEC TODO - remove
-    this.operations.forEach((op) => {
-      this.builder.addOperation(op);
-    });
-    return this.builder.build();
-  }
-}
+import { TransactionBuilder } from "./transaction/TransactionBuilder";
+import { TransactionParams } from "../Types";
+import {
+  AccountDoesNotExistError,
+  TransactionSubmitFailedError,
+} from "../Exceptions";
 
 // Do not create this object directly, use the Wallet class.
 export class Stellar {
@@ -99,24 +22,29 @@ export class Stellar {
     return new AccountService(this.cfg);
   }
 
-  // ALEC TODO - make params optional
-  // ALEC TODO - any
-  async transaction(
-    sourceAddress: AccountKeypair,
-    baseFee: number,
-    memo: any,
-    timebounds: Server.Timebounds
-  ): Promise<TransactionBuilder> {
+  async transaction({
+    sourceAddress,
+    baseFee,
+    memo,
+    timebounds,
+  }: TransactionParams): Promise<TransactionBuilder> {
     let sourceAccount: StellarAccount;
     try {
       sourceAccount = await this.cfg.stellar.server.loadAccount(
         sourceAddress.publicKey
       );
     } catch (e) {
-      // ALEC TODO - check error is not found error
-      throw new Error(
-        `source account does not exist on network ${this.cfg.stellar.network}`
-      );
+      throw new AccountDoesNotExistError(this.cfg.stellar.network);
+    }
+
+    let formattedTimebounds: Server.Timebounds | undefined;
+    if (typeof timebounds === "number") {
+      formattedTimebounds = {
+        minTime: 0,
+        maxTime: Math.floor(Date.now() / 1000) + timebounds,
+      };
+    } else {
+      formattedTimebounds = timebounds;
     }
 
     return new TransactionBuilder(
@@ -124,18 +52,25 @@ export class Stellar {
       sourceAccount,
       baseFee,
       memo,
-      timebounds
+      formattedTimebounds
     );
   }
 
-  // ALEC TODO
-  // // ALEC TODO - make basFee optional
-  // // ALEC TODO - types
-  // transaction(
-  //   sourceAddress: any,
-  //   timeout: any,
-  //   baseFee: any
-  // ): TransactionBuilder {
-  //   return transaction(sourceAddress, baseFee, memo, timeout.toTimeBounds());
-  // }
+  async submitTransaction(signedTransaction: Transaction): Promise<boolean> {
+    try {
+      const response = await this.server.submitTransaction(signedTransaction);
+      if (!response.successful) {
+        throw new TransactionSubmitFailedError(response);
+      }
+      return true;
+    } catch (e) {
+      if (e.response.status === 504) {
+        // in case of 504, keep retrying this tx until submission succeeds or we get a different error
+        // https://developers.stellar.org/api/errors/http-status-codes/horizon-specific/timeout
+        // https://developers.stellar.org/docs/encyclopedia/error-handling#timeouts
+        return await this.submitTransaction(signedTransaction);
+      }
+      throw e;
+    }
+  }
 }
