@@ -94,6 +94,7 @@ export class StellarConfiguration {
   network: Networks;
   horizonUrl: string;
   baseFee: number;
+  defaultTimeout: number;
 
   static TestNet = (): StellarConfiguration => {
     return new StellarConfiguration({ 
@@ -109,14 +110,16 @@ export class StellarConfiguration {
     });
   };
 
-  constructor({ 
-    network, 
-    horizonUrl, 
-    baseFee = 100 
+  constructor({
+    network,
+    horizonUrl,
+    baseFee = 100,
+    defaultTimeout = 180
   }: StellarConfigurationParams) {
     this.network = network;
     this.horizonUrl = horizonUrl;
     this.baseFee = baseFee;
+    this.defaultTimeout = defaultTimeout;
     this.server = new Server(horizonUrl);
   }
 }

@@ -27,6 +27,7 @@ export type StellarConfigurationParams = {
   network: Networks;
   horizonUrl: string;
   baseFee?: number;
+  defaultTimeout?: number;
 }
 
 // Export all other types from walletSdk/Types.ts

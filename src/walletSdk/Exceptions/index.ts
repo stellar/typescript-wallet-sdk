@@ -1,3 +1,4 @@
+import { Networks, Horizon } from "stellar-sdk";
 import { AnchorTransaction, FLOW_TYPE } from "../Types";
 
 
@@ -47,5 +48,26 @@ export class InvalidTransactionsResponseError extends Error {
     constructor(transactionsResponse: AnchorTransaction[]) {
         super(`Invalid transactions in response data: ${JSON.stringify(transactionsResponse)}`);
         Object.setPrototypeOf(this, InvalidTransactionsResponseError.prototype);
+    }
+}
+
+export class AccountDoesNotExistError extends Error {
+    constructor(network: Networks) {
+        super(`source account does not exist on network ${network}`);
+        Object.setPrototypeOf(this, AccountDoesNotExistError.prototype);
+    }
+}
+
+export class TransactionSubmitFailedError extends Error {
+    constructor(response: Horizon.SubmitTransactionResponse) {
+        super(`Submit transaction failed ${response}`);
+        Object.setPrototypeOf(this, TransactionSubmitFailedError.prototype);
+    }
+}
+
+export class InsufficientStartingBalanceError extends Error {
+    constructor() {
+        super(`Insufficient starting balance`);
+        Object.setPrototypeOf(this, InsufficientStartingBalanceError.prototype);
     }
 }
