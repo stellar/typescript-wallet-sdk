@@ -4,16 +4,20 @@ import sinon from "sinon";
 import axios, { AxiosInstance } from "axios";
 
 import sdk from "../src";
-import { AssetNotSupportedError, ServerRequestFailedError } from "../src/walletSdk/Exceptions";
+import {
+  AssetNotSupportedError,
+  ServerRequestFailedError,
+} from "../src/walletSdk/Exceptions";
 import { Watcher } from "../src/walletSdk/Watcher";
-import { TransactionStatus } from "../src/walletSdk/Types";
+import { TransactionStatus, AnchorTransaction } from "../src/walletSdk/Types";
 
 import { TransactionsResponse } from "../test/fixtures/TransactionsResponse";
 import {
   WalletSigner,
-  DefaultSigner
+  DefaultSigner,
 } from "../src/walletSdk/Auth/WalletSigner";
 import { SigningKeypair } from "../src/walletSdk/Horizon/Account";
+import { Sep24 } from "../src/walletSdk/Anchor/Sep24";
 
 const originalSetTimeout = global.setTimeout;
 function sleep(time: number) {
@@ -32,7 +36,7 @@ describe("Wallet", () => {
     let appConfig = new walletSdk.ApplicationConfiguration();
     let wal = new walletSdk.Wallet({
       stellarConfiguration: walletSdk.StellarConfiguration.TestNet(),
-      applicationConfiguration: appConfig
+      applicationConfiguration: appConfig,
     });
   });
   it("should be able to customize a client", async () => {
@@ -71,13 +75,13 @@ describe("Anchor", () => {
     );
   });
   it("should give TOML info", async () => {
-    const resp = await anchor.getInfo();
+    const resp = await anchor.sep1();
 
     expect(resp.webAuthEndpoint).toBe("https://testanchor.stellar.org/auth");
     expect(resp.currencies.length).toBe(2);
   });
   it("should be able to authenticate", async () => {
-    const auth = await anchor.auth();
+    const auth = await anchor.sep10();
 
     authToken = await auth.authenticate({ accountKp });
     expect(authToken).toBeTruthy();
@@ -85,7 +89,7 @@ describe("Anchor", () => {
   });
 
   it("should be able to authenticate with client domain", async () => {
-    const auth = await anchor.auth();
+    const auth = await anchor.sep10();
     let signedByClient = false;
     let signedByDomain = false;
 
@@ -95,7 +99,11 @@ describe("Anchor", () => {
         signedByClient = true;
         return transaction;
       },
-      signWithDomainAccount: async ({ transactionXDR, networkPassphrase, accountKp }) => {
+      signWithDomainAccount: async ({
+        transactionXDR,
+        networkPassphrase,
+        accountKp,
+      }) => {
         // dummy secret key for signing
         const clientDomainKp = Keypair.fromSecret(
           "SC7PKBRGRI5X4XP4QICBZ2NL67VUJJVKFKXDTGSPI3SQYZGC4NZWONIH"
@@ -113,7 +121,7 @@ describe("Anchor", () => {
     // because using dummy sk and not real demo wallet sk, lets just check that signing is called
     const challengeResponse = await auth.challenge({
       accountKp,
-      clientDomain: "demo-wallet-server.stellar.org"
+      clientDomain: "demo-wallet-server.stellar.org",
     });
     const txn = await auth.sign({ accountKp, challengeResponse, walletSigner });
     expect(txn).toBeTruthy();
@@ -121,7 +129,7 @@ describe("Anchor", () => {
     expect(signedByDomain).toBe(true);
   });
   it("should get anchor services info", async () => {
-    const serviceInfo = await anchor.getServicesInfo();
+    const serviceInfo = await anchor.sep24().getServicesInfo();
 
     expect(serviceInfo.deposit).toBeTruthy();
     expect(serviceInfo.withdraw).toBeTruthy();
@@ -129,7 +137,7 @@ describe("Anchor", () => {
 
   it("should give interactive deposit url", async () => {
     const assetCode = "SRT";
-    const resp = await anchor.interactive().deposit({
+    const resp = await anchor.sep24().deposit({
       accountAddress: accountKp.publicKey,
       assetCode,
       authToken,
@@ -146,7 +154,7 @@ describe("Anchor", () => {
 
   it("should give interactive withdraw url", async () => {
     const assetCode = "SRT";
-    const resp = await anchor.interactive().withdraw({
+    const resp = await anchor.sep24().withdraw({
       accountAddress: accountKp.publicKey,
       assetCode,
       authToken,
@@ -165,14 +173,14 @@ describe("Anchor", () => {
     const assetCode = "SRT";
 
     // creates new 'incomplete' deposit transaction
-    const { id: transactionId } = await anchor.interactive().deposit({
+    const { id: transactionId } = await anchor.sep24().deposit({
       accountAddress: accountKp.publicKey,
       assetCode,
       authToken,
     });
 
     // fetches transaction that has just been created
-    const transaction = await anchor.getTransactionBy({
+    const transaction = await anchor.sep24().getTransactionBy({
       authToken,
       id: transactionId,
     });
@@ -191,7 +199,7 @@ describe("Anchor", () => {
   it("should error fetching non-existing transaction by id", async () => {
     await expect(async () => {
       const nonExistingTransactionId = "da8575e9-edc6-4f99-98cf-2b302f203cc7";
-      await anchor.getTransactionBy({
+      await anchor.sep24().getTransactionBy({
         authToken,
         id: nonExistingTransactionId,
       });
@@ -199,7 +207,7 @@ describe("Anchor", () => {
   });
 
   it("should fetch 5 existing transactions by token code", async () => {
-    const transactions = await anchor.getTransactionsForAsset({
+    const transactions = await anchor.sep24().getTransactionsForAsset({
       authToken,
       assetCode: "SRT",
       limit: 5,
@@ -215,7 +223,7 @@ describe("Anchor", () => {
   });
 
   it("should fetch 3 existing deposit transactions by token code", async () => {
-    const transactions = await anchor.getTransactionsForAsset({
+    const transactions = await anchor.sep24().getTransactionsForAsset({
       authToken,
       assetCode: "SRT",
       limit: 3,
@@ -231,7 +239,7 @@ describe("Anchor", () => {
   });
 
   it("should fetch 2 existing withdrawal transactions by token code", async () => {
-    const transactions = await anchor.getTransactionsForAsset({
+    const transactions = await anchor.sep24().getTransactionsForAsset({
       authToken,
       assetCode: "SRT",
       limit: 2,
@@ -248,7 +256,7 @@ describe("Anchor", () => {
 
   it("should error fetching transactions with invalid pading id", async () => {
     await expect(async () => {
-      await anchor.getTransactionsForAsset({
+      await anchor.sep24().getTransactionsForAsset({
         authToken,
         assetCode: "SRT",
         lang: "en-US",
@@ -259,32 +267,30 @@ describe("Anchor", () => {
 
   it("should fetch only finished transactions", async () => {
     // mock TOML response to include the "SRT" currency
-    jest
-      .spyOn(anchor, "getInfo")
-      .mockResolvedValue({
-        networkPassphrase: 'Test SDF Network ; September 2015',
-        transferServerSep24: 'https://testanchor.stellar.org/sep24',
-        webAuthEndpoint: 'https://testanchor.stellar.org/auth',
-        accounts: [
-          'GCSGSR6KQQ5BP2FXVPWRL6SWPUSFWLVONLIBJZUKTVQB5FYJFVL6XOXE',
-          'GDRND2IUXVMHZ4XTB2RZ4AJ3AOLON3WTAOC23XEASB56NHDFW3ED57TW'
-        ],
-        documentation: {
-          orgName: 'Stellar Development Foundation',
-          orgUrl: 'https://stellar.org',
-          orgGithub: 'stellar',
-        },
-        principals: [],
-        currencies: [{ code: "SRT" }, { code: "USDC" }],
-        validators: []
-      });
+    jest.spyOn(anchor, "sep1").mockResolvedValue({
+      networkPassphrase: "Test SDF Network ; September 2015",
+      transferServerSep24: "https://testanchor.stellar.org/sep24",
+      webAuthEndpoint: "https://testanchor.stellar.org/auth",
+      accounts: [
+        "GCSGSR6KQQ5BP2FXVPWRL6SWPUSFWLVONLIBJZUKTVQB5FYJFVL6XOXE",
+        "GDRND2IUXVMHZ4XTB2RZ4AJ3AOLON3WTAOC23XEASB56NHDFW3ED57TW",
+      ],
+      documentation: {
+        orgName: "Stellar Development Foundation",
+        orgUrl: "https://stellar.org",
+        orgGithub: "stellar",
+      },
+      principals: [],
+      currencies: [{ code: "SRT" }, { code: "USDC" }],
+      validators: [],
+    });
 
     // mock transactions response so we have a few completed/refunded
     jest
-      .spyOn(anchor, "getTransactionsForAsset")
+      .spyOn(Sep24.prototype, "getTransactionsForAsset")
       .mockResolvedValue(TransactionsResponse);
 
-    const transactions = await anchor.getHistory({
+    const transactions = await anchor.sep24().getHistory({
       authToken,
       assetCode: "SRT",
     });
@@ -292,16 +298,17 @@ describe("Anchor", () => {
     expect(transactions.length).toBeGreaterThan(0);
 
     transactions.forEach(({ status }) => {
-      expect([
-        TransactionStatus.completed, 
-        TransactionStatus.refunded
-      ].includes(status)).toBeTruthy();
+      expect(
+        [TransactionStatus.completed, TransactionStatus.refunded].includes(
+          status
+        )
+      ).toBeTruthy();
     });
   });
 
   it("should error fetching history for unsupported asset", async () => {
     await expect(async () => {
-      await anchor.getHistory({
+      await anchor.sep24().getHistory({
         authToken,
         assetCode: "ABC",
       });
@@ -314,7 +321,7 @@ describe("Anchor", () => {
 
     beforeEach(async () => {
       clock = sinon.useFakeTimers(0);
-      watcher = anchor.watcher();
+      watcher = anchor.sep24().watcher();
     });
 
     afterEach(() => {
@@ -332,7 +339,7 @@ describe("Anchor", () => {
 
       // mock default transactions response
       jest
-        .spyOn(anchor, "getTransactionsForAsset")
+        .spyOn(Sep24.prototype, "getTransactionsForAsset")
         .mockResolvedValue(TransactionsResponse);
 
       // start watching
@@ -370,7 +377,7 @@ describe("Anchor", () => {
 
       // mock default transactions response
       jest
-        .spyOn(anchor, "getTransactionsForAsset")
+        .spyOn(Sep24.prototype, "getTransactionsForAsset")
         .mockResolvedValue(TransactionsResponse);
 
       // start watching
@@ -414,7 +421,7 @@ describe("Anchor", () => {
 
       // mock default transactions response
       jest
-        .spyOn(anchor, "getTransactionsForAsset")
+        .spyOn(Sep24.prototype, "getTransactionsForAsset")
         .mockResolvedValue(TransactionsResponse);
 
       // start watching
@@ -449,7 +456,7 @@ describe("Anchor", () => {
 
       // update mock with new transaction status
       jest
-        .spyOn(anchor, "getTransactionsForAsset")
+        .spyOn(Sep24.prototype, "getTransactionsForAsset")
         .mockResolvedValue(updatedTransactions);
 
       clock.next();
@@ -478,7 +485,7 @@ describe("Anchor", () => {
 
       // update mock with new transaction status
       jest
-        .spyOn(anchor, "getTransactionsForAsset")
+        .spyOn(Sep24.prototype, "getTransactionsForAsset")
         .mockResolvedValue(updatedTransactions);
 
       clock.next();
@@ -502,7 +509,7 @@ describe("Anchor", () => {
 
       // update mock with new transaction status
       jest
-        .spyOn(anchor, "getTransactionsForAsset")
+        .spyOn(Sep24.prototype, "getTransactionsForAsset")
         .mockResolvedValue(updatedTransactions);
 
       clock.next();
@@ -527,7 +534,7 @@ describe("Anchor", () => {
 
       // mock default transactions response
       jest
-        .spyOn(anchor, "getTransactionsForAsset")
+        .spyOn(Sep24.prototype, "getTransactionsForAsset")
         .mockResolvedValue(TransactionsResponse);
 
       // start watching
@@ -562,7 +569,7 @@ describe("Anchor", () => {
 
       // update mock with new transaction status
       jest
-        .spyOn(anchor, "getTransactionsForAsset")
+        .spyOn(Sep24.prototype, "getTransactionsForAsset")
         .mockResolvedValue(updatedTransactions);
 
       clock.next();
@@ -591,7 +598,7 @@ describe("Anchor", () => {
 
       // update mock with new transaction status
       jest
-        .spyOn(anchor, "getTransactionsForAsset")
+        .spyOn(Sep24.prototype, "getTransactionsForAsset")
         .mockResolvedValue(updatedTransactions);
 
       clock.next();
@@ -618,7 +625,7 @@ describe("Anchor", () => {
 
       // update mock with new transaction status
       jest
-        .spyOn(anchor, "getTransactionsForAsset")
+        .spyOn(Sep24.prototype, "getTransactionsForAsset")
         .mockResolvedValue(updatedTransactions);
 
       clock.next();
@@ -639,7 +646,9 @@ describe("Anchor", () => {
       });
 
       // mock an empty transactions array
-      jest.spyOn(anchor, "getTransactionsForAsset").mockResolvedValue([]);
+      jest
+        .spyOn(Sep24.prototype, "getTransactionsForAsset")
+        .mockResolvedValue([]);
 
       // start watching
       const { stop } = watcher.watchAllTransactions({
@@ -661,10 +670,10 @@ describe("Anchor", () => {
       expect(onMessage.callCount).toBe(0);
       expect(onError.callCount).toBe(0);
 
-      const completedTransaction = {
+      const completedTransaction: AnchorTransaction = {
         id: "uyt1576b-ac28-4c02-a521-ddbfd9ae7oiu",
         kind: "deposit",
-        status: "completed",
+        status: TransactionStatus.completed,
         status_eta: null,
         amount_in: "150.45",
         amount_out: "149.45",
@@ -676,7 +685,6 @@ describe("Anchor", () => {
         external_transaction_id: null,
         more_info_url:
           "https://testanchor.stellar.org/sep24/transaction/more_info?id=uyt1576b-ac28-4c02-a521-ddbfd9ae7oiu",
-        refunded: false,
         message: "deposit completed!",
         claimable_balance_id: null,
         to: "GCZSYKPDWAKPGR7GYFBOIQB3TH352X7ELZL27WSJET5PDVFORDMGYTB5",
@@ -687,7 +695,7 @@ describe("Anchor", () => {
 
       // add a new success message
       jest
-        .spyOn(anchor, "getTransactionsForAsset")
+        .spyOn(Sep24.prototype, "getTransactionsForAsset")
         .mockResolvedValue([completedTransaction]);
 
       clock.next();
@@ -699,7 +707,7 @@ describe("Anchor", () => {
 
       // getting the same thing again should change nothing
       jest
-        .spyOn(anchor, "getTransactionsForAsset")
+        .spyOn(Sep24.prototype, "getTransactionsForAsset")
         .mockResolvedValue([completedTransaction]);
 
       clock.next();
@@ -709,10 +717,10 @@ describe("Anchor", () => {
       expect(onMessage.callCount).toBe(1);
       expect(onError.callCount).toBe(0);
 
-      const refundedTransaction = {
+      const refundedTransaction: AnchorTransaction = {
         id: "def5d166-5a5e-4d5c-ba5d-271c32cd8abc",
         kind: "withdrawal",
-        status: "refunded",
+        status: TransactionStatus.refunded,
         status_eta: null,
         amount_in: "95.35",
         amount_in_asset:
@@ -729,7 +737,6 @@ describe("Anchor", () => {
         external_transaction_id: null,
         more_info_url:
           "https://testanchor.stellar.org/sep24/transaction/more_info?id=def5d166-5a5e-4d5c-ba5d-271c32cd8abc",
-        refunded: true,
         refunds: {
           amount_refunded: "95.35",
           amount_fee: "5",
@@ -760,7 +767,7 @@ describe("Anchor", () => {
 
       // add a new success message
       jest
-        .spyOn(anchor, "getTransactionsForAsset")
+        .spyOn(Sep24.prototype, "getTransactionsForAsset")
         .mockResolvedValue([completedTransaction, refundedTransaction]);
 
       clock.next();
@@ -772,7 +779,7 @@ describe("Anchor", () => {
 
       // getting the same thing again should change nothing
       jest
-        .spyOn(anchor, "getTransactionsForAsset")
+        .spyOn(Sep24.prototype, "getTransactionsForAsset")
         .mockResolvedValue([completedTransaction, refundedTransaction]);
 
       clock.next();
@@ -782,10 +789,10 @@ describe("Anchor", () => {
       expect(onMessage.callCount).toBe(2);
       expect(onError.callCount).toBe(0);
 
-      const expiredTransaction = {
+      const expiredTransaction: AnchorTransaction = {
         id: "hytcf7c4-927d-4b7a-8a1f-d7188ebddu8i",
         kind: "withdrawal",
-        status: "expired",
+        status: TransactionStatus.expired,
         status_eta: null,
         amount_in: null,
         amount_out: null,
@@ -796,7 +803,6 @@ describe("Anchor", () => {
         external_transaction_id: null,
         more_info_url:
           "https://testanchor.stellar.org/sep24/transaction/more_info?id=hytcf7c4-927d-4b7a-8a1f-d7188ebddu8i",
-        refunded: false,
         message: "transaction has expired",
         to: null,
         from: "GCZSYKPDWAKPGR7GYFBOIQB3TH352X7ELZL27WSJET5PDVFORDMGYTB5",
@@ -807,7 +813,7 @@ describe("Anchor", () => {
 
       // add a new success message
       jest
-        .spyOn(anchor, "getTransactionsForAsset")
+        .spyOn(Sep24.prototype, "getTransactionsForAsset")
         .mockResolvedValue([
           completedTransaction,
           refundedTransaction,
@@ -823,7 +829,7 @@ describe("Anchor", () => {
 
       // getting the same thing again should change nothing
       jest
-        .spyOn(anchor, "getTransactionsForAsset")
+        .spyOn(Sep24.prototype, "getTransactionsForAsset")
         .mockResolvedValue([
           completedTransaction,
           refundedTransaction,
@@ -855,7 +861,8 @@ describe("Anchor", () => {
 
     beforeEach(async () => {
       clock = sinon.useFakeTimers(0);
-      watcher = anchor.watcher();
+      watcher = anchor.sep24().watcher();
+      jest.resetAllMocks();
     });
 
     afterEach(() => {
@@ -882,7 +889,7 @@ describe("Anchor", () => {
 
       // queue up a success
       jest
-        .spyOn(anchor, "getTransactionBy")
+        .spyOn(Sep24.prototype, "getTransactionBy")
         .mockResolvedValue(successfulTransaction);
 
       // start watching
@@ -919,7 +926,7 @@ describe("Anchor", () => {
 
       // queue up a success
       jest
-        .spyOn(anchor, "getTransactionBy")
+        .spyOn(Sep24.prototype, "getTransactionBy")
         .mockResolvedValue(refundedTransaction);
 
       // start watching
@@ -953,7 +960,7 @@ describe("Anchor", () => {
 
       // queue up a success
       jest
-        .spyOn(anchor, "getTransactionBy")
+        .spyOn(Sep24.prototype, "getTransactionBy")
         .mockResolvedValue(expiredTransaction);
 
       // start watching
@@ -1004,7 +1011,7 @@ describe("Anchor", () => {
 
       // queue up an incomplete transaction response
       jest
-        .spyOn(anchor, "getTransactionBy")
+        .spyOn(Sep24.prototype, "getTransactionBy")
         .mockResolvedValue(incompleteTransaction);
 
       // start watching
@@ -1038,7 +1045,7 @@ describe("Anchor", () => {
 
       // queue up a pending transaction response
       jest
-        .spyOn(anchor, "getTransactionBy")
+        .spyOn(Sep24.prototype, "getTransactionBy")
         .mockResolvedValue(pendingTransaction);
 
       // start watching
@@ -1084,7 +1091,7 @@ describe("Anchor", () => {
 
       // queue up an error transaction response
       jest
-        .spyOn(anchor, "getTransactionBy")
+        .spyOn(Sep24.prototype, "getTransactionBy")
         .mockResolvedValue(errorTransaction);
 
       // start watching
@@ -1118,7 +1125,7 @@ describe("Anchor", () => {
 
       // queue up a "no market" transaction response
       jest
-        .spyOn(anchor, "getTransactionBy")
+        .spyOn(Sep24.prototype, "getTransactionBy")
         .mockResolvedValue(noMarketTransaction);
 
       // start watching
@@ -1161,7 +1168,7 @@ describe("Anchor", () => {
 
       // queue up several pending status updates
       jest
-        .spyOn(anchor, "getTransactionBy")
+        .spyOn(Sep24.prototype, "getTransactionBy")
         .mockResolvedValueOnce(makeTransaction(0, TransactionStatus.incomplete))
         .mockResolvedValueOnce(
           makeTransaction(1, TransactionStatus.pending_user)
@@ -1273,7 +1280,7 @@ describe("Anchor", () => {
 
       // queue up several pending status updates
       jest
-        .spyOn(anchor, "getTransactionBy")
+        .spyOn(Sep24.prototype, "getTransactionBy")
         .mockResolvedValueOnce(makeTransaction(0, TransactionStatus.incomplete))
         .mockResolvedValueOnce(
           makeTransaction(1, TransactionStatus.pending_user)
@@ -1355,7 +1362,7 @@ describe("Anchor", () => {
 
       // queue up transactions
       jest
-        .spyOn(anchor, "getTransactionBy")
+        .spyOn(Sep24.prototype, "getTransactionBy")
         .mockResolvedValueOnce(
           makeTransaction(0, TransactionStatus.pending_user_transfer_complete)
         )
@@ -1413,7 +1420,7 @@ describe("Anchor", () => {
     });
 
     test("One pending, one refunded, no more after that", async () => {
-      const onMessage = sinon.spy(() => {
+      const onMessage = sinon.spy((e) => {
         expect(onMessage.callCount).toBeLessThanOrEqual(1);
       });
 
@@ -1427,7 +1434,7 @@ describe("Anchor", () => {
 
       // queue up transactions
       jest
-        .spyOn(anchor, "getTransactionBy")
+        .spyOn(Sep24.prototype, "getTransactionBy")
         .mockResolvedValueOnce(
           makeTransaction(0, TransactionStatus.pending_user_transfer_complete)
         )
@@ -1500,7 +1507,7 @@ describe("Anchor", () => {
 
       // queue up transactions
       jest
-        .spyOn(anchor, "getTransactionBy")
+        .spyOn(Sep24.prototype, "getTransactionBy")
         .mockResolvedValueOnce(
           makeTransaction(0, TransactionStatus.pending_user_transfer_start)
         )
@@ -1573,7 +1580,7 @@ describe("Anchor", () => {
 
       // queue up transactions
       jest
-        .spyOn(anchor, "getTransactionBy")
+        .spyOn(Sep24.prototype, "getTransactionBy")
         .mockResolvedValueOnce(
           makeTransaction(0, TransactionStatus.pending_user_transfer_start)
         )
@@ -1646,7 +1653,7 @@ describe("Anchor", () => {
 
       // queue up transactions
       jest
-        .spyOn(anchor, "getTransactionBy")
+        .spyOn(Sep24.prototype, "getTransactionBy")
         .mockResolvedValueOnce(
           makeTransaction(0, TransactionStatus.pending_user_transfer_start)
         )

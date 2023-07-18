@@ -11,7 +11,7 @@ export type ExtraFields = {
   [api_key: string]: string;
 };
 
-export type InteractivePostParams = {
+export type Sep24PostParams = {
   authToken: AuthToken;
   accountAddress: string;
   assetCode: string;
@@ -20,16 +20,16 @@ export type InteractivePostParams = {
   fundsAccountAddress?: string;
 };
 
-export enum InteractiveResponseType {
+export enum Sep24ResponseType {
   authentication_required = "authentication_required",
   interactive_customer_info_needed = "interactive_customer_info_needed",
   error = "error"
 }
 
-export interface InteractivePostResponse {
-  type: InteractiveResponseType.authentication_required 
-    | InteractiveResponseType.interactive_customer_info_needed 
-    | InteractiveResponseType.error;
+export interface Sep24PostResponse {
+  type: Sep24ResponseType.authentication_required 
+    | Sep24ResponseType.interactive_customer_info_needed 
+    | Sep24ResponseType.error;
   id?: string;
   url?: string;
   error?: string;

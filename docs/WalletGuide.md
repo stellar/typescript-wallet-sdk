@@ -64,7 +64,7 @@ let anchor = wallet.anchor({ homeDomain: "testanchor.stellar.org" });
 Get anchor information from a TOML file.
 
 ```typescript
-let resp = await anchor.getInfo();
+let resp = await anchor.sep1();
 ```
 
 Authenticate an account with the anchor using SEP-10.
@@ -75,28 +75,28 @@ let account = wal.stellar().account();
 let accountKp = account.createKeypair();
 
 // authenticate with Sep-10
-let auth = await anchor.auth();
+let auth = await anchor.sep10();
 let authToken = await auth.authenticate({ accountKp });
 ```
 
-Get available anchor services and information about them. For example, interactive deposit/withdrawal limits, currency, fees, payment methods.
+Get available anchor services and information about them. For example, sep24 deposit/withdrawal limits, currency, fees, payment methods.
 
 ```typescript
 let serviceInfo = await anchor.getServicesInfo();
 ```
 
-Interactive deposit and withdrawal.
+Sep24 deposit and withdrawal.
 
 ```typescript
 const assetCode = "XLM";
 
-let resp = await anchor.interactive().deposit({
+let resp = await anchor.sep24().deposit({
   accountAddress: accountKp.publicKey(),
   assetCode,
   authToken,
 });
 
-let resp = await anchor.interactive().withdraw({
+let resp = await anchor.sep24().withdraw({
   accountAddress: accountKp.publicKey(),
   assetCode,
   authToken,
@@ -106,7 +106,7 @@ let resp = await anchor.interactive().withdraw({
 Get a single transaction's current status and details.
 
 ```typescript
-const transaction = await anchor.getTransactionBy({
+const transaction = await anchor.sep24().getTransactionBy({
   authToken,
   id: transactionId,
 });
@@ -115,7 +115,7 @@ const transaction = await anchor.getTransactionBy({
 Get account transactions for a specified asset.
 
 ```typescript
-const transactions = await anchor.getHistory({
+const transactions = await anchor.sep24().getHistory({
   authToken,
   assetCode,
 });
@@ -150,7 +150,7 @@ Functionality of signing with client domain is enabled by the [WalletSigner](../
 Implementation should make a request to a backend server containing the client domain private key. Server returns signed transaction, finishing the flow.
 
 For your wallet signer to be used, it's required to set it in this SDK. It's recommended to set it globally via `ApplicationConfiguration` `defaultSigner` [option](../wallet-sdk/src/walletsdk/index.ts).
-Alternatively, it can be passed to the `authenticate` call of the `Auth` class.
+Alternatively, it can be passed to the `authenticate` call of the `Sep10` class.
 
 #### Example
 

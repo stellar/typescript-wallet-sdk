@@ -19,7 +19,7 @@ export { WalletSigner, DefaultSigner } from "./WalletSigner";
 
 // Let's prevent exporting this constructor type as
 // we should not create this Anchor class directly.
-type AuthParams = {
+type Sep10Params = {
   cfg: Config;
   webAuthEndpoint: string;
   homeDomain: string;
@@ -27,13 +27,13 @@ type AuthParams = {
 };
 
 // Do not create this object directly, use the Wallet class.
-export class Auth {
+export class Sep10 {
   private cfg: Config;
   private webAuthEndpoint: string;
   private homeDomain: string;
   private httpClient: AxiosInstance;
 
-  constructor(params: AuthParams) {
+  constructor(params: Sep10Params) {
     const {
       cfg,
       webAuthEndpoint,

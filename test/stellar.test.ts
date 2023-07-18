@@ -36,13 +36,13 @@ describe("Stellar", () => {
         baseFee: 100,
         timebounds: 180,
         memo: new Memo(MemoText, "test-memo"),
-        startingBalance: 2.5,
+        startingBalance: 2.1,
       },
       {
         sourceAddress: kp,
         baseFee: 100,
         timebounds: { minTime: now, maxTime: now + 180 },
-        startingBalance: 100,
+        startingBalance: 2,
       },
     ];
 

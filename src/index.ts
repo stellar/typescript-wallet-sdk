@@ -14,14 +14,14 @@ export {
   ApplicationConfiguration 
 } from "./walletSdk";
 export { Anchor } from "./walletSdk/Anchor";
-export { Auth, WalletSigner, DefaultSigner } from "./walletSdk/Auth";
+export { Sep10, WalletSigner, DefaultSigner } from "./walletSdk/Auth";
 export { 
   PublicKeypair, 
   SigningKeypair, 
   AccountService, 
   Stellar 
 } from "./walletSdk/Horizon";
-export { Interactive } from "./walletSdk/Interactive";
+export { Sep24 } from "./walletSdk/Anchor/Sep24";
 export { Recovery } from "./walletSdk/Recovery";
 export { Watcher } from "./walletSdk/Watcher";
 
