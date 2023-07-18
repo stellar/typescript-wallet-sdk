@@ -15,7 +15,7 @@ describe("Stellar", () => {
 
     // make sure signing key exists
     const kp = SigningKeypair.fromSecret(
-      "SAS372GXRG6U7FW6W2PRVELKPOJG2FZZUADCIELWU2U3A45TNWXEQUV5"
+      "SAS372GXRG6U7FW6W2PRVELKPOJG2FZZUADCIELWU2U3A45TNWXEQUV5",
     );
     try {
       await stellar.server.loadAccount(kp.publicKey);

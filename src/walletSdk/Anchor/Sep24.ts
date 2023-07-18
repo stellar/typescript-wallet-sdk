@@ -80,7 +80,7 @@ export class Sep24 {
   }
 
   private async flow(
-    params: Sep24PostParams & { type: FLOW_TYPE }
+    params: Sep24PostParams & { type: FLOW_TYPE },
   ): Promise<Sep24PostResponse> {
     const {
       accountAddress,
@@ -121,7 +121,7 @@ export class Sep24 {
             "Content-Type": "application/json",
             Authorization: `Bearer ${authToken}`,
           },
-        }
+        },
       );
 
       const interactiveResponse: Sep24PostResponse = resp.data;
@@ -186,7 +186,7 @@ export class Sep24 {
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
-        }
+        },
       );
 
       const transaction: AnchorTransaction = resp.data.transaction;
@@ -240,13 +240,13 @@ export class Sep24 {
     try {
       const resp = await this.httpClient.get(
         `${transferServerEndpoint}/transactions?${queryString.stringify(
-          apiParams
+          apiParams,
         )}`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
-        }
+        },
       );
 
       const transactions: AnchorTransaction[] = resp.data.transactions;
@@ -303,7 +303,9 @@ export class Sep24 {
     });
 
     const finishedTransactions = transactions.filter(({ status }) =>
-      [TransactionStatus.completed, TransactionStatus.refunded].includes(status)
+      [TransactionStatus.completed, TransactionStatus.refunded].includes(
+        status,
+      ),
     );
 
     return finishedTransactions;

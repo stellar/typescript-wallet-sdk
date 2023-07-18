@@ -15,20 +15,20 @@ export type WalletAnchor = {
 };
 
 export type WalletRecovery = {
-  servers: Server[]; 
+  servers: Server[];
 };
 
-export type ConfigParams = { 
+export type ConfigParams = {
   stellarConfiguration: StellarConfiguration;
   applicationConfiguration?: ApplicationConfiguration;
-}
+};
 
-export type StellarConfigurationParams = { 
+export type StellarConfigurationParams = {
   network: Networks;
   horizonUrl: string;
   baseFee?: number;
   defaultTimeout?: number;
-}
+};
 
 // Export all other types from walletSdk/Types.ts
 export * from "./anchor";

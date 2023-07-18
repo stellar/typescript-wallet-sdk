@@ -95,7 +95,7 @@ export class Watcher {
     // make an object map out of watchlist
     const watchlistMap = watchlist.reduce(
       (memo, id: string) => ({ ...memo, [id]: true }),
-      {}
+      {},
     );
 
     // make sure to initiate registries for the given asset code
@@ -132,9 +132,8 @@ export class Watcher {
             const isInProgress =
               transaction.status.indexOf("pending") === 0 ||
               transaction.status === TransactionStatus.incomplete;
-            const registeredTransaction = this._transactionsRegistry[assetCode][
-              transaction.id
-            ];
+            const registeredTransaction =
+              this._transactionsRegistry[assetCode][transaction.id];
 
             // if this is the first watch, only keep the pending ones
             if (!isRetry) {
@@ -145,9 +144,8 @@ export class Watcher {
 
               // if we're not in progress, then save this in an ignore reg
               if (!isInProgress) {
-                this._transactionsIgnoredRegistry[assetCode][
-                  transaction.id
-                ] = transaction;
+                this._transactionsIgnoredRegistry[assetCode][transaction.id] =
+                  transaction;
               }
 
               return isInProgress;
@@ -295,9 +293,8 @@ export class Watcher {
           return;
         }
 
-        const registeredTransaction = this._transactionsRegistry[assetCode][
-          transaction.id
-        ];
+        const registeredTransaction =
+          this._transactionsRegistry[assetCode][transaction.id];
 
         // if we've had the transaction before, only report if there is a change
         if (

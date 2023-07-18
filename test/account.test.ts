@@ -21,7 +21,7 @@ describe("Account", () => {
 
     const tx = TransactionBuilder.fromXDR(
       "AAAAAgAAAADk/TqnRl6sFK79yasH46qlX/dFxQ8R023aHRxAkUmE8wAAAGQAAAAAAAAAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAQAAAADk/TqnRl6sFK79yasH46qlX/dFxQ8R023aHRxAkUmE8wAAAAAAAAAABfXhAAAAAAAAAAAA",
-      Networks.TESTNET
+      Networks.TESTNET,
     );
     kp.sign(tx);
     expect(tx.signatures.length).toBe(1);
@@ -30,7 +30,7 @@ describe("Account", () => {
   });
   it("can init from string", () => {
     const kp = PublicKeypair.fromPublicKey(
-      "GCPECGTX5RZWBJNH7Q3FNN4742R7OKMSP6G4ECCUX7Q5IGDCYYG2I447"
+      "GCPECGTX5RZWBJNH7Q3FNN4742R7OKMSP6G4ECCUX7Q5IGDCYYG2I447",
     );
     expect(kp.publicKey).toBeTruthy();
   });

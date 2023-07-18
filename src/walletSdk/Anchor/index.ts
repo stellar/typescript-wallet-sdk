@@ -63,7 +63,7 @@ export class Anchor {
   }
 
   async getServicesInfo(
-    lang: string = this.language
+    lang: string = this.language,
   ): Promise<AnchorServiceInfo> {
     const toml = await this.sep1();
     const transferServerEndpoint = toml.transferServerSep24;
@@ -75,7 +75,7 @@ export class Anchor {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       const servicesInfo: AnchorServiceInfo = resp.data;

@@ -22,7 +22,7 @@ export class PublicKeypair extends AccountKeypair {
 
   static fromPublicKey = (publicKey: string): PublicKeypair => {
     return new PublicKeypair(Keypair.fromPublicKey(publicKey));
-  }
+  };
 }
 
 export class SigningKeypair extends AccountKeypair {
@@ -35,14 +35,14 @@ export class SigningKeypair extends AccountKeypair {
 
   static fromSecret = (secretKey: string): SigningKeypair => {
     return new SigningKeypair(Keypair.fromSecret(secretKey));
-  }
+  };
 
   get secretKey(): string {
     return this.keypair.secret();
   }
 
   sign(
-    transaction: Transaction | FeeBumpTransaction
+    transaction: Transaction | FeeBumpTransaction,
   ): Transaction | FeeBumpTransaction {
     transaction.sign(this.keypair);
     return transaction;

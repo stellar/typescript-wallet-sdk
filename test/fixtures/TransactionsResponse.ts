@@ -167,8 +167,7 @@ export const TransactionsResponse: AnchorTransaction[] = [
           fee: "5",
         },
         {
-          id:
-            "b9d0b2292c4e09e8eb22d036171491e87b8d2086bf8b265874c8d182cb9c9020",
+          id: "b9d0b2292c4e09e8eb22d036171491e87b8d2086bf8b265874c8d182cb9c9020",
           id_type: "stellar",
           amount: "55.35",
           fee: "0",
@@ -208,8 +207,7 @@ export const TransactionsResponse: AnchorTransaction[] = [
       amount_fee: "0",
       payments: [
         {
-          id:
-            "urh0b2292c4e09e8eb22d036171491e87b8d2086bf8b265874c8d182cb9cuhrt",
+          id: "urh0b2292c4e09e8eb22d036171491e87b8d2086bf8b265874c8d182cb9cuhrt",
           id_type: "stellar",
           amount: "35.35",
           fee: "0",
