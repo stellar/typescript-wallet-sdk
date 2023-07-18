@@ -129,7 +129,7 @@ describe("Anchor", () => {
     expect(signedByDomain).toBe(true);
   });
   it("should get anchor services info", async () => {
-    const serviceInfo = await anchor.getServicesInfo();
+    const serviceInfo = await anchor.sep24().getServicesInfo();
 
     expect(serviceInfo.deposit).toBeTruthy();
     expect(serviceInfo.withdraw).toBeTruthy();
@@ -321,7 +321,7 @@ describe("Anchor", () => {
 
     beforeEach(async () => {
       clock = sinon.useFakeTimers(0);
-      watcher = anchor.watcher();
+      watcher = anchor.sep24().watcher();
     });
 
     afterEach(() => {
@@ -861,7 +861,7 @@ describe("Anchor", () => {
 
     beforeEach(async () => {
       clock = sinon.useFakeTimers(0);
-      watcher = anchor.watcher();
+      watcher = anchor.sep24().watcher();
       jest.resetAllMocks();
     });
 

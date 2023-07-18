@@ -17,7 +17,9 @@ import {
   GetTransactionParams,
   GetTransactionsParams,
   TransactionStatus,
+  AnchorServiceInfo,
 } from "../Types";
+import { Watcher } from "../Watcher";
 import { camelToSnakeCaseObject } from "../Utils";
 
 // Let's prevent exporting this constructor type as
@@ -128,6 +130,14 @@ export class Sep24 {
     } catch (e) {
       throw new ServerRequestFailedError(e);
     }
+  }
+
+  async getServicesInfo(): Promise<AnchorServiceInfo> {
+    return this.anchor.getServicesInfo();
+  }
+
+  watcher(): Watcher {
+    return new Watcher(this.anchor);
   }
 
   /**

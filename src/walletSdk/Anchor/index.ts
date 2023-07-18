@@ -6,7 +6,6 @@ import { Sep10 } from "../Auth";
 import { ServerRequestFailedError } from "../Exceptions";
 import { Sep24 } from "./Sep24";
 import { AnchorServiceInfo, TomlInfo } from "../Types";
-import { Watcher } from "../Watcher";
 import { parseToml } from "../Utils";
 
 // Let's prevent exporting this constructor type as
@@ -28,12 +27,7 @@ export class Anchor {
   private toml: TomlInfo;
 
   constructor(params: AnchorParams) {
-    const {
-      cfg,
-      homeDomain,
-      httpClient,
-      language,
-    } = params;
+    const { cfg, homeDomain, httpClient, language } = params;
 
     this.cfg = cfg;
     this.homeDomain = homeDomain;
@@ -60,19 +54,17 @@ export class Anchor {
       cfg: this.cfg,
       webAuthEndpoint: tomlInfo.webAuthEndpoint,
       homeDomain: this.homeDomain,
-      httpClient: this.httpClient
+      httpClient: this.httpClient,
     });
   }
 
   sep24(): Sep24 {
-    return new Sep24({ anchor: this, httpClient: this.httpClient});
+    return new Sep24({ anchor: this, httpClient: this.httpClient });
   }
 
-  watcher(): Watcher {
-    return new Watcher(this);
-  }
-
-  async getServicesInfo(lang: string = this.language): Promise<AnchorServiceInfo> {
+  async getServicesInfo(
+    lang: string = this.language
+  ): Promise<AnchorServiceInfo> {
     const toml = await this.sep1();
     const transferServerEndpoint = toml.transferServerSep24;
 
@@ -87,7 +79,7 @@ export class Anchor {
       );
 
       const servicesInfo: AnchorServiceInfo = resp.data;
-      
+
       return servicesInfo;
     } catch (e) {
       throw new ServerRequestFailedError(e);
