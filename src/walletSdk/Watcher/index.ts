@@ -112,7 +112,7 @@ export class Watcher {
       this._watchAllTransactionsRegistry[assetCode] = true;
     }
 
-    this.anchor.getTransactionsForAsset({ 
+    this.anchor.sep24().getTransactionsForAsset({ 
       authToken, 
       assetCode, 
       lang, 
@@ -287,7 +287,7 @@ export class Watcher {
     }
 
     // do this all asynchronously (since this func needs to return a cancel fun)
-    this.anchor.getTransactionBy({ authToken, id, lang })
+    this.anchor.sep24().getTransactionBy({ authToken, id, lang })
       .then((transaction: AnchorTransaction) => {
         // make sure we're still watching
         if (!this._watchOneTransactionRegistry[assetCode]?.[id]) {
