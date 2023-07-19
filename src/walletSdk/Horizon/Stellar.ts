@@ -31,7 +31,7 @@ export class Stellar {
     let sourceAccount: StellarAccount;
     try {
       sourceAccount = await this.cfg.stellar.server.loadAccount(
-        sourceAddress.publicKey
+        sourceAddress.publicKey,
       );
     } catch (e) {
       throw new AccountDoesNotExistError(this.cfg.stellar.network);
@@ -52,7 +52,7 @@ export class Stellar {
       sourceAccount,
       baseFee,
       memo,
-      formattedTimebounds
+      formattedTimebounds,
     );
   }
 

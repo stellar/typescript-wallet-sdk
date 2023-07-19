@@ -22,12 +22,7 @@ export class Recovery {
   private servers: Server[];
 
   constructor(params: RecoveryParams) {
-    const {
-      cfg,
-      stellar,
-      httpClient,
-      servers,
-    } = params;
+    const { cfg, stellar, httpClient, servers } = params;
 
     this.cfg = cfg;
     this.stellar = stellar;

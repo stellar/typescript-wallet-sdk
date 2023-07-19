@@ -47,7 +47,7 @@ describe("Wallet", () => {
     });
     let appConfig = new walletSdk.ApplicationConfiguration(
       DefaultSigner,
-      customClient
+      customClient,
     );
     let wal = new walletSdk.Wallet({
       stellarConfiguration: walletSdk.StellarConfiguration.TestNet(),
@@ -71,7 +71,7 @@ describe("Anchor", () => {
     const Wal = walletSdk.Wallet.TestNet();
     anchor = Wal.anchor({ homeDomain: "testanchor.stellar.org" });
     accountKp = SigningKeypair.fromSecret(
-      "SDXC3OHSJZEQIXKEWFDNEZEQ7SW5DWBPW7RKUWI36ILY3QZZ6VER7TXV"
+      "SDXC3OHSJZEQIXKEWFDNEZEQ7SW5DWBPW7RKUWI36ILY3QZZ6VER7TXV",
     );
   });
   it("should give TOML info", async () => {
@@ -106,11 +106,11 @@ describe("Anchor", () => {
       }) => {
         // dummy secret key for signing
         const clientDomainKp = Keypair.fromSecret(
-          "SC7PKBRGRI5X4XP4QICBZ2NL67VUJJVKFKXDTGSPI3SQYZGC4NZWONIH"
+          "SC7PKBRGRI5X4XP4QICBZ2NL67VUJJVKFKXDTGSPI3SQYZGC4NZWONIH",
         );
         const transaction = StellarSdk.TransactionBuilder.fromXDR(
           transactionXDR,
-          networkPassphrase
+          networkPassphrase,
         );
         transaction.sign(clientDomainKp);
         signedByDomain = true;
@@ -300,8 +300,8 @@ describe("Anchor", () => {
     transactions.forEach(({ status }) => {
       expect(
         [TransactionStatus.completed, TransactionStatus.refunded].includes(
-          status
-        )
+          status,
+        ),
       ).toBeTruthy();
     });
   });
@@ -748,8 +748,7 @@ describe("Anchor", () => {
               fee: "5",
             },
             {
-              id:
-                "b9d0b2292c4e09e8eb22d036171491e87b8d2086bf8b265874c8d182cb9c9020",
+              id: "b9d0b2292c4e09e8eb22d036171491e87b8d2086bf8b265874c8d182cb9c9020",
               id_type: "stellar",
               amount: "55.35",
               fee: "0",
@@ -884,7 +883,7 @@ describe("Anchor", () => {
 
       const successfulTransaction = makeTransaction(
         0,
-        TransactionStatus.completed
+        TransactionStatus.completed,
       );
 
       // queue up a success
@@ -921,7 +920,7 @@ describe("Anchor", () => {
 
       const refundedTransaction = makeTransaction(
         0,
-        TransactionStatus.refunded
+        TransactionStatus.refunded,
       );
 
       // queue up a success
@@ -1006,7 +1005,7 @@ describe("Anchor", () => {
 
       const incompleteTransaction = makeTransaction(
         0,
-        TransactionStatus.incomplete
+        TransactionStatus.incomplete,
       );
 
       // queue up an incomplete transaction response
@@ -1040,7 +1039,7 @@ describe("Anchor", () => {
 
       const pendingTransaction = makeTransaction(
         0,
-        TransactionStatus.pending_user_transfer_start
+        TransactionStatus.pending_user_transfer_start,
       );
 
       // queue up a pending transaction response
@@ -1120,7 +1119,7 @@ describe("Anchor", () => {
 
       const noMarketTransaction = makeTransaction(
         0,
-        TransactionStatus.no_market
+        TransactionStatus.no_market,
       );
 
       // queue up a "no market" transaction response
@@ -1171,32 +1170,32 @@ describe("Anchor", () => {
         .spyOn(Sep24.prototype, "getTransactionBy")
         .mockResolvedValueOnce(makeTransaction(0, TransactionStatus.incomplete))
         .mockResolvedValueOnce(
-          makeTransaction(1, TransactionStatus.pending_user)
+          makeTransaction(1, TransactionStatus.pending_user),
         )
         .mockResolvedValueOnce(
-          makeTransaction(2, TransactionStatus.pending_anchor)
+          makeTransaction(2, TransactionStatus.pending_anchor),
         )
         .mockResolvedValueOnce(
-          makeTransaction(3, TransactionStatus.pending_external)
+          makeTransaction(3, TransactionStatus.pending_external),
         )
         .mockResolvedValueOnce(
-          makeTransaction(4, TransactionStatus.pending_stellar)
+          makeTransaction(4, TransactionStatus.pending_stellar),
         )
         .mockResolvedValueOnce(
-          makeTransaction(5, TransactionStatus.pending_trust)
+          makeTransaction(5, TransactionStatus.pending_trust),
         )
         .mockResolvedValueOnce(
-          makeTransaction(6, TransactionStatus.pending_user_transfer_start)
+          makeTransaction(6, TransactionStatus.pending_user_transfer_start),
         )
         .mockResolvedValueOnce(
-          makeTransaction(7, TransactionStatus.pending_user_transfer_complete)
+          makeTransaction(7, TransactionStatus.pending_user_transfer_complete),
         )
         .mockResolvedValueOnce(makeTransaction(8, TransactionStatus.completed))
         .mockResolvedValueOnce(
-          makeTransaction(9, TransactionStatus.pending_anchor)
+          makeTransaction(9, TransactionStatus.pending_anchor),
         )
         .mockResolvedValueOnce(
-          makeTransaction(10, TransactionStatus.pending_external)
+          makeTransaction(10, TransactionStatus.pending_external),
         );
 
       // start watching
@@ -1283,19 +1282,19 @@ describe("Anchor", () => {
         .spyOn(Sep24.prototype, "getTransactionBy")
         .mockResolvedValueOnce(makeTransaction(0, TransactionStatus.incomplete))
         .mockResolvedValueOnce(
-          makeTransaction(1, TransactionStatus.pending_user)
+          makeTransaction(1, TransactionStatus.pending_user),
         )
         .mockResolvedValueOnce(
-          makeTransaction(2, TransactionStatus.pending_anchor)
+          makeTransaction(2, TransactionStatus.pending_anchor),
         )
         .mockResolvedValueOnce(
-          makeTransaction(3, TransactionStatus.pending_external)
+          makeTransaction(3, TransactionStatus.pending_external),
         )
         .mockResolvedValueOnce(
-          makeTransaction(4, TransactionStatus.pending_stellar)
+          makeTransaction(4, TransactionStatus.pending_stellar),
         )
         .mockResolvedValueOnce(
-          makeTransaction(5, TransactionStatus.pending_trust)
+          makeTransaction(5, TransactionStatus.pending_trust),
         );
 
       // start watching
@@ -1364,14 +1363,14 @@ describe("Anchor", () => {
       jest
         .spyOn(Sep24.prototype, "getTransactionBy")
         .mockResolvedValueOnce(
-          makeTransaction(0, TransactionStatus.pending_user_transfer_complete)
+          makeTransaction(0, TransactionStatus.pending_user_transfer_complete),
         )
         .mockResolvedValueOnce(makeTransaction(1, TransactionStatus.completed))
         .mockResolvedValueOnce(
-          makeTransaction(2, TransactionStatus.pending_anchor)
+          makeTransaction(2, TransactionStatus.pending_anchor),
         )
         .mockResolvedValueOnce(
-          makeTransaction(3, TransactionStatus.pending_external)
+          makeTransaction(3, TransactionStatus.pending_external),
         );
 
       // start watching
@@ -1436,14 +1435,14 @@ describe("Anchor", () => {
       jest
         .spyOn(Sep24.prototype, "getTransactionBy")
         .mockResolvedValueOnce(
-          makeTransaction(0, TransactionStatus.pending_user_transfer_complete)
+          makeTransaction(0, TransactionStatus.pending_user_transfer_complete),
         )
         .mockResolvedValueOnce(makeTransaction(1, TransactionStatus.refunded))
         .mockResolvedValueOnce(
-          makeTransaction(2, TransactionStatus.pending_anchor)
+          makeTransaction(2, TransactionStatus.pending_anchor),
         )
         .mockResolvedValueOnce(
-          makeTransaction(3, TransactionStatus.pending_external)
+          makeTransaction(3, TransactionStatus.pending_external),
         );
 
       // start watching
@@ -1509,14 +1508,14 @@ describe("Anchor", () => {
       jest
         .spyOn(Sep24.prototype, "getTransactionBy")
         .mockResolvedValueOnce(
-          makeTransaction(0, TransactionStatus.pending_user_transfer_start)
+          makeTransaction(0, TransactionStatus.pending_user_transfer_start),
         )
         .mockResolvedValueOnce(makeTransaction(1, TransactionStatus.error))
         .mockResolvedValueOnce(
-          makeTransaction(2, TransactionStatus.pending_anchor)
+          makeTransaction(2, TransactionStatus.pending_anchor),
         )
         .mockResolvedValueOnce(
-          makeTransaction(3, TransactionStatus.pending_external)
+          makeTransaction(3, TransactionStatus.pending_external),
         );
 
       // start watching
@@ -1582,14 +1581,14 @@ describe("Anchor", () => {
       jest
         .spyOn(Sep24.prototype, "getTransactionBy")
         .mockResolvedValueOnce(
-          makeTransaction(0, TransactionStatus.pending_user_transfer_start)
+          makeTransaction(0, TransactionStatus.pending_user_transfer_start),
         )
         .mockResolvedValueOnce(makeTransaction(1, TransactionStatus.no_market))
         .mockResolvedValueOnce(
-          makeTransaction(2, TransactionStatus.pending_anchor)
+          makeTransaction(2, TransactionStatus.pending_anchor),
         )
         .mockResolvedValueOnce(
-          makeTransaction(3, TransactionStatus.pending_external)
+          makeTransaction(3, TransactionStatus.pending_external),
         );
 
       // start watching
@@ -1655,17 +1654,17 @@ describe("Anchor", () => {
       jest
         .spyOn(Sep24.prototype, "getTransactionBy")
         .mockResolvedValueOnce(
-          makeTransaction(0, TransactionStatus.pending_user_transfer_start)
+          makeTransaction(0, TransactionStatus.pending_user_transfer_start),
         )
         .mockResolvedValueOnce(
-          makeTransaction(1, TransactionStatus.pending_user_transfer_complete)
+          makeTransaction(1, TransactionStatus.pending_user_transfer_complete),
         )
         .mockResolvedValueOnce(makeTransaction(2, TransactionStatus.error))
         .mockResolvedValueOnce(
-          makeTransaction(3, TransactionStatus.pending_anchor)
+          makeTransaction(3, TransactionStatus.pending_anchor),
         )
         .mockResolvedValueOnce(
-          makeTransaction(4, TransactionStatus.pending_external)
+          makeTransaction(4, TransactionStatus.pending_external),
         );
 
       // start watching
@@ -1726,12 +1725,12 @@ describe("Anchor", () => {
 describe("Http client", () => {
   it("should work with http", async () => {
     const accountKp = Keypair.fromSecret(
-      "SDXC3OHSJZEQIXKEWFDNEZEQ7SW5DWBPW7RKUWI36ILY3QZZ6VER7TXV"
+      "SDXC3OHSJZEQIXKEWFDNEZEQ7SW5DWBPW7RKUWI36ILY3QZZ6VER7TXV",
     );
     const client = walletSdk.DefaultClient;
 
     const resp = await client.get(
-      `http://testanchor.stellar.org/auth?account=${accountKp.publicKey()}`
+      `http://testanchor.stellar.org/auth?account=${accountKp.publicKey()}`,
     );
     expect(resp.data.transaction).toBeTruthy();
   });

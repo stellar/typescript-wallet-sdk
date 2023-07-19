@@ -23,7 +23,7 @@ export type WatchTransactionParams = {
   timeout?: number;
   isRetry?: boolean;
   lang?: string;
-}
+};
 
 export type WatcherRefreshFunction = () => void;
 export type WatcherStopFunction = () => void;

@@ -7,19 +7,19 @@ export { Types };
 /**
  * Classes
  */
-export { 
-  Wallet, 
-  Config, 
-  StellarConfiguration, 
-  ApplicationConfiguration 
+export {
+  Wallet,
+  Config,
+  StellarConfiguration,
+  ApplicationConfiguration,
 } from "./walletSdk";
 export { Anchor } from "./walletSdk/Anchor";
 export { Sep10, WalletSigner, DefaultSigner } from "./walletSdk/Auth";
-export { 
-  PublicKeypair, 
-  SigningKeypair, 
-  AccountService, 
-  Stellar 
+export {
+  PublicKeypair,
+  SigningKeypair,
+  AccountService,
+  Stellar,
 } from "./walletSdk/Horizon";
 export { Sep24 } from "./walletSdk/Anchor/Sep24";
 export { Recovery } from "./walletSdk/Recovery";

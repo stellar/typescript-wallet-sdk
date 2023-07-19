@@ -24,7 +24,7 @@ export class TransactionBuilder {
     sourceAccount: StellarAccount,
     baseFee?: number,
     memo?: Memo,
-    timebounds?: Server.Timebounds
+    timebounds?: Server.Timebounds,
   ) {
     this.network = cfg.stellar.network;
     this.operations = [];
@@ -51,7 +51,7 @@ export class TransactionBuilder {
         destination: newAccount.publicKey,
         startingBalance: startingBalance.toString(),
         source: this.sourceAccount,
-      })
+      }),
     );
     return this;
   }

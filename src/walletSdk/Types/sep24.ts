@@ -23,12 +23,13 @@ export type Sep24PostParams = {
 export enum Sep24ResponseType {
   authentication_required = "authentication_required",
   interactive_customer_info_needed = "interactive_customer_info_needed",
-  error = "error"
+  error = "error",
 }
 
 export interface Sep24PostResponse {
-  type: Sep24ResponseType.authentication_required 
-    | Sep24ResponseType.interactive_customer_info_needed 
+  type:
+    | Sep24ResponseType.authentication_required
+    | Sep24ResponseType.interactive_customer_info_needed
     | Sep24ResponseType.error;
   id?: string;
   url?: string;
