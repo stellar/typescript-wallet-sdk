@@ -138,7 +138,23 @@ describe("Anchor", () => {
   it("should give interactive deposit url", async () => {
     const assetCode = "SRT";
     const resp = await anchor.sep24().deposit({
-      accountAddress: accountKp.publicKey,
+      destinationAccount: accountKp.publicKey,
+      assetCode,
+      authToken,
+      lang: "en-US",
+      extraFields: {
+        wallet_name: "Test Wallet",
+        wallet_url: "https://stellar.org/",
+      },
+    });
+
+    expect(resp.url).toBeTruthy();
+    expect(resp.id).toBeTruthy();
+  });
+
+  it("should give interactive deposit url without giving account", async () => {
+    const assetCode = "SRT";
+    const resp = await anchor.sep24().deposit({
       assetCode,
       authToken,
       lang: "en-US",
@@ -155,7 +171,7 @@ describe("Anchor", () => {
   it("should give interactive withdraw url", async () => {
     const assetCode = "SRT";
     const resp = await anchor.sep24().withdraw({
-      accountAddress: accountKp.publicKey,
+      withdrawalAccount: accountKp.publicKey,
       assetCode,
       authToken,
       lang: "en-US",

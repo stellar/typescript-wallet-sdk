@@ -80,3 +80,24 @@ export class InsufficientStartingBalanceError extends Error {
     Object.setPrototypeOf(this, InsufficientStartingBalanceError.prototype);
   }
 }
+
+export class MissingTokenError extends Error {
+  constructor() {
+    super("Token was not returned");
+    Object.setPrototypeOf(this, MissingTokenError.prototype);
+  }
+}
+
+export class InvalidTokenError extends Error {
+  constructor() {
+    super(`Invalid token given`);
+    Object.setPrototypeOf(this, InvalidTokenError.prototype);
+  }
+}
+
+export class ExpiredTokenError extends Error {
+  constructor(expiresAt: number) {
+    super(`Token has already expired. Expiration time: ${expiresAt}`);
+    Object.setPrototypeOf(this, ExpiredTokenError.prototype);
+  }
+}

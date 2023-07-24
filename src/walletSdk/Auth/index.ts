@@ -1,11 +1,15 @@
 import { AxiosInstance } from "axios";
 import StellarSdk, { Transaction } from "stellar-sdk";
+import { decode } from "jws";
 
 import { Config } from "walletSdk";
 import {
   InvalidMemoError,
   ClientDomainWithMemoError,
   ServerRequestFailedError,
+  InvalidTokenError,
+  MissingTokenError,
+  ExpiredTokenError,
 } from "../Exceptions";
 import {
   AuthenticateParams,
@@ -58,6 +62,7 @@ export class Sep10 {
       challengeResponse,
       walletSigner: walletSigner ?? this.cfg.app.defaultSigner,
     });
+
     return this.getToken(signedTransaction);
   }
 
@@ -118,10 +123,26 @@ export class Sep10 {
       const resp = await this.httpClient.post(this.webAuthEndpoint, {
         transaction: signedTransaction.toXDR(),
       });
+      if (!resp.data.token) {
+        throw new MissingTokenError();
+      }
+
       const authToken: AuthToken = resp.data.token;
+      validateToken(authToken);
+
       return authToken;
     } catch (e) {
       throw new ServerRequestFailedError(e);
     }
   }
 }
+
+const validateToken = (token: AuthToken) => {
+  const parsedToken = decode(token);
+  if (!parsedToken) {
+    throw new InvalidTokenError();
+  }
+  if (parsedToken.expiresAt < Math.floor(Date.now() / 1000)) {
+    throw new ExpiredTokenError(parsedToken.expiresAt);
+  }
+};
