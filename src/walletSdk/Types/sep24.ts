@@ -13,11 +13,12 @@ export type ExtraFields = {
 
 export type Sep24PostParams = {
   authToken: AuthToken;
-  accountAddress: string;
   assetCode: string;
   lang?: string;
   extraFields?: ExtraFields;
-  fundsAccountAddress?: string;
+  destinationAccount?: string;
+  withdrawalAccount?: string;
+  account?: string;
 };
 
 export enum Sep24ResponseType {

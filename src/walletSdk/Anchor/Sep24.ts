@@ -42,39 +42,35 @@ export class Sep24 {
   }
 
   async deposit({
-    accountAddress,
     assetCode,
     authToken,
     lang,
     extraFields,
-    fundsAccountAddress,
+    destinationAccount,
   }: Sep24PostParams): Promise<Sep24PostResponse> {
     return this.flow({
-      accountAddress,
       assetCode,
       authToken,
       lang,
       extraFields,
-      fundsAccountAddress,
+      account: destinationAccount,
       type: FLOW_TYPE.DEPOSIT,
     });
   }
 
   async withdraw({
-    accountAddress,
     assetCode,
     authToken,
     lang,
     extraFields,
-    fundsAccountAddress,
+    withdrawalAccount,
   }: Sep24PostParams): Promise<Sep24PostResponse> {
     return this.flow({
-      accountAddress,
       assetCode,
       authToken,
       lang,
       extraFields,
-      fundsAccountAddress,
+      account: withdrawalAccount,
       type: FLOW_TYPE.WITHDRAW,
     });
   }
@@ -83,12 +79,11 @@ export class Sep24 {
     params: Sep24PostParams & { type: FLOW_TYPE },
   ): Promise<Sep24PostResponse> {
     const {
-      accountAddress,
       assetCode,
       authToken,
       lang = this.anchor.language,
       extraFields,
-      fundsAccountAddress = accountAddress,
+      account,
       type,
     } = params;
 
@@ -113,7 +108,7 @@ export class Sep24 {
         {
           asset_code: assetCode,
           lang,
-          account: fundsAccountAddress,
+          account,
           ...extraFields,
         },
         {
