@@ -46,6 +46,7 @@ export class Sep24 {
     authToken,
     lang,
     extraFields,
+    destinationMemo,
     destinationAccount,
   }: Sep24PostParams): Promise<Sep24PostResponse> {
     return this.flow({
@@ -53,6 +54,7 @@ export class Sep24 {
       authToken,
       lang,
       extraFields,
+      destinationMemo,
       account: destinationAccount,
       type: FLOW_TYPE.DEPOSIT,
     });
@@ -83,6 +85,7 @@ export class Sep24 {
       authToken,
       lang = this.anchor.language,
       extraFields,
+      destinationMemo,
       account,
       type,
     } = params;
@@ -101,6 +104,11 @@ export class Sep24 {
     if (!assets.includes(assetCode)) {
       throw new AssetNotSupportedError(type, assetCode);
     }
+    let memoMap = {};
+    if (destinationMemo) {
+      memoMap["memo_type"] = destinationMemo.type;
+      memoMap["memo"] = destinationMemo.value;
+    }
 
     try {
       const resp = await this.httpClient.post(
@@ -109,6 +117,7 @@ export class Sep24 {
           asset_code: assetCode,
           lang,
           account,
+          ...memoMap,
           ...extraFields,
         },
         {
