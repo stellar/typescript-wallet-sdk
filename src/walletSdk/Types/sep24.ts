@@ -1,3 +1,5 @@
+import { Memo } from "stellar-sdk";
+
 import { AuthToken } from "./auth";
 
 export enum FLOW_TYPE {
@@ -16,6 +18,7 @@ export type Sep24PostParams = {
   assetCode: string;
   lang?: string;
   extraFields?: ExtraFields;
+  destinationMemo?: Memo;
   destinationAccount?: string;
   withdrawalAccount?: string;
   account?: string;

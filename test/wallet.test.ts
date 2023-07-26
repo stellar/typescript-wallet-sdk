@@ -1,4 +1,4 @@
-import StellarSdk, { Keypair } from "stellar-sdk";
+import StellarSdk, { Keypair, Memo, MemoText } from "stellar-sdk";
 import http from "http";
 import sinon from "sinon";
 import axios, { AxiosInstance } from "axios";
@@ -152,12 +152,13 @@ describe("Anchor", () => {
     expect(resp.id).toBeTruthy();
   });
 
-  it("should give interactive deposit url without giving account", async () => {
+  it("should give interactive deposit url without giving account and giving memo", async () => {
     const assetCode = "SRT";
     const resp = await anchor.sep24().deposit({
       assetCode,
       authToken,
       lang: "en-US",
+      destinationMemo: new Memo(MemoText, "test-memo"),
       extraFields: {
         wallet_name: "Test Wallet",
         wallet_url: "https://stellar.org/",
