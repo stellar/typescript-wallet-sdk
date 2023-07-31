@@ -1,12 +1,20 @@
-import { Account as StellarAccount, Server, Transaction } from "stellar-sdk";
+import {
+  Account as StellarAccount,
+  Server,
+  Transaction,
+  Memo,
+} from "stellar-sdk";
+
 import { Config } from "walletSdk";
 import { AccountService } from "./AccountService";
 import { TransactionBuilder } from "./transaction/TransactionBuilder";
 import { TransactionParams } from "../Types";
+import { AccountKeypair } from "./Account";
 import {
   AccountDoesNotExistError,
   TransactionSubmitFailedError,
 } from "../Exceptions";
+import { getResultCode } from "../Utils/getResultCode";
 
 // Do not create this object directly, use the Wallet class.
 export class Stellar {
@@ -69,6 +77,23 @@ export class Stellar {
         // https://developers.stellar.org/api/errors/http-status-codes/horizon-specific/timeout
         // https://developers.stellar.org/docs/encyclopedia/error-handling#timeouts
         return await this.submitTransaction(signedTransaction);
+      }
+      throw e;
+    }
+  }
+
+  async submitWithFeeIncrease(
+    signedTransaction: Transaction,
+    baseFeeIncrease: number,
+  ) {
+    try {
+      const resp = await this.submitTransaction(signedTransaction);
+      return signedTransaction;
+    } catch (e) {
+      const resultCode = getResultCode(e);
+      if (resultCode === "tx_too_late") {
+        const newFee = parseInt(signedTransaction.fee) + baseFeeIncrease;
+        return this.submitWithFeeIncrease(signedTransaction, baseFeeIncrease);
       }
       throw e;
     }

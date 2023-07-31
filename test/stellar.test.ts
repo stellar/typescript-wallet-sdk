@@ -8,15 +8,18 @@ import {
 import sdk from "../src";
 const { walletSdk } = sdk;
 
+let wal;
+let stellar;
+const kp = SigningKeypair.fromSecret(
+  "SAS372GXRG6U7FW6W2PRVELKPOJG2FZZUADCIELWU2U3A45TNWXEQUV5",
+);
 describe("Stellar", () => {
+  beforeEach(() => {
+    wal = walletSdk.Wallet.TestNet();
+    stellar = wal.stellar();
+  });
   it("should create and submit a transaction", async () => {
-    const wal = walletSdk.Wallet.TestNet();
-    const stellar = wal.stellar();
-
     // make sure signing key exists
-    const kp = SigningKeypair.fromSecret(
-      "SAS372GXRG6U7FW6W2PRVELKPOJG2FZZUADCIELWU2U3A45TNWXEQUV5",
-    );
     try {
       await stellar.server.loadAccount(kp.publicKey);
     } catch (e) {
@@ -62,4 +65,35 @@ describe("Stellar", () => {
       expect(failed).toBeFalsy();
     }
   }, 30000);
+
+  it("should resubmit with fee increase if txn fails", async () => {
+    // mock 1 failed response and then 1 successful to test retry
+    jest
+      .spyOn(stellar, "submitTransaction")
+      .mockRejectedValueOnce({
+        response: {
+          status: 400,
+          statusText: "Bad Request",
+          data: {
+            extras: {
+              result_codes: { transaction: "tx_too_late" },
+            },
+          },
+        },
+      })
+      .mockReturnValueOnce({ successful: true });
+
+    const txn = (
+      await stellar.transaction({
+        sourceAddress: kp,
+        baseFee: 100,
+      })
+    )
+      .createAccount(new AccountKeypair(Keypair.random()), 100)
+      .build();
+
+    txn.sign(kp.keypair);
+    const signedTxn = await stellar.submitWithFeeIncrease(txn, 100);
+    expect(signedTxn).toBeTruthy();
+  });
 });
