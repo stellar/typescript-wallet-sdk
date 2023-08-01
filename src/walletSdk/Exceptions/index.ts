@@ -101,3 +101,15 @@ export class ExpiredTokenError extends Error {
     Object.setPrototypeOf(this, ExpiredTokenError.prototype);
   }
 }
+
+export class TransactionSubmitWithFeeIncreaseFailedError extends Error {
+  constructor(maxFee: number, e: Error) {
+    super(
+      `Submitting transasction with fee increase failed due to reaching max fee of ${maxFee}: ${e}`,
+    );
+    Object.setPrototypeOf(
+      this,
+      TransactionSubmitWithFeeIncreaseFailedError.prototype,
+    );
+  }
+}

@@ -8,11 +8,11 @@ import {
 import { Config } from "walletSdk";
 import { AccountService } from "./AccountService";
 import { TransactionBuilder } from "./transaction/TransactionBuilder";
-import { TransactionParams } from "../Types";
-import { AccountKeypair } from "./Account";
+import { TransactionParams, SubmitWithFeeIncreaseParams } from "../Types";
 import {
   AccountDoesNotExistError,
   TransactionSubmitFailedError,
+  TransactionSubmitWithFeeIncreaseFailedError,
 } from "../Exceptions";
 import { getResultCode } from "../Utils/getResultCode";
 
@@ -82,18 +82,57 @@ export class Stellar {
     }
   }
 
-  async submitWithFeeIncrease(
-    signedTransaction: Transaction,
-    baseFeeIncrease: number,
-  ) {
+  async submitWithFeeIncrease({
+    sourceAddress,
+    timeout,
+    baseFeeIncrease,
+    operations,
+    signingAddresses,
+    baseFee,
+    memo,
+    maxFee,
+  }: SubmitWithFeeIncreaseParams): Promise<Transaction> {
+    const builder = await this.transaction({
+      sourceAddress,
+      timebounds: timeout,
+      baseFee,
+      memo,
+    });
+
+    operations.forEach((op) => {
+      builder.addOperation(op);
+    });
+
+    const transaction = builder.build();
+    if (signingAddresses?.length) {
+      signingAddresses.forEach((signer) => {
+        transaction.sign(signer.keypair);
+      });
+    } else {
+      transaction.sign(sourceAddress.keypair);
+    }
+
     try {
-      const resp = await this.submitTransaction(signedTransaction);
-      return signedTransaction;
+      const success = await this.submitTransaction(transaction);
+      return transaction;
     } catch (e) {
       const resultCode = getResultCode(e);
       if (resultCode === "tx_too_late") {
-        const newFee = parseInt(signedTransaction.fee) + baseFeeIncrease;
-        return this.submitWithFeeIncrease(signedTransaction, baseFeeIncrease);
+        const newFee = parseInt(transaction.fee) + baseFeeIncrease;
+
+        if (maxFee && newFee > maxFee) {
+          throw new TransactionSubmitWithFeeIncreaseFailedError(maxFee, e);
+        }
+
+        return this.submitWithFeeIncrease({
+          sourceAddress,
+          timeout,
+          baseFeeIncrease,
+          operations,
+          signingAddresses,
+          baseFee: newFee,
+          memo,
+        });
       }
       throw e;
     }

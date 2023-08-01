@@ -1,4 +1,10 @@
-import StellarSdk, { Keypair, Memo, MemoText } from "stellar-sdk";
+import StellarSdk, {
+  Keypair,
+  Memo,
+  MemoText,
+  Operation,
+  Asset,
+} from "stellar-sdk";
 import axios from "axios";
 import {
   AccountKeypair,
@@ -83,17 +89,57 @@ describe("Stellar", () => {
       })
       .mockReturnValueOnce({ successful: true });
 
-    const txn = (
-      await stellar.transaction({
-        sourceAddress: kp,
-        baseFee: 100,
-      })
-    )
-      .createAccount(new AccountKeypair(Keypair.random()), 100)
-      .build();
+    const txn = await stellar.submitWithFeeIncrease({
+      sourceAddress: kp,
+      timeout: 180,
+      baseFeeIncrease: 100,
+      operations: [
+        Operation.payment({
+          destination: kp.publicKey,
+          asset: Asset.native(),
+          amount: "1",
+        }),
+      ],
+    });
+    expect(txn).toBeTruthy();
+    expect(txn.fee).toBe("200");
+  });
 
-    txn.sign(kp.keypair);
-    const signedTxn = await stellar.submitWithFeeIncrease(txn, 100);
-    expect(signedTxn).toBeTruthy();
+  it("should be able to give a signing keypair", async () => {
+    // mock 1 failed response and then 1 successful to test retry
+    jest
+      .spyOn(stellar, "submitTransaction")
+      .mockRejectedValueOnce({
+        response: {
+          status: 400,
+          statusText: "Bad Request",
+          data: {
+            extras: {
+              result_codes: { transaction: "tx_too_late" },
+            },
+          },
+        },
+      })
+      .mockReturnValueOnce({ successful: true });
+
+    const txn = await stellar.submitWithFeeIncrease({
+      sourceAddress: kp,
+      signingAddresses: [
+        SigningKeypair.fromSecret(
+          "SDCLCSOJ7JFDUAGMB4RD54JBQ633M2DHWWGNUE4WMK52WMEU6QKZCPHV",
+        ),
+      ],
+      timeout: 180,
+      baseFeeIncrease: 100,
+      operations: [
+        Operation.payment({
+          destination: kp.publicKey,
+          asset: Asset.native(),
+          amount: "1",
+        }),
+      ],
+    });
+    expect(txn).toBeTruthy();
+    expect(txn.fee).toBe("200");
   });
 });
