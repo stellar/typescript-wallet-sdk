@@ -113,3 +113,10 @@ export class TransactionSubmitWithFeeIncreaseFailedError extends Error {
     );
   }
 }
+
+export class SignerRequiredError extends Error {
+  constructor() {
+    super(`Either a SigningKeypair or a signerFunction required`);
+    Object.setPrototypeOf(this, SignerRequiredError.prototype);
+  }
+}

@@ -13,8 +13,10 @@ import {
   AccountDoesNotExistError,
   TransactionSubmitFailedError,
   TransactionSubmitWithFeeIncreaseFailedError,
+  SignerRequiredError,
 } from "../Exceptions";
 import { getResultCode } from "../Utils/getResultCode";
+import { SigningKeypair } from "./Account";
 
 // Do not create this object directly, use the Wallet class.
 export class Stellar {
@@ -87,7 +89,7 @@ export class Stellar {
     timeout,
     baseFeeIncrease,
     operations,
-    signingAddresses,
+    signerFunction,
     baseFee,
     memo,
     maxFee,
@@ -103,13 +105,13 @@ export class Stellar {
       builder.addOperation(op);
     });
 
-    const transaction = builder.build();
-    if (signingAddresses?.length) {
-      signingAddresses.forEach((signer) => {
-        transaction.sign(signer.keypair);
-      });
-    } else {
+    let transaction = builder.build();
+    if (signerFunction) {
+      transaction = signerFunction(transaction);
+    } else if (sourceAddress instanceof SigningKeypair) {
       transaction.sign(sourceAddress.keypair);
+    } else {
+      throw new SignerRequiredError();
     }
 
     try {
@@ -129,7 +131,7 @@ export class Stellar {
           timeout,
           baseFeeIncrease,
           operations,
-          signingAddresses,
+          signerFunction,
           baseFee: newFee,
           memo,
         });
