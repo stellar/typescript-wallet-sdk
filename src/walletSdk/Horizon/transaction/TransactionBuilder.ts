@@ -56,6 +56,10 @@ export class TransactionBuilder {
     return this;
   }
 
+  addOperation(op: xdr.Operation) {
+    this.builder.addOperation(op);
+  }
+
   build(): Transaction {
     this.operations.forEach((op) => {
       this.builder.addOperation(op);

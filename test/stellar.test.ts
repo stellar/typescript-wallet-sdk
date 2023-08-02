@@ -1,4 +1,10 @@
-import StellarSdk, { Keypair, Memo, MemoText } from "stellar-sdk";
+import StellarSdk, {
+  Keypair,
+  Memo,
+  MemoText,
+  Operation,
+  Asset,
+} from "stellar-sdk";
 import axios from "axios";
 import {
   AccountKeypair,
@@ -8,15 +14,18 @@ import {
 import sdk from "../src";
 const { walletSdk } = sdk;
 
+let wal;
+let stellar;
+const kp = SigningKeypair.fromSecret(
+  "SAS372GXRG6U7FW6W2PRVELKPOJG2FZZUADCIELWU2U3A45TNWXEQUV5",
+);
 describe("Stellar", () => {
+  beforeEach(() => {
+    wal = walletSdk.Wallet.TestNet();
+    stellar = wal.stellar();
+  });
   it("should create and submit a transaction", async () => {
-    const wal = walletSdk.Wallet.TestNet();
-    const stellar = wal.stellar();
-
     // make sure signing key exists
-    const kp = SigningKeypair.fromSecret(
-      "SAS372GXRG6U7FW6W2PRVELKPOJG2FZZUADCIELWU2U3A45TNWXEQUV5",
-    );
     try {
       await stellar.server.loadAccount(kp.publicKey);
     } catch (e) {
@@ -62,4 +71,81 @@ describe("Stellar", () => {
       expect(failed).toBeFalsy();
     }
   }, 30000);
+
+  it("should resubmit with fee increase if txn fails", async () => {
+    // mock 1 failed response and then 1 successful to test retry
+    jest
+      .spyOn(stellar, "submitTransaction")
+      .mockRejectedValueOnce({
+        response: {
+          status: 400,
+          statusText: "Bad Request",
+          data: {
+            extras: {
+              result_codes: { transaction: "tx_too_late" },
+            },
+          },
+        },
+      })
+      .mockReturnValueOnce({ successful: true });
+
+    const txn = await stellar.submitWithFeeIncrease({
+      sourceAddress: kp,
+      timeout: 180,
+      baseFeeIncrease: 100,
+      operations: [
+        Operation.payment({
+          destination: kp.publicKey,
+          asset: Asset.native(),
+          amount: "1",
+        }),
+      ],
+    });
+    expect(txn).toBeTruthy();
+    expect(txn.fee).toBe("200");
+  });
+
+  it("should be able to give a signing keypair", async () => {
+    // mock 1 failed response and then 1 successful to test retry
+    jest
+      .spyOn(stellar, "submitTransaction")
+      .mockRejectedValueOnce({
+        response: {
+          status: 400,
+          statusText: "Bad Request",
+          data: {
+            extras: {
+              result_codes: { transaction: "tx_too_late" },
+            },
+          },
+        },
+      })
+      .mockReturnValueOnce({ successful: true });
+
+    const signerFunction = (txn) => {
+      txn.sign(kp.keypair);
+      return txn;
+    };
+
+    const txn = await stellar.submitWithFeeIncrease({
+      sourceAddress: kp,
+      signingAddresses: [
+        SigningKeypair.fromSecret(
+          "SDCLCSOJ7JFDUAGMB4RD54JBQ633M2DHWWGNUE4WMK52WMEU6QKZCPHV",
+        ),
+      ],
+      timeout: 180,
+      baseFeeIncrease: 100,
+      signerFunction,
+      operations: [
+        Operation.payment({
+          destination: kp.publicKey,
+          asset: Asset.native(),
+          amount: "1",
+        }),
+      ],
+    });
+    expect(txn).toBeTruthy();
+    expect(txn.fee).toBe("200");
+  });
 });

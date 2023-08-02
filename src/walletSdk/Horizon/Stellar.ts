@@ -1,12 +1,22 @@
-import { Account as StellarAccount, Server, Transaction } from "stellar-sdk";
+import {
+  Account as StellarAccount,
+  Server,
+  Transaction,
+  Memo,
+} from "stellar-sdk";
+
 import { Config } from "walletSdk";
 import { AccountService } from "./AccountService";
 import { TransactionBuilder } from "./transaction/TransactionBuilder";
-import { TransactionParams } from "../Types";
+import { TransactionParams, SubmitWithFeeIncreaseParams } from "../Types";
 import {
   AccountDoesNotExistError,
   TransactionSubmitFailedError,
+  TransactionSubmitWithFeeIncreaseFailedError,
+  SignerRequiredError,
 } from "../Exceptions";
+import { getResultCode } from "../Utils/getResultCode";
+import { SigningKeypair } from "./Account";
 
 // Do not create this object directly, use the Wallet class.
 export class Stellar {
@@ -69,6 +79,62 @@ export class Stellar {
         // https://developers.stellar.org/api/errors/http-status-codes/horizon-specific/timeout
         // https://developers.stellar.org/docs/encyclopedia/error-handling#timeouts
         return await this.submitTransaction(signedTransaction);
+      }
+      throw e;
+    }
+  }
+
+  async submitWithFeeIncrease({
+    sourceAddress,
+    timeout,
+    baseFeeIncrease,
+    operations,
+    signerFunction,
+    baseFee,
+    memo,
+    maxFee,
+  }: SubmitWithFeeIncreaseParams): Promise<Transaction> {
+    const builder = await this.transaction({
+      sourceAddress,
+      timebounds: timeout,
+      baseFee,
+      memo,
+    });
+
+    operations.forEach((op) => {
+      builder.addOperation(op);
+    });
+
+    let transaction = builder.build();
+    if (signerFunction) {
+      transaction = signerFunction(transaction);
+    } else if (sourceAddress instanceof SigningKeypair) {
+      transaction.sign(sourceAddress.keypair);
+    } else {
+      throw new SignerRequiredError();
+    }
+
+    try {
+      const success = await this.submitTransaction(transaction);
+      return transaction;
+    } catch (e) {
+      const resultCode = getResultCode(e);
+      if (resultCode === "tx_too_late") {
+        const newFee = parseInt(transaction.fee) + baseFeeIncrease;
+
+        if (maxFee && newFee > maxFee) {
+          throw new TransactionSubmitWithFeeIncreaseFailedError(maxFee, e);
+        }
+
+        return this.submitWithFeeIncrease({
+          sourceAddress,
+          timeout,
+          baseFeeIncrease,
+          operations,
+          signerFunction,
+          baseFee: newFee,
+          memo,
+        });
       }
       throw e;
     }

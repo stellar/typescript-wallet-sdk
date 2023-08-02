@@ -1,4 +1,4 @@
-import { Memo, Server } from "stellar-sdk";
+import { Memo, Server, xdr, Transaction } from "stellar-sdk";
 import { AccountKeypair } from "../Horizon/Account";
 
 export enum NETWORK_URLS {
@@ -11,4 +11,15 @@ export type TransactionParams = {
   baseFee: number;
   memo?: Memo;
   timebounds?: Server.Timebounds | number;
+};
+
+export type SubmitWithFeeIncreaseParams = {
+  sourceAddress: AccountKeypair;
+  timeout: number;
+  baseFeeIncrease: number;
+  operations: Array<xdr.Operation>;
+  signerFunction?: (Transaction) => Transaction;
+  baseFee?: number;
+  memo?: Memo;
+  maxFee?: number;
 };

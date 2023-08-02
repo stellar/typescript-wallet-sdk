@@ -101,3 +101,22 @@ export class ExpiredTokenError extends Error {
     Object.setPrototypeOf(this, ExpiredTokenError.prototype);
   }
 }
+
+export class TransactionSubmitWithFeeIncreaseFailedError extends Error {
+  constructor(maxFee: number, e: Error) {
+    super(
+      `Submitting transasction with fee increase failed due to reaching max fee of ${maxFee}: ${e}`,
+    );
+    Object.setPrototypeOf(
+      this,
+      TransactionSubmitWithFeeIncreaseFailedError.prototype,
+    );
+  }
+}
+
+export class SignerRequiredError extends Error {
+  constructor() {
+    super(`Either a SigningKeypair or a signerFunction required`);
+    Object.setPrototypeOf(this, SignerRequiredError.prototype);
+  }
+}
