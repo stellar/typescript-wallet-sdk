@@ -127,6 +127,11 @@ describe("Stellar", () => {
       })
       .mockReturnValueOnce({ successful: true });
 
+    const signerFunction = (txn) => {
+      txn.sign(kp.keypair);
+      return txn;
+    };
+
     const txn = await stellar.submitWithFeeIncrease({
       sourceAddress: kp,
       signingAddresses: [
@@ -136,6 +141,7 @@ describe("Stellar", () => {
       ],
       timeout: 180,
       baseFeeIncrease: 100,
+      signerFunction,
       operations: [
         Operation.payment({
           destination: kp.publicKey,

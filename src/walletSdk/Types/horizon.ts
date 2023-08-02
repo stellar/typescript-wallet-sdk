@@ -1,5 +1,5 @@
-import { Memo, Server, xdr } from "stellar-sdk";
-import { AccountKeypair, SigningKeypair } from "../Horizon/Account";
+import { Memo, Server, xdr, Transaction } from "stellar-sdk";
+import { AccountKeypair } from "../Horizon/Account";
 
 export enum NETWORK_URLS {
   PUBLIC = "https://horizon.stellar.org",
@@ -14,11 +14,11 @@ export type TransactionParams = {
 };
 
 export type SubmitWithFeeIncreaseParams = {
-  sourceAddress: SigningKeypair;
+  sourceAddress: AccountKeypair;
   timeout: number;
   baseFeeIncrease: number;
   operations: Array<xdr.Operation>;
-  signingAddresses?: Array<SigningKeypair>;
+  signerFunction?: (Transaction) => Transaction;
   baseFee?: number;
   memo?: Memo;
   maxFee?: number;
