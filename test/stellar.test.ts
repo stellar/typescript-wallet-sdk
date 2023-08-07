@@ -179,6 +179,14 @@ describe("Stellar", () => {
     balance = acc.balances.find((b) => b.asset_code === "USDC");
     expect(balance).toBeFalsy();
   }, 20000);
+
+  it("should import and sign a transaction from xdr", async () => {
+    const txnXdr =
+      "AAAAAgAAAACHw+LvUYx5O3Ot8A1SUChfTVk4qxFFJZ5QZ/ktaEUKPwAAAGQACEjuAAABDAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAQAAAACHw+LvUYx5O3Ot8A1SUChfTVk4qxFFJZ5QZ/ktaEUKPwAAAAAAAAAAATEtAAAAAAAAAAAA";
+
+    const tx = stellar.decodeTransaction(txnXdr);
+    kp.sign(tx);
+  });
 });
 
 describe("Asset", () => {
