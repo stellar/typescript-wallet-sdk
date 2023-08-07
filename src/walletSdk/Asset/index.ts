@@ -47,9 +47,9 @@ export class NativeAssetId extends StellarAssetId {
 export class FiatAssetId extends AssetId {
   id: string;
   scheme = FIAT_SCHEME;
-  constructor(id: string) {
+  constructor(code: string) {
     super();
-    this.id = id;
+    this.id = code;
   }
 
   toString() {
