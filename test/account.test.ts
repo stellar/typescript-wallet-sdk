@@ -11,6 +11,16 @@ import { PublicKeypair } from "../src/walletSdk/Horizon/Account";
 import sdk from "../src";
 const { walletSdk } = sdk;
 
+// ALEC TODO - remove
+
+describe("ALEC TODO - REMOVE", () => {
+  it("should work", () => {
+    const wal = walletSdk.Wallet.TestNet();
+    const account = wal.stellar().account();
+    console.log(account.createKeypair()); // ALEC TODO - remove
+  });
+});
+
 describe("Account", () => {
   it("should init keypair and sign", () => {
     const wal = walletSdk.Wallet.TestNet();
