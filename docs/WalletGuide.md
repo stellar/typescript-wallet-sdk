@@ -118,7 +118,7 @@ const transaction = await anchor.sep24().getTransactionBy({
 Get account transactions for a specified asset.
 
 ```typescript
-const transactions = await anchor.sep24().getHistory({
+const transactions = await anchor.sep24().getTransactionsForAsset({
   authToken,
   assetCode,
 });

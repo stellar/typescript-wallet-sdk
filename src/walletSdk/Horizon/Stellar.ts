@@ -3,7 +3,6 @@ import {
   Server,
   Transaction,
   TransactionBuilder as StellarTransactionBuilder,
-  Memo,
   FeeBumpTransaction,
 } from "stellar-sdk";
 
