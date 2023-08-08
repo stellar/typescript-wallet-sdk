@@ -2,7 +2,8 @@ import {
   Account as StellarAccount,
   Server,
   Transaction,
-  Memo,
+  TransactionBuilder as StellarTransactionBuilder,
+  FeeBumpTransaction,
 } from "stellar-sdk";
 
 import { Config } from "walletSdk";
@@ -138,5 +139,9 @@ export class Stellar {
       }
       throw e;
     }
+  }
+
+  decodeTransaction(xdr: string): Transaction | FeeBumpTransaction {
+    return StellarTransactionBuilder.fromXDR(xdr, this.cfg.stellar.network);
   }
 }
