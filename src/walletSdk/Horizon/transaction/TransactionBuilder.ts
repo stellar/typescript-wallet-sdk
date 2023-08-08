@@ -11,6 +11,7 @@ import StellarSdk, {
 import { Config } from "walletSdk";
 import { AccountKeypair } from "../Account";
 import { InsufficientStartingBalanceError } from "../../Exceptions";
+import { IssuedAssetId } from "../../Asset";
 
 export class TransactionBuilder {
   private network: Networks;
@@ -58,6 +59,21 @@ export class TransactionBuilder {
 
   addOperation(op: xdr.Operation) {
     this.builder.addOperation(op);
+  }
+
+  addAssetSupport(asset: IssuedAssetId, trustLimit?: string) {
+    this.operations.push(
+      StellarSdk.Operation.changeTrust({
+        asset: asset.toAsset(),
+        limit: trustLimit,
+        source: this.sourceAccount,
+      }),
+    );
+    return this;
+  }
+
+  removeAssetSupport(asset: IssuedAssetId) {
+    return this.addAssetSupport(asset, "0");
   }
 
   build(): Transaction {

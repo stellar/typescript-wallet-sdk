@@ -10,6 +10,11 @@ import {
   AccountKeypair,
   SigningKeypair,
 } from "../src/walletSdk/Horizon/Account";
+import {
+  IssuedAssetId,
+  FiatAssetId,
+  NativeAssetId,
+} from "../src/walletSdk/Asset";
 
 import sdk from "../src";
 const { walletSdk } = sdk;
@@ -147,5 +152,51 @@ describe("Stellar", () => {
     });
     expect(txn).toBeTruthy();
     expect(txn.fee).toBe("200");
+  });
+  it("should add and remove asset support", async () => {
+    const asset = new IssuedAssetId(
+      "USDC",
+      "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+    );
+
+    const txBuilder = await stellar.transaction({
+      sourceAddress: kp,
+      baseFee: 1000,
+    });
+    const tx = txBuilder.addAssetSupport(asset).build();
+    tx.sign(kp.keypair);
+    await stellar.submitTransaction(tx);
+
+    let acc = await stellar.server.loadAccount(kp.publicKey);
+    let balance = acc.balances.find((b) => b.asset_code === "USDC");
+    expect(balance).toBeTruthy();
+
+    const tx2 = txBuilder.removeAssetSupport(asset).build();
+    tx2.sign(kp.keypair);
+    await stellar.submitTransaction(tx2);
+
+    acc = await stellar.server.loadAccount(kp.publicKey);
+    balance = acc.balances.find((b) => b.asset_code === "USDC");
+    expect(balance).toBeFalsy();
+  }, 20000);
+});
+
+describe("Asset", () => {
+  it("should create an asset", () => {
+    const issued = new IssuedAssetId(
+      "USDC",
+      "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+    );
+    expect(issued.sep38).toBe(
+      "stellar:USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+    );
+    expect(issued.toAsset().code).toBe("USDC");
+
+    const native = new NativeAssetId();
+    expect(native.sep38).toBe("stellar:native");
+    expect(native.toAsset().code).toBe("XLM");
+
+    const fiat = new FiatAssetId("USD");
+    expect(fiat.sep38).toBe("iso4217:USD");
   });
 });
