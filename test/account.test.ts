@@ -7,24 +7,19 @@ import StellarSdk, {
   MemoText,
 } from "stellar-sdk";
 import { PublicKeypair } from "../src/walletSdk/Horizon/Account";
+import crypto from "crypto";
 
 import sdk from "../src";
 const { walletSdk } = sdk;
 
-// ALEC TODO - remove
-
-describe("ALEC TODO - REMOVE", () => {
-  it("should work", () => {
-    const wal = walletSdk.Wallet.TestNet();
-    const account = wal.stellar().account();
-    console.log(account.createKeypair()); // ALEC TODO - remove
-  });
-});
-
+let wal;
+let account;
 describe("Account", () => {
-  it("should init keypair and sign", () => {
-    const wal = walletSdk.Wallet.TestNet();
-    const account = wal.stellar().account();
+  beforeEach(() => {
+    wal = walletSdk.Wallet.TestNet();
+    account = wal.stellar().account();
+  });
+  it("should create keypair and sign", () => {
     const kp = account.createKeypair();
     expect(kp.publicKey).toBeTruthy();
     expect(kp.secretKey).toBeTruthy();
@@ -37,6 +32,12 @@ describe("Account", () => {
     expect(tx.signatures.length).toBe(1);
     tx.sign(kp.keypair);
     expect(tx.signatures.length).toBe(2);
+  });
+  it("should create keypair from random", () => {
+    const rand = crypto.randomBytes(32);
+    const kp = account.createKeypairFromRandom(rand);
+    expect(kp.publicKey).toBeTruthy();
+    expect(kp.secretKey).toBeTruthy();
   });
   it("can init from string", () => {
     const kp = PublicKeypair.fromPublicKey(
