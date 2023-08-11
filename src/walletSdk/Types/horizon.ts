@@ -4,7 +4,7 @@ import { AccountKeypair } from "../Horizon/Account";
 export enum NETWORK_URLS {
   PUBLIC = "https://horizon.stellar.org",
   TESTNET = "https://horizon-testnet.stellar.org",
-}
+};
 
 export type TransactionParams = {
   sourceAddress: AccountKeypair;
@@ -22,4 +22,12 @@ export type SubmitWithFeeIncreaseParams = {
   baseFee?: number;
   memo?: Memo;
   maxFee?: number;
+};
+
+export const HORIZON_LIMIT_MAX = 200;
+export const HORIZON_LIMIT_DEFAULT = 10;
+
+export enum HORIZON_ORDER {
+  ASC = "asc",
+  DESC = "desc",
 };
