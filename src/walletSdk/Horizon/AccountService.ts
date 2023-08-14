@@ -2,7 +2,11 @@ import { Keypair, Networks, Server, ServerApi } from "stellar-sdk";
 
 import { Config } from "walletSdk";
 import { SigningKeypair } from "./Account";
-import { HORIZON_LIMIT_DEFAULT, HORIZON_LIMIT_MAX, HORIZON_ORDER } from "../Types";
+import {
+  HORIZON_LIMIT_DEFAULT,
+  HORIZON_LIMIT_MAX,
+  HORIZON_ORDER,
+} from "../Types";
 import { OperationsLimitExceededError } from "../Exceptions";
 
 // Do not create this object directly, use the Wallet class.
@@ -26,17 +30,27 @@ export class AccountService {
   }
 
   /**
+   * Generate new account keypair (public and secret key) from random bytes. This key pair can be
+   * used to create a Stellar account.
+   *
+   * @return public key and secret key
+   */
+  createKeypairFromRandom(randomBytes: Buffer): SigningKeypair {
+    return new SigningKeypair(Keypair.fromRawEd25519Seed(randomBytes));
+  }
+
+  /**
    * Get account information from the Stellar network.
    *
    * @param accountAddress Stellar address of the account
    * @param serverInstance optional Horizon server instance when default doesn't work
    * @return account information
    */
-  async getInfo({ 
-    accountAddress, 
-    serverInstance = this.server 
-  }: { 
-    accountAddress: string; 
+  async getInfo({
+    accountAddress,
+    serverInstance = this.server,
+  }: {
+    accountAddress: string;
     serverInstance?: Server;
   }): Promise<ServerApi.AccountRecord> {
     return serverInstance.accounts().accountId(accountAddress).call();
@@ -69,7 +83,7 @@ export class AccountService {
     if (limit > HORIZON_LIMIT_MAX) {
       throw new OperationsLimitExceededError(HORIZON_LIMIT_MAX);
     }
-    
+
     return this.server
       .operations()
       .forAccount(accountAddress)

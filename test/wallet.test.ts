@@ -2,12 +2,20 @@ import axios, { AxiosInstance } from "axios";
 import sinon from "sinon";
 import StellarSdk, { Keypair, Memo, MemoText } from "stellar-sdk";
 
-import { Anchor, ApplicationConfiguration, StellarConfiguration, Wallet } from "../src";
+import {
+  Anchor,
+  ApplicationConfiguration,
+  StellarConfiguration,
+  Wallet,
+} from "../src";
 import { DefaultClient } from "../src/walletSdk";
 import { ServerRequestFailedError } from "../src/walletSdk/Exceptions";
 import { Watcher } from "../src/walletSdk/Watcher";
 import { TransactionStatus, AnchorTransaction } from "../src/walletSdk/Types";
-import { WalletSigner, DefaultSigner } from "../src/walletSdk/Auth/WalletSigner";
+import {
+  WalletSigner,
+  DefaultSigner,
+} from "../src/walletSdk/Auth/WalletSigner";
 import { SigningKeypair } from "../src/walletSdk/Horizon/Account";
 import { Sep24 } from "../src/walletSdk/Anchor/Sep24";
 
@@ -38,10 +46,7 @@ describe("Wallet", () => {
       timeout: 1000,
       headers: { "X-Custom-Header": "foobar" },
     });
-    let appConfig = new ApplicationConfiguration(
-      DefaultSigner,
-      customClient,
-    );
+    let appConfig = new ApplicationConfiguration(DefaultSigner, customClient);
     let wal = new Wallet({
       stellarConfiguration: StellarConfiguration.TestNet(),
       applicationConfiguration: appConfig,
@@ -85,7 +90,7 @@ describe("Anchor", () => {
     // The Sep10.challenge and Sep10.sign functions are private so lint is
     // complaining about it on a few lines below. So let's mock this auth
     // instance as "any" to work around that.
-    const auth = await anchor.sep10() as any;
+    const auth = (await anchor.sep10()) as any;
     let signedByClient = false;
     let signedByDomain = false;
 

@@ -148,7 +148,7 @@ describe("Stellar", () => {
     expect(txn).toBeTruthy();
     expect(txn.fee).toBe("200");
   });
-  
+
   it("should add and remove asset support", async () => {
     const asset = new IssuedAssetId(
       "USDC",
@@ -164,7 +164,9 @@ describe("Stellar", () => {
     await stellar.submitTransaction(tx);
 
     let acc = await stellar.server.loadAccount(kp.publicKey);
-    let balance = acc.balances.find((b) => (b as Horizon.BalanceLineAsset).asset_code === "USDC");
+    let balance = acc.balances.find(
+      (b) => (b as Horizon.BalanceLineAsset).asset_code === "USDC",
+    );
     expect(balance).toBeTruthy();
 
     const tx2 = txBuilder.removeAssetSupport(asset).build();
@@ -172,7 +174,9 @@ describe("Stellar", () => {
     await stellar.submitTransaction(tx2);
 
     acc = await stellar.server.loadAccount(kp.publicKey);
-    balance = acc.balances.find((b) => (b as Horizon.BalanceLineAsset).asset_code === "USDC");
+    balance = acc.balances.find(
+      (b) => (b as Horizon.BalanceLineAsset).asset_code === "USDC",
+    );
     expect(balance).toBeFalsy();
   }, 20000);
 

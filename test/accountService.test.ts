@@ -15,7 +15,7 @@ describe("Horizon", () => {
     const wallet = Wallet.TestNet();
     const stellar = wallet.stellar();
     accountService = stellar.account();
-    
+
     const fundingAccountKp = SigningKeypair.fromSecret(
       "SDJTZXPFPWRK4GHECLQBDFRDCNEZFA4PIZA475WQEGKTL4Y2QLS77DGD",
     );
@@ -24,11 +24,13 @@ describe("Horizon", () => {
     try {
       await stellar.server.loadAccount(fundingAccountKp.publicKey);
     } catch (e) {
-      await axios.get("https://friendbot.stellar.org/?addr=" + fundingAccountKp.publicKey);
+      await axios.get(
+        "https://friendbot.stellar.org/?addr=" + fundingAccountKp.publicKey,
+      );
     }
 
     const testingAccountKp = SigningKeypair.fromSecret(
-      "SAXW2HC7JH5IJSIRFQ22JTMT6T3VONKGMYSIBLHNEJCV7AXLIGAXNESD"
+      "SAXW2HC7JH5IJSIRFQ22JTMT6T3VONKGMYSIBLHNEJCV7AXLIGAXNESD",
     );
 
     // make sure testing account exists
@@ -48,7 +50,7 @@ describe("Horizon", () => {
         await stellar.submitTransaction(createAccTx);
         await stellar.server.loadAccount(accountAddress);
       } catch (e) {
-        failed = true; 
+        failed = true;
       }
 
       const txBuilder2 = await stellar.transaction({
@@ -66,7 +68,7 @@ describe("Horizon", () => {
       try {
         await stellar.submitTransaction(addUsdcTx);
       } catch (e) {
-        failed = true; 
+        failed = true;
       }
 
       expect(failed).toBeFalsy();
@@ -74,17 +76,20 @@ describe("Horizon", () => {
   }, 30000);
 
   it("should return stellar account details", async () => {
-    const response  = await accountService.getInfo({ accountAddress });
+    const response = await accountService.getInfo({ accountAddress });
 
     expect(response.account_id).toBe(accountAddress);
     expect(response.balances).toBeInstanceOf(Array);
-    expect(response.balances.some(
-      (balance) => (balance as Horizon.BalanceLineAsset).asset_code === "USDC"
-    )).toBeTruthy();
+    expect(
+      response.balances.some(
+        (balance) =>
+          (balance as Horizon.BalanceLineAsset).asset_code === "USDC",
+      ),
+    ).toBeTruthy();
   });
 
   it("should return stellar account operations", async () => {
-    const response  = await accountService.getHistory({ 
+    const response = await accountService.getHistory({
       accountAddress,
       order: HORIZON_ORDER.ASC,
     });
@@ -94,7 +99,11 @@ describe("Horizon", () => {
     expect(response.records[0]).toHaveProperty("id");
     expect(response.records[0]).toHaveProperty("type");
     expect(response.records[0]).toHaveProperty("created_at");
-    expect(response.records.some(({ type }) => type === "create_account")).toBeTruthy();
-    expect(response.records.some(({ type }) => type === "change_trust")).toBeTruthy();
+    expect(
+      response.records.some(({ type }) => type === "create_account"),
+    ).toBeTruthy();
+    expect(
+      response.records.some(({ type }) => type === "change_trust"),
+    ).toBeTruthy();
   });
 });
