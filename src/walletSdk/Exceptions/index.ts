@@ -120,3 +120,10 @@ export class SignerRequiredError extends Error {
     Object.setPrototypeOf(this, SignerRequiredError.prototype);
   }
 }
+
+export class OperationsLimitExceededError extends Error {
+  constructor(maxLimit: number) {
+    super(`Maximum limit is ${maxLimit} operations`);
+    Object.setPrototypeOf(this, OperationsLimitExceededError.prototype);
+  }
+}

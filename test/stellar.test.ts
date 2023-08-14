@@ -1,11 +1,14 @@
-import StellarSdk, {
+import {
   Keypair,
   Memo,
   MemoText,
   Operation,
   Asset,
+  Horizon,
 } from "stellar-sdk";
 import axios from "axios";
+
+import { Stellar, Wallet } from "../src";
 import {
   AccountKeypair,
   SigningKeypair,
@@ -16,17 +19,14 @@ import {
   NativeAssetId,
 } from "../src/walletSdk/Asset";
 
-import sdk from "../src";
-const { walletSdk } = sdk;
-
-let wal;
-let stellar;
+let wal: Wallet;
+let stellar: Stellar;
 const kp = SigningKeypair.fromSecret(
   "SAS372GXRG6U7FW6W2PRVELKPOJG2FZZUADCIELWU2U3A45TNWXEQUV5",
 );
 describe("Stellar", () => {
-  beforeEach(() => {
-    wal = walletSdk.Wallet.TestNet();
+  beforeAll(() => {
+    wal = Wallet.TestNet();
     stellar = wal.stellar();
   });
   it("should create and submit a transaction", async () => {
@@ -69,7 +69,7 @@ describe("Stellar", () => {
       let failed;
       try {
         await stellar.submitTransaction(tx);
-        await stellar.server.loadAccount(param.sourceAddress.publicKey);
+        await stellar.server.loadAccount(newKp.publicKey);
       } catch (e) {
         failed = true;
       }
@@ -92,7 +92,7 @@ describe("Stellar", () => {
           },
         },
       })
-      .mockReturnValueOnce({ successful: true });
+      .mockReturnValueOnce(Promise.resolve(true));
 
     const txn = await stellar.submitWithFeeIncrease({
       sourceAddress: kp,
@@ -125,7 +125,7 @@ describe("Stellar", () => {
           },
         },
       })
-      .mockReturnValueOnce({ successful: true });
+      .mockReturnValueOnce(Promise.resolve(true));
 
     const signerFunction = (txn) => {
       txn.sign(kp.keypair);
@@ -134,11 +134,6 @@ describe("Stellar", () => {
 
     const txn = await stellar.submitWithFeeIncrease({
       sourceAddress: kp,
-      signingAddresses: [
-        SigningKeypair.fromSecret(
-          "SDCLCSOJ7JFDUAGMB4RD54JBQ633M2DHWWGNUE4WMK52WMEU6QKZCPHV",
-        ),
-      ],
       timeout: 180,
       baseFeeIncrease: 100,
       signerFunction,
@@ -153,6 +148,7 @@ describe("Stellar", () => {
     expect(txn).toBeTruthy();
     expect(txn.fee).toBe("200");
   });
+
   it("should add and remove asset support", async () => {
     const asset = new IssuedAssetId(
       "USDC",
@@ -168,7 +164,9 @@ describe("Stellar", () => {
     await stellar.submitTransaction(tx);
 
     let acc = await stellar.server.loadAccount(kp.publicKey);
-    let balance = acc.balances.find((b) => b.asset_code === "USDC");
+    let balance = acc.balances.find(
+      (b) => (b as Horizon.BalanceLineAsset).asset_code === "USDC",
+    );
     expect(balance).toBeTruthy();
 
     const tx2 = txBuilder.removeAssetSupport(asset).build();
@@ -176,7 +174,9 @@ describe("Stellar", () => {
     await stellar.submitTransaction(tx2);
 
     acc = await stellar.server.loadAccount(kp.publicKey);
-    balance = acc.balances.find((b) => b.asset_code === "USDC");
+    balance = acc.balances.find(
+      (b) => (b as Horizon.BalanceLineAsset).asset_code === "USDC",
+    );
     expect(balance).toBeFalsy();
   }, 20000);
 

@@ -23,3 +23,11 @@ export type SubmitWithFeeIncreaseParams = {
   memo?: Memo;
   maxFee?: number;
 };
+
+export const HORIZON_LIMIT_MAX = 200;
+export const HORIZON_LIMIT_DEFAULT = 10;
+
+export enum HORIZON_ORDER {
+  ASC = "asc",
+  DESC = "desc",
+}
