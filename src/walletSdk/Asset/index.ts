@@ -12,7 +12,7 @@ class AssetId {
   }
 }
 
-class StellarAssetId extends AssetId {
+export class StellarAssetId extends AssetId {
   id: string;
   code: string;
   issuer: string;

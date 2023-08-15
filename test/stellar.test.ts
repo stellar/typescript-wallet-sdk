@@ -18,6 +18,7 @@ import {
   FiatAssetId,
   NativeAssetId,
 } from "../src/walletSdk/Asset";
+import { TransactionStatus, WithdrawTransaction } from "../src/walletSdk/Types";
 
 let wal: Wallet;
 let stellar: Stellar;
@@ -186,6 +187,33 @@ describe("Stellar", () => {
 
     const tx = stellar.decodeTransaction(txnXdr);
     kp.sign(tx);
+  });
+  it("should transfer withdrawal transaction", async () => {
+    const walletTransaction = {
+      id: "db15d166-5a5e-4d5c-ba5d-271c32cd8cf0",
+      kind: "withdrawal",
+      status: TransactionStatus.pending_user_transfer_start,
+      amount_in: "50.55",
+      withdraw_memo_type: "text",
+      withdraw_memo: "the withdraw memo",
+      withdraw_anchor_account:
+        "GCSGSR6KQQ5BP2FXVPWRL6SWPUSFWLVONLIBJZUKTVQB5FYJFVL6XOXE",
+    } as WithdrawTransaction;
+
+    const asset = new IssuedAssetId(
+      "USDC",
+      "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+    );
+
+    const txBuilder = await stellar.transaction({
+      sourceAddress: kp,
+      baseFee: 100,
+    });
+
+    const txn = txBuilder
+      .transferWithdrawalTransaction(walletTransaction, asset)
+      .build();
+    expect(txn).toBeTruthy();
   });
 });
 
