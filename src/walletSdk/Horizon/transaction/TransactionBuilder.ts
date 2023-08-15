@@ -85,7 +85,7 @@ export class TransactionBuilder {
     return this;
   }
 
-  addMemo(memo: Memo): TransactionBuilder {
+  setMemo(memo: Memo): TransactionBuilder {
     this.builder.addMemo(memo);
     return this;
   }
@@ -129,7 +129,7 @@ export class TransactionBuilder {
       throw new WithdrawalTxMissingMemoError();
     }
 
-    return this.addMemo(
+    return this.setMemo(
       new Memo(transaction.withdraw_memo_type, transaction.withdraw_memo),
     ).transfer(
       transaction.withdraw_anchor_account,
