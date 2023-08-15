@@ -13,6 +13,12 @@ export type TransactionParams = {
   timebounds?: Server.Timebounds | number;
 };
 
+export type FeeBumpTransactionParams = {
+  feeAddress: AccountKeypair;
+  transaction: Transaction;
+  baseFee?: number;
+};
+
 export type SubmitWithFeeIncreaseParams = {
   sourceAddress: AccountKeypair;
   timeout: number;
