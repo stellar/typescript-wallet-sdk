@@ -95,18 +95,16 @@ describe("Stellar", () => {
       })
       .mockReturnValueOnce(Promise.resolve(true));
 
+    const buildingFunction = (builder) =>
+      builder.transfer(kp.publicKey, new NativeAssetId(), "2");
+
     const txn = await stellar.submitWithFeeIncrease({
       sourceAddress: kp,
       timeout: 180,
       baseFeeIncrease: 100,
-      operations: [
-        Operation.payment({
-          destination: kp.publicKey,
-          asset: Asset.native(),
-          amount: "1",
-        }),
-      ],
+      buildingFunction,
     });
+
     expect(txn).toBeTruthy();
     expect(txn.fee).toBe("200");
   });
@@ -147,18 +145,15 @@ describe("Stellar", () => {
       return txn;
     };
 
+    const buildingFunction = (builder) =>
+      builder.transfer(kp.publicKey, new NativeAssetId(), "2");
+
     const txn = await stellar.submitWithFeeIncrease({
       sourceAddress: kp,
       timeout: 180,
       baseFeeIncrease: 100,
       signerFunction,
-      operations: [
-        Operation.payment({
-          destination: kp.publicKey,
-          asset: Asset.native(),
-          amount: "1",
-        }),
-      ],
+      buildingFunction,
     });
     expect(txn).toBeTruthy();
     expect(txn.fee).toBe("200");

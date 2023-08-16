@@ -108,22 +108,20 @@ export class Stellar {
     sourceAddress,
     timeout,
     baseFeeIncrease,
-    operations,
+    buildingFunction,
     signerFunction,
     baseFee,
     memo,
     maxFee,
   }: SubmitWithFeeIncreaseParams): Promise<Transaction> {
-    const builder = await this.transaction({
+    let builder = await this.transaction({
       sourceAddress,
       timebounds: timeout,
       baseFee,
       memo,
     });
 
-    operations.forEach((op) => {
-      builder.addOperation(op);
-    });
+    builder = buildingFunction(builder);
 
     let transaction = builder.build();
     if (signerFunction) {
@@ -150,7 +148,7 @@ export class Stellar {
           sourceAddress,
           timeout,
           baseFeeIncrease,
-          operations,
+          buildingFunction,
           signerFunction,
           baseFee: newFee,
           memo,
