@@ -8,7 +8,7 @@ import {
 
 import { Config } from "walletSdk";
 import { AccountService } from "./AccountService";
-import { TransactionBuilder } from "./transaction/TransactionBuilder";
+import { TransactionBuilder } from "./Transaction/TransactionBuilder";
 import {
   TransactionParams,
   SubmitWithFeeIncreaseParams,
