@@ -9,7 +9,11 @@ import {
 import { Config } from "walletSdk";
 import { AccountService } from "./AccountService";
 import { TransactionBuilder } from "./Transaction/TransactionBuilder";
-import { TransactionParams, SubmitWithFeeIncreaseParams } from "../Types";
+import {
+  TransactionParams,
+  SubmitWithFeeIncreaseParams,
+  FeeBumpTransactionParams,
+} from "../Types";
 import {
   AccountDoesNotExistError,
   TransactionSubmitFailedError,
@@ -67,7 +71,22 @@ export class Stellar {
     );
   }
 
-  async submitTransaction(signedTransaction: Transaction): Promise<boolean> {
+  makeFeeBump({
+    feeAddress,
+    transaction,
+    baseFee,
+  }: FeeBumpTransactionParams): FeeBumpTransaction {
+    return StellarTransactionBuilder.buildFeeBumpTransaction(
+      feeAddress.keypair,
+      (baseFee || this.cfg.stellar.baseFee).toString(),
+      transaction,
+      transaction.networkPassphrase,
+    );
+  }
+
+  async submitTransaction(
+    signedTransaction: Transaction | FeeBumpTransaction,
+  ): Promise<boolean> {
     try {
       const response = await this.server.submitTransaction(signedTransaction);
       if (!response.successful) {
@@ -89,22 +108,20 @@ export class Stellar {
     sourceAddress,
     timeout,
     baseFeeIncrease,
-    operations,
+    buildingFunction,
     signerFunction,
     baseFee,
     memo,
     maxFee,
   }: SubmitWithFeeIncreaseParams): Promise<Transaction> {
-    const builder = await this.transaction({
+    let builder = await this.transaction({
       sourceAddress,
       timebounds: timeout,
       baseFee,
       memo,
     });
 
-    operations.forEach((op) => {
-      builder.addOperation(op);
-    });
+    builder = buildingFunction(builder);
 
     let transaction = builder.build();
     if (signerFunction) {
@@ -131,7 +148,7 @@ export class Stellar {
           sourceAddress,
           timeout,
           baseFeeIncrease,
-          operations,
+          buildingFunction,
           signerFunction,
           baseFee: newFee,
           memo,

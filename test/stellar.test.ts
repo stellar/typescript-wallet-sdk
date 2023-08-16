@@ -26,18 +26,18 @@ const kp = SigningKeypair.fromSecret(
   "SAS372GXRG6U7FW6W2PRVELKPOJG2FZZUADCIELWU2U3A45TNWXEQUV5",
 );
 describe("Stellar", () => {
-  beforeAll(() => {
+  beforeAll(async () => {
     wal = Wallet.TestNet();
     stellar = wal.stellar();
-  });
-  it("should create and submit a transaction", async () => {
+
     // make sure signing key exists
     try {
       await stellar.server.loadAccount(kp.publicKey);
     } catch (e) {
       await axios.get("https://friendbot.stellar.org/?addr=" + kp.publicKey);
     }
-
+  });
+  it("should create and submit a transaction", async () => {
     const now = Math.floor(Date.now() / 1000) - 5;
 
     const txBuilderParams = [
@@ -95,21 +95,33 @@ describe("Stellar", () => {
       })
       .mockReturnValueOnce(Promise.resolve(true));
 
+    const buildingFunction = (builder) =>
+      builder.transfer(kp.publicKey, new NativeAssetId(), "2");
+
     const txn = await stellar.submitWithFeeIncrease({
       sourceAddress: kp,
       timeout: 180,
       baseFeeIncrease: 100,
-      operations: [
-        Operation.payment({
-          destination: kp.publicKey,
-          asset: Asset.native(),
-          amount: "1",
-        }),
-      ],
+      buildingFunction,
     });
+
     expect(txn).toBeTruthy();
     expect(txn.fee).toBe("200");
   });
+
+  it("should create and submit fee-bump transaction", async () => {
+    const txBuilder = await stellar.transaction({
+      sourceAddress: kp,
+      baseFee: 100,
+    });
+    const newKp = new AccountKeypair(Keypair.random());
+    const transaction = txBuilder.createAccount(newKp, 2).build();
+    kp.sign(transaction);
+
+    const feeBumpTx = stellar.makeFeeBump({ feeAddress: kp, transaction });
+    kp.sign(feeBumpTx);
+    await stellar.submitTransaction(feeBumpTx);
+  }, 10000);
 
   it("should be able to give a signing keypair", async () => {
     // mock 1 failed response and then 1 successful to test retry
@@ -133,18 +145,15 @@ describe("Stellar", () => {
       return txn;
     };
 
+    const buildingFunction = (builder) =>
+      builder.transfer(kp.publicKey, new NativeAssetId(), "2");
+
     const txn = await stellar.submitWithFeeIncrease({
       sourceAddress: kp,
       timeout: 180,
       baseFeeIncrease: 100,
       signerFunction,
-      operations: [
-        Operation.payment({
-          destination: kp.publicKey,
-          asset: Asset.native(),
-          amount: "1",
-        }),
-      ],
+      buildingFunction,
     });
     expect(txn).toBeTruthy();
     expect(txn.fee).toBe("200");
