@@ -127,3 +127,22 @@ export class OperationsLimitExceededError extends Error {
     Object.setPrototypeOf(this, OperationsLimitExceededError.prototype);
   }
 }
+
+export class WithdrawalTxNotPendingUserTransferStartError extends Error {
+  constructor(status: string) {
+    super(
+      `Transaction status needs to be pending_user_transfer_start, given: ${status}`,
+    );
+    Object.setPrototypeOf(
+      this,
+      WithdrawalTxNotPendingUserTransferStartError.prototype,
+    );
+  }
+}
+
+export class WithdrawalTxMissingMemoError extends Error {
+  constructor() {
+    super(`Withdrawal transaction missing memo`);
+    Object.setPrototypeOf(this, WithdrawalTxMissingMemoError.prototype);
+  }
+}
