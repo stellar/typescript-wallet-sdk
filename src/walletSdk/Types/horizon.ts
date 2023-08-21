@@ -1,6 +1,6 @@
 import { Memo, Server, xdr, Transaction } from "stellar-sdk";
 import { AccountKeypair } from "../Horizon/Account";
-import { TransactionBuilder } from "../Horizon/transaction/TransactionBuilder";
+import { TransactionBuilder } from "../Horizon/Transaction/TransactionBuilder";
 
 export enum NETWORK_URLS {
   PUBLIC = "https://horizon.stellar.org",
