@@ -1,12 +1,27 @@
-import { Account as StellarAccount, Server, Transaction } from "stellar-sdk";
+import {
+  Account as StellarAccount,
+  Server,
+  Transaction,
+  TransactionBuilder as StellarTransactionBuilder,
+  FeeBumpTransaction,
+} from "stellar-sdk";
+
 import { Config } from "walletSdk";
 import { AccountService } from "./AccountService";
-import { TransactionBuilder } from "./transaction/TransactionBuilder";
-import { TransactionParams } from "../Types";
+import { TransactionBuilder } from "./Transaction/TransactionBuilder";
+import {
+  TransactionParams,
+  SubmitWithFeeIncreaseParams,
+  FeeBumpTransactionParams,
+} from "../Types";
 import {
   AccountDoesNotExistError,
   TransactionSubmitFailedError,
+  TransactionSubmitWithFeeIncreaseFailedError,
+  SignerRequiredError,
 } from "../Exceptions";
+import { getResultCode } from "../Utils/getResultCode";
+import { SigningKeypair } from "./Account";
 
 // Do not create this object directly, use the Wallet class.
 export class Stellar {
@@ -56,7 +71,22 @@ export class Stellar {
     );
   }
 
-  async submitTransaction(signedTransaction: Transaction): Promise<boolean> {
+  makeFeeBump({
+    feeAddress,
+    transaction,
+    baseFee,
+  }: FeeBumpTransactionParams): FeeBumpTransaction {
+    return StellarTransactionBuilder.buildFeeBumpTransaction(
+      feeAddress.keypair,
+      (baseFee || this.cfg.stellar.baseFee).toString(),
+      transaction,
+      transaction.networkPassphrase,
+    );
+  }
+
+  async submitTransaction(
+    signedTransaction: Transaction | FeeBumpTransaction,
+  ): Promise<boolean> {
     try {
       const response = await this.server.submitTransaction(signedTransaction);
       if (!response.successful) {
@@ -72,5 +102,63 @@ export class Stellar {
       }
       throw e;
     }
+  }
+
+  async submitWithFeeIncrease({
+    sourceAddress,
+    timeout,
+    baseFeeIncrease,
+    buildingFunction,
+    signerFunction,
+    baseFee,
+    memo,
+    maxFee,
+  }: SubmitWithFeeIncreaseParams): Promise<Transaction> {
+    let builder = await this.transaction({
+      sourceAddress,
+      timebounds: timeout,
+      baseFee,
+      memo,
+    });
+
+    builder = buildingFunction(builder);
+
+    let transaction = builder.build();
+    if (signerFunction) {
+      transaction = signerFunction(transaction);
+    } else if (sourceAddress instanceof SigningKeypair) {
+      transaction.sign(sourceAddress.keypair);
+    } else {
+      throw new SignerRequiredError();
+    }
+
+    try {
+      const success = await this.submitTransaction(transaction);
+      return transaction;
+    } catch (e) {
+      const resultCode = getResultCode(e);
+      if (resultCode === "tx_too_late") {
+        const newFee = parseInt(transaction.fee) + baseFeeIncrease;
+
+        if (maxFee && newFee > maxFee) {
+          throw new TransactionSubmitWithFeeIncreaseFailedError(maxFee, e);
+        }
+
+        return this.submitWithFeeIncrease({
+          sourceAddress,
+          timeout,
+          baseFeeIncrease,
+          buildingFunction,
+          signerFunction,
+          baseFee: newFee,
+          memo,
+        });
+      }
+      throw e;
+    }
+  }
+
+  decodeTransaction(xdr: string): Transaction | FeeBumpTransaction {
+    return StellarTransactionBuilder.fromXDR(xdr, this.cfg.stellar.network);
   }
 }

@@ -14,14 +14,16 @@ export {
   ApplicationConfiguration,
 } from "./walletSdk";
 export { Anchor } from "./walletSdk/Anchor";
+export { Sep24 } from "./walletSdk/Anchor/Sep24";
+export { IssuedAssetId, NativeAssetId, FiatAssetId } from "./walletSdk/Asset";
 export { Sep10, WalletSigner, DefaultSigner } from "./walletSdk/Auth";
 export {
   PublicKeypair,
   SigningKeypair,
   AccountService,
   Stellar,
+  TransactionBuilder,
 } from "./walletSdk/Horizon";
-export { Sep24 } from "./walletSdk/Anchor/Sep24";
 export { Recovery } from "./walletSdk/Recovery";
 export { Watcher } from "./walletSdk/Watcher";
 

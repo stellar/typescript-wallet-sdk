@@ -1,20 +1,17 @@
-import StellarSdk, {
-  TransactionBuilder,
-  Networks,
-  Server,
-  Keypair,
-  Memo,
-  MemoText,
-} from "stellar-sdk";
+import crypto from "crypto";
+import { TransactionBuilder, Networks } from "stellar-sdk";
+
+import { Wallet } from "../src";
 import { PublicKeypair } from "../src/walletSdk/Horizon/Account";
 
-import sdk from "../src";
-const { walletSdk } = sdk;
-
+let wal;
+let account;
 describe("Account", () => {
-  it("should init keypair and sign", () => {
-    const wal = walletSdk.Wallet.TestNet();
-    const account = wal.stellar().account();
+  beforeEach(() => {
+    wal = Wallet.TestNet();
+    account = wal.stellar().account();
+  });
+  it("should create keypair and sign", () => {
     const kp = account.createKeypair();
     expect(kp.publicKey).toBeTruthy();
     expect(kp.secretKey).toBeTruthy();
@@ -27,6 +24,12 @@ describe("Account", () => {
     expect(tx.signatures.length).toBe(1);
     tx.sign(kp.keypair);
     expect(tx.signatures.length).toBe(2);
+  });
+  it("should create keypair from random", () => {
+    const rand = crypto.randomBytes(32);
+    const kp = account.createKeypairFromRandom(rand);
+    expect(kp.publicKey).toBeTruthy();
+    expect(kp.secretKey).toBeTruthy();
   });
   it("can init from string", () => {
     const kp = PublicKeypair.fromPublicKey(

@@ -1,23 +1,25 @@
-import StellarSdk, { Keypair, Memo, MemoText } from "stellar-sdk";
-import http from "http";
-import sinon from "sinon";
 import axios, { AxiosInstance } from "axios";
+import sinon from "sinon";
+import StellarSdk, { Keypair, Memo, MemoText } from "stellar-sdk";
 
-import sdk from "../src";
 import {
-  AssetNotSupportedError,
-  ServerRequestFailedError,
-} from "../src/walletSdk/Exceptions";
+  Anchor,
+  ApplicationConfiguration,
+  StellarConfiguration,
+  Wallet,
+} from "../src";
+import { DefaultClient } from "../src/walletSdk";
+import { ServerRequestFailedError } from "../src/walletSdk/Exceptions";
 import { Watcher } from "../src/walletSdk/Watcher";
 import { TransactionStatus, AnchorTransaction } from "../src/walletSdk/Types";
-
-import { TransactionsResponse } from "../test/fixtures/TransactionsResponse";
 import {
   WalletSigner,
   DefaultSigner,
 } from "../src/walletSdk/Auth/WalletSigner";
 import { SigningKeypair } from "../src/walletSdk/Horizon/Account";
 import { Sep24 } from "../src/walletSdk/Anchor/Sep24";
+
+import { TransactionsResponse } from "../test/fixtures/TransactionsResponse";
 
 const originalSetTimeout = global.setTimeout;
 function sleep(time: number) {
@@ -26,16 +28,15 @@ function sleep(time: number) {
   });
 }
 
-const { walletSdk } = sdk;
 describe("Wallet", () => {
   it("should init", () => {
-    walletSdk.Wallet.TestNet();
-    walletSdk.Wallet.MainNet();
+    Wallet.TestNet();
+    Wallet.MainNet();
   });
   it("should be able return a client", async () => {
-    let appConfig = new walletSdk.ApplicationConfiguration();
-    let wal = new walletSdk.Wallet({
-      stellarConfiguration: walletSdk.StellarConfiguration.TestNet(),
+    let appConfig = new ApplicationConfiguration();
+    let wal = new Wallet({
+      stellarConfiguration: StellarConfiguration.TestNet(),
       applicationConfiguration: appConfig,
     });
   });
@@ -45,12 +46,9 @@ describe("Wallet", () => {
       timeout: 1000,
       headers: { "X-Custom-Header": "foobar" },
     });
-    let appConfig = new walletSdk.ApplicationConfiguration(
-      DefaultSigner,
-      customClient,
-    );
-    let wal = new walletSdk.Wallet({
-      stellarConfiguration: walletSdk.StellarConfiguration.TestNet(),
+    let appConfig = new ApplicationConfiguration(DefaultSigner, customClient);
+    let wal = new Wallet({
+      stellarConfiguration: StellarConfiguration.TestNet(),
       applicationConfiguration: appConfig,
     });
   });
@@ -58,17 +56,17 @@ describe("Wallet", () => {
 
 describe("SEP-24 flow", () => {
   it("should init a wallet with network and domain", () => {
-    const Wal = walletSdk.Wallet.TestNet();
+    const Wal = Wallet.TestNet();
     Wal.anchor({ homeDomain: "anchor-domain" });
   });
 });
 
-let anchor;
-let accountKp;
-let authToken;
+let anchor: Anchor;
+let accountKp: SigningKeypair;
+let authToken: string;
 describe("Anchor", () => {
-  beforeEach(() => {
-    const Wal = walletSdk.Wallet.TestNet();
+  beforeAll(() => {
+    const Wal = Wallet.TestNet();
     anchor = Wal.anchor({ homeDomain: "testanchor.stellar.org" });
     accountKp = SigningKeypair.fromSecret(
       "SDXC3OHSJZEQIXKEWFDNEZEQ7SW5DWBPW7RKUWI36ILY3QZZ6VER7TXV",
@@ -89,7 +87,10 @@ describe("Anchor", () => {
   });
 
   it("should be able to authenticate with client domain", async () => {
-    const auth = await anchor.sep10();
+    // The Sep10.challenge and Sep10.sign functions are private so lint is
+    // complaining about it on a few lines below. So let's mock this auth
+    // instance as "any" to work around that.
+    const auth = (await anchor.sep10()) as any;
     let signedByClient = false;
     let signedByDomain = false;
 
@@ -191,7 +192,6 @@ describe("Anchor", () => {
 
     // creates new 'incomplete' deposit transaction
     const { id: transactionId } = await anchor.sep24().deposit({
-      accountAddress: accountKp.publicKey,
       assetCode,
       authToken,
     });
@@ -641,7 +641,7 @@ describe("Anchor", () => {
         id: "uyt1576b-ac28-4c02-a521-ddbfd9ae7oiu",
         kind: "deposit",
         status: TransactionStatus.completed,
-        status_eta: null,
+        status_eta: undefined,
         amount_in: "150.45",
         amount_out: "149.45",
         amount_fee: "1.00",
@@ -649,15 +649,15 @@ describe("Anchor", () => {
         completed_at: "2023-05-22T18:11:27.227597Z",
         stellar_transaction_id:
           "pokib2292c4e09e8eb22d036171491e87b8d2086bf8b265874c8d182cb9cbngt",
-        external_transaction_id: null,
+        external_transaction_id: undefined,
         more_info_url:
           "https://testanchor.stellar.org/sep24/transaction/more_info?id=uyt1576b-ac28-4c02-a521-ddbfd9ae7oiu",
         message: "deposit completed!",
-        claimable_balance_id: null,
+        claimable_balance_id: undefined,
         to: "GCZSYKPDWAKPGR7GYFBOIQB3TH352X7ELZL27WSJET5PDVFORDMGYTB5",
-        from: null,
+        from: undefined,
         deposit_memo_type: "hash",
-        deposit_memo: null,
+        deposit_memo: undefined,
       };
 
       // add a new success message
@@ -688,7 +688,7 @@ describe("Anchor", () => {
         id: "def5d166-5a5e-4d5c-ba5d-271c32cd8abc",
         kind: "withdrawal",
         status: TransactionStatus.refunded,
-        status_eta: null,
+        status_eta: undefined,
         amount_in: "95.35",
         amount_in_asset:
           "stellar:SRT:GCDNJUBQSX7AJWLJACMJ7I4BC3Z47BQUTMHEICZLE6MU4KQBRYG5JY6B",
@@ -701,7 +701,7 @@ describe("Anchor", () => {
         completed_at: "2023-05-26T15:12:35.128156Z",
         stellar_transaction_id:
           "abu0b2292c4e09e8eb22d036171491e87b8d2086bf8b265874c8d182cb9cdega",
-        external_transaction_id: null,
+        external_transaction_id: undefined,
         more_info_url:
           "https://testanchor.stellar.org/sep24/transaction/more_info?id=def5d166-5a5e-4d5c-ba5d-271c32cd8abc",
         refunds: {
@@ -722,8 +722,8 @@ describe("Anchor", () => {
             },
           ],
         },
-        message: null,
-        to: null,
+        message: undefined,
+        to: undefined,
         from: "GCZSYKPDWAKPGR7GYFBOIQB3TH352X7ELZL27WSJET5PDVFORDMGYTB5",
         withdraw_memo_type: "hash",
         withdraw_memo: "AAAAAAAAAAAAAAAAAAAAANsV0WZaXk1cul0nHDLNjPA=",
@@ -759,22 +759,22 @@ describe("Anchor", () => {
         id: "hytcf7c4-927d-4b7a-8a1f-d7188ebddu8i",
         kind: "withdrawal",
         status: TransactionStatus.expired,
-        status_eta: null,
-        amount_in: null,
-        amount_out: null,
-        amount_fee: null,
+        status_eta: undefined,
+        amount_in: undefined,
+        amount_out: undefined,
+        amount_fee: undefined,
         started_at: "2023-05-25T18:56:29.615274Z",
-        completed_at: null,
-        stellar_transaction_id: null,
-        external_transaction_id: null,
+        completed_at: undefined,
+        stellar_transaction_id: undefined,
+        external_transaction_id: undefined,
         more_info_url:
           "https://testanchor.stellar.org/sep24/transaction/more_info?id=hytcf7c4-927d-4b7a-8a1f-d7188ebddu8i",
         message: "transaction has expired",
-        to: null,
+        to: undefined,
         from: "GCZSYKPDWAKPGR7GYFBOIQB3TH352X7ELZL27WSJET5PDVFORDMGYTB5",
         withdraw_memo_type: "hash",
-        withdraw_memo: null,
-        withdraw_anchor_account: null,
+        withdraw_memo: undefined,
+        withdraw_anchor_account: undefined,
       };
 
       // add a new success message
@@ -1694,7 +1694,7 @@ describe("Http client", () => {
     const accountKp = Keypair.fromSecret(
       "SDXC3OHSJZEQIXKEWFDNEZEQ7SW5DWBPW7RKUWI36ILY3QZZ6VER7TXV",
     );
-    const client = walletSdk.DefaultClient;
+    const client = DefaultClient;
 
     const resp = await client.get(
       `http://testanchor.stellar.org/auth?account=${accountKp.publicKey()}`,

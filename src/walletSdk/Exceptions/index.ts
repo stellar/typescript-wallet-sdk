@@ -101,3 +101,48 @@ export class ExpiredTokenError extends Error {
     Object.setPrototypeOf(this, ExpiredTokenError.prototype);
   }
 }
+
+export class TransactionSubmitWithFeeIncreaseFailedError extends Error {
+  constructor(maxFee: number, e: Error) {
+    super(
+      `Submitting transasction with fee increase failed due to reaching max fee of ${maxFee}: ${e}`,
+    );
+    Object.setPrototypeOf(
+      this,
+      TransactionSubmitWithFeeIncreaseFailedError.prototype,
+    );
+  }
+}
+
+export class SignerRequiredError extends Error {
+  constructor() {
+    super(`Either a SigningKeypair or a signerFunction required`);
+    Object.setPrototypeOf(this, SignerRequiredError.prototype);
+  }
+}
+
+export class OperationsLimitExceededError extends Error {
+  constructor(maxLimit: number) {
+    super(`Maximum limit is ${maxLimit} operations`);
+    Object.setPrototypeOf(this, OperationsLimitExceededError.prototype);
+  }
+}
+
+export class WithdrawalTxNotPendingUserTransferStartError extends Error {
+  constructor(status: string) {
+    super(
+      `Transaction status needs to be pending_user_transfer_start, given: ${status}`,
+    );
+    Object.setPrototypeOf(
+      this,
+      WithdrawalTxNotPendingUserTransferStartError.prototype,
+    );
+  }
+}
+
+export class WithdrawalTxMissingMemoError extends Error {
+  constructor() {
+    super(`Withdrawal transaction missing memo`);
+    Object.setPrototypeOf(this, WithdrawalTxMissingMemoError.prototype);
+  }
+}
