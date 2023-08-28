@@ -20,6 +20,112 @@ import {
 } from "../src/walletSdk/Asset";
 import { TransactionStatus, WithdrawTransaction } from "../src/walletSdk/Types";
 
+// ALEC TODO - move to it's own describe?
+describe("ALEC TODO - move", () => {
+  // ALEC TODO - uncomment
+  // it("should sponsor creating an account", async () => {
+  //   const kp = new SigningKeypair(Keypair.random());
+  //   console.log(`kp: ${kp.publicKey}`); // ALEC TODO - remove
+  //   const newKp = new SigningKeypair(Keypair.random());
+  //   console.log(`newKp: ${newKp.publicKey}`); // ALEC TODO - remove
+  //   await axios.get("https://friendbot.stellar.org/?addr=" + kp.publicKey);
+
+  //   const wal = Wallet.TestNet();
+  //   const stellar = wal.stellar();
+
+  //   const txBuilder = await stellar.transaction({
+  //     sourceAddress: kp,
+  //     baseFee: 100,
+  //   });
+
+  //   const buildingFunction = (builder) => builder.createAccount(newKp, "0");
+
+  //   const txn = txBuilder.sponsoring(kp, buildingFunction, newKp).build();
+  //   console.log(txn.toXDR()); // ALEC TODO - remove
+
+  //   kp.sign(txn);
+  //   newKp.sign(txn);
+
+  //   const res = await stellar.submitTransaction(txn);
+  //   expect(res).toBe(true);
+  // }, 30000);
+
+  // ALEC TODO - probably combine with above
+  it("should sponsor creating an account - diff txn source and sponsor", async () => {
+    const txnSourceKp = new SigningKeypair(Keypair.random());
+    console.log(`txnSourceKp: ${txnSourceKp.publicKey}`); // ALEC TODO - remove
+    const sponsorKp = new SigningKeypair(Keypair.random());
+    console.log(`sponsorKp: ${sponsorKp.publicKey}`); // ALEC TODO - remove
+    const newKp = new SigningKeypair(Keypair.random());
+    console.log(`newKp: ${newKp.publicKey}`); // ALEC TODO - remove
+    await axios.get(
+      "https://friendbot.stellar.org/?addr=" + sponsorKp.publicKey,
+    );
+    await axios.get(
+      "https://friendbot.stellar.org/?addr=" + txnSourceKp.publicKey,
+    );
+
+    const wal = Wallet.TestNet();
+    const stellar = wal.stellar();
+
+    const txBuilder = await stellar.transaction({
+      sourceAddress: txnSourceKp,
+      baseFee: 100,
+    });
+
+    const buildingFunction = (builder) => builder.createAccount(newKp, "0");
+
+    const txn = txBuilder
+      .sponsoring(txnSourceKp, buildingFunction, newKp)
+      .build();
+    console.log(txn.toXDR()); // ALEC TODO - remove
+
+    // sponsorKp.sign(txn);
+    newKp.sign(txn);
+    txnSourceKp.sign(txn);
+
+    const res = await stellar.submitTransaction(txn);
+    expect(res).toBe(true);
+  }, 30000);
+
+  // ALEC TODO - uncomment
+  // it("should sponsor adding trustlines", async () => {
+  //   const kp = new SigningKeypair(Keypair.random());
+  //   console.log(`kp: ${kp.publicKey}`); // ALEC TODO - remove
+  //   const txnSourceKp = new SigningKeypair(Keypair.random());
+  //   console.log(`txnSourceKp: ${txnSourceKp.publicKey}`); // ALEC TODO - remove
+  //   await axios.get("https://friendbot.stellar.org/?addr=" + kp.publicKey);
+  //   await axios.get(
+  //     "https://friendbot.stellar.org/?addr=" + txnSourceKp.publicKey,
+  //   );
+
+  //   const wal = Wallet.TestNet();
+  //   const stellar = wal.stellar();
+
+  //   const txBuilder = await stellar.transaction({
+  //     sourceAddress: txnSourceKp,
+  //     baseFee: 100,
+  //   });
+
+  //   const buildingFunction = (builder) =>
+  //     builder.addAssetSupport(
+  //       new IssuedAssetId(
+  //         "USDC",
+  //         "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+  //       ),
+  //     );
+
+  //   const txn = txBuilder.sponsoring(kp, buildingFunction).build();
+  //   console.log(txn.toXDR()); // ALEC TODO - remove
+
+  //   kp.sign(txn);
+  //   txnSourceKp.sign(txn);
+
+  //   const res = await stellar.submitTransaction(txn);
+  //   expect(res).toBe(true);
+  // }, 30000);
+});
+
 let wal: Wallet;
 let stellar: Stellar;
 const kp = SigningKeypair.fromSecret(

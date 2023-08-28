@@ -18,12 +18,88 @@ import {
 import { IssuedAssetId, StellarAssetId } from "../../Asset";
 import { WithdrawTransaction, TransactionStatus } from "../../Types";
 
-export class TransactionBuilder {
-  private network: Networks;
-  private operations: Array<xdr.Operation>;
-  private builder: StellarTransactionBuilder;
+// ALEC TODO - move
+abstract class CommonTransactionBuilder {
+  sourceAddress: string;
+  operations: Array<xdr.Operation>;
 
-  sourceAccount: string;
+  constructor(sourceAddress: string, operations: Array<xdr.Operation>) {
+    this.sourceAddress = sourceAddress;
+    this.operations = operations;
+  }
+
+  addAssetSupport(
+    asset: IssuedAssetId,
+    trustLimit?: string,
+  ): TransactionBuilder {
+    this.operations.push(
+      StellarSdk.Operation.changeTrust({
+        asset: asset.toAsset(),
+        limit: trustLimit,
+        source: this.sourceAddress,
+      }),
+    );
+    return this;
+  }
+
+  removeAssetSupport(asset: IssuedAssetId): TransactionBuilder {
+    return this.addAssetSupport(asset, "0");
+  }
+}
+
+// ALEC TODO - move
+class SponsoringBuilder extends CommonTransactionBuilder {
+  private sponsorAccount: AccountKeypair;
+
+  constructor(
+    sponsoredAddress: string,
+    sponsorAccount: AccountKeypair,
+    operations: Array<xdr.Operation>,
+    buildingFunction: (SponsoringBuilder) => SponsoringBuilder,
+  ) {
+    super(sponsoredAddress, operations);
+    this.sponsorAccount = sponsorAccount;
+
+    this.startSponsoring();
+    buildingFunction(this);
+    this.stopSponsoring();
+  }
+
+  createAccount(
+    newAccount: AccountKeypair,
+    startingBalance,
+  ): SponsoringBuilder {
+    this.operations.push(
+      StellarSdk.Operation.createAccount({
+        destination: newAccount.publicKey,
+        startingBalance: startingBalance.toString(),
+        source: this.sponsorAccount.publicKey,
+      }),
+    );
+    return this;
+  }
+
+  startSponsoring() {
+    this.operations.push(
+      StellarSdk.Operation.beginSponsoringFutureReserves({
+        sponsoredId: this.sourceAddress,
+        source: this.sponsorAccount.publicKey,
+      }),
+    );
+  }
+
+  stopSponsoring() {
+    this.operations.push(
+      StellarSdk.Operation.endSponsoringFutureReserves({
+        source: this.sourceAddress,
+      }),
+    );
+  }
+}
+
+export class TransactionBuilder extends CommonTransactionBuilder {
+  private cfg: Config;
+  private builder: StellarTransactionBuilder;
 
   constructor(
     cfg: Config,
@@ -32,8 +108,7 @@ export class TransactionBuilder {
     memo?: Memo,
     timebounds?: Server.Timebounds,
   ) {
-    this.network = cfg.stellar.network;
-    this.operations = [];
+    super(sourceAccount.accountId(), []);
     this.builder = new StellarTransactionBuilder(sourceAccount, {
       fee: baseFee ? baseFee.toString() : cfg.stellar.baseFee.toString(),
       timebounds,
@@ -43,8 +118,23 @@ export class TransactionBuilder {
     if (!timebounds) {
       this.builder.setTimeout(cfg.stellar.defaultTimeout);
     }
+  }
 
-    this.sourceAccount = sourceAccount.accountId();
+  // ALEC TODO - move types?
+  sponsoring(
+    sponsorAccount: AccountKeypair,
+    buildingFunction: (SponsoringBuilder) => SponsoringBuilder,
+    sponsoredAccount?: AccountKeypair,
+  ): TransactionBuilder {
+    new SponsoringBuilder(
+      sponsoredAccount ? sponsoredAccount.publicKey : this.sourceAddress,
+      sponsorAccount,
+      this.operations,
+      buildingFunction,
+    );
+    // ALEC TODO - make sure the operations array is updated
+
+    return this;
   }
 
   createAccount(
@@ -59,7 +149,7 @@ export class TransactionBuilder {
       StellarSdk.Operation.createAccount({
         destination: newAccount.publicKey,
         startingBalance: startingBalance.toString(),
-        source: this.sourceAccount,
+        source: this.sourceAddress,
       }),
     );
     return this;
@@ -88,24 +178,6 @@ export class TransactionBuilder {
   setMemo(memo: Memo): TransactionBuilder {
     this.builder.addMemo(memo);
     return this;
-  }
-
-  addAssetSupport(
-    asset: IssuedAssetId,
-    trustLimit?: string,
-  ): TransactionBuilder {
-    this.operations.push(
-      StellarSdk.Operation.changeTrust({
-        asset: asset.toAsset(),
-        limit: trustLimit,
-        source: this.sourceAccount,
-      }),
-    );
-    return this;
-  }
-
-  removeAssetSupport(asset: IssuedAssetId): TransactionBuilder {
-    return this.addAssetSupport(asset, "0");
   }
 
   build(): Transaction {
