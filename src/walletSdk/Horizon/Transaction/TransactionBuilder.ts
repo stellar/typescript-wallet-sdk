@@ -17,87 +17,10 @@ import {
 } from "../../Exceptions";
 import { IssuedAssetId, StellarAssetId } from "../../Asset";
 import { WithdrawTransaction, TransactionStatus } from "../../Types";
+import { CommonTransactionBuilder } from "./CommonTransactionBuilder";
+import { SponsoringBuilder } from "./SponsoringBuilder";
 
-// ALEC TODO - move
-abstract class CommonTransactionBuilder {
-  sourceAddress: string;
-  operations: Array<xdr.Operation>;
-
-  constructor(sourceAddress: string, operations: Array<xdr.Operation>) {
-    this.sourceAddress = sourceAddress;
-    this.operations = operations;
-  }
-
-  addAssetSupport(
-    asset: IssuedAssetId,
-    trustLimit?: string,
-  ): TransactionBuilder {
-    this.operations.push(
-      StellarSdk.Operation.changeTrust({
-        asset: asset.toAsset(),
-        limit: trustLimit,
-        source: this.sourceAddress,
-      }),
-    );
-    return this;
-  }
-
-  removeAssetSupport(asset: IssuedAssetId): TransactionBuilder {
-    return this.addAssetSupport(asset, "0");
-  }
-}
-
-// ALEC TODO - move
-class SponsoringBuilder extends CommonTransactionBuilder {
-  private sponsorAccount: AccountKeypair;
-
-  constructor(
-    sponsoredAddress: string,
-    sponsorAccount: AccountKeypair,
-    operations: Array<xdr.Operation>,
-    buildingFunction: (SponsoringBuilder) => SponsoringBuilder,
-  ) {
-    super(sponsoredAddress, operations);
-    this.sponsorAccount = sponsorAccount;
-
-    this.startSponsoring();
-    buildingFunction(this);
-    this.stopSponsoring();
-  }
-
-  createAccount(
-    newAccount: AccountKeypair,
-    startingBalance,
-  ): SponsoringBuilder {
-    this.operations.push(
-      StellarSdk.Operation.createAccount({
-        destination: newAccount.publicKey,
-        startingBalance: startingBalance.toString(),
-        source: this.sponsorAccount.publicKey,
-      }),
-    );
-    return this;
-  }
-
-  startSponsoring() {
-    this.operations.push(
-      StellarSdk.Operation.beginSponsoringFutureReserves({
-        sponsoredId: this.sourceAddress,
-        source: this.sponsorAccount.publicKey,
-      }),
-    );
-  }
-
-  stopSponsoring() {
-    this.operations.push(
-      StellarSdk.Operation.endSponsoringFutureReserves({
-        source: this.sourceAddress,
-      }),
-    );
-  }
-}
-
-export class TransactionBuilder extends CommonTransactionBuilder {
+export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuilder> {
   private cfg: Config;
   private builder: StellarTransactionBuilder;
 
@@ -108,7 +31,7 @@ export class TransactionBuilder extends CommonTransactionBuilder {
     memo?: Memo,
     timebounds?: Server.Timebounds,
   ) {
-    super(sourceAccount.accountId(), []);
+    super(sourceAccount.accountId());
     this.builder = new StellarTransactionBuilder(sourceAccount, {
       fee: baseFee ? baseFee.toString() : cfg.stellar.baseFee.toString(),
       timebounds,
@@ -120,21 +43,15 @@ export class TransactionBuilder extends CommonTransactionBuilder {
     }
   }
 
-  // ALEC TODO - move types?
   sponsoring(
     sponsorAccount: AccountKeypair,
-    buildingFunction: (SponsoringBuilder) => SponsoringBuilder,
     sponsoredAccount?: AccountKeypair,
-  ): TransactionBuilder {
-    new SponsoringBuilder(
+  ): SponsoringBuilder {
+    return new SponsoringBuilder(
       sponsoredAccount ? sponsoredAccount.publicKey : this.sourceAddress,
       sponsorAccount,
-      this.operations,
-      buildingFunction,
+      this.builder,
     );
-    // ALEC TODO - make sure the operations array is updated
-
-    return this;
   }
 
   createAccount(
@@ -170,6 +87,16 @@ export class TransactionBuilder extends CommonTransactionBuilder {
     return this;
   }
 
+  addAssetSupport(asset: IssuedAssetId, trustLimit?: string) {
+    super.addAssetSupport(asset, trustLimit);
+    return this;
+  }
+
+  removeAssetSupport(asset: IssuedAssetId) {
+    super.removeAssetSupport(asset);
+    return this;
+  }
+
   addOperation(op: xdr.Operation): TransactionBuilder {
     this.builder.addOperation(op);
     return this;
@@ -178,13 +105,6 @@ export class TransactionBuilder extends CommonTransactionBuilder {
   setMemo(memo: Memo): TransactionBuilder {
     this.builder.addMemo(memo);
     return this;
-  }
-
-  build(): Transaction {
-    this.operations.forEach((op) => {
-      this.builder.addOperation(op);
-    });
-    return this.builder.build();
   }
 
   transferWithdrawalTransaction(
@@ -208,5 +128,12 @@ export class TransactionBuilder extends CommonTransactionBuilder {
       assetId,
       transaction.amount_in,
     );
+  }
+
+  build(): Transaction {
+    this.operations.forEach((op) => {
+      this.builder.addOperation(op);
+    });
+    return this.builder.build();
   }
 }

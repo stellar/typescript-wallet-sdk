@@ -1,4 +1,4 @@
-import {
+import StellarSdk, {
   Keypair,
   Memo,
   MemoText,
@@ -19,112 +19,6 @@ import {
   NativeAssetId,
 } from "../src/walletSdk/Asset";
 import { TransactionStatus, WithdrawTransaction } from "../src/walletSdk/Types";
-
-// ALEC TODO - move to it's own describe?
-describe("ALEC TODO - move", () => {
-  // ALEC TODO - uncomment
-  // it("should sponsor creating an account", async () => {
-  //   const kp = new SigningKeypair(Keypair.random());
-  //   console.log(`kp: ${kp.publicKey}`); // ALEC TODO - remove
-  //   const newKp = new SigningKeypair(Keypair.random());
-  //   console.log(`newKp: ${newKp.publicKey}`); // ALEC TODO - remove
-  //   await axios.get("https://friendbot.stellar.org/?addr=" + kp.publicKey);
-
-  //   const wal = Wallet.TestNet();
-  //   const stellar = wal.stellar();
-
-  //   const txBuilder = await stellar.transaction({
-  //     sourceAddress: kp,
-  //     baseFee: 100,
-  //   });
-
-  //   const buildingFunction = (builder) => builder.createAccount(newKp, "0");
-
-  //   const txn = txBuilder.sponsoring(kp, buildingFunction, newKp).build();
-  //   console.log(txn.toXDR()); // ALEC TODO - remove
-
-  //   kp.sign(txn);
-  //   newKp.sign(txn);
-
-  //   const res = await stellar.submitTransaction(txn);
-  //   expect(res).toBe(true);
-  // }, 30000);
-
-  // ALEC TODO - probably combine with above
-  it("should sponsor creating an account - diff txn source and sponsor", async () => {
-    const txnSourceKp = new SigningKeypair(Keypair.random());
-    console.log(`txnSourceKp: ${txnSourceKp.publicKey}`); // ALEC TODO - remove
-    const sponsorKp = new SigningKeypair(Keypair.random());
-    console.log(`sponsorKp: ${sponsorKp.publicKey}`); // ALEC TODO - remove
-    const newKp = new SigningKeypair(Keypair.random());
-    console.log(`newKp: ${newKp.publicKey}`); // ALEC TODO - remove
-    await axios.get(
-      "https://friendbot.stellar.org/?addr=" + sponsorKp.publicKey,
-    );
-    await axios.get(
-      "https://friendbot.stellar.org/?addr=" + txnSourceKp.publicKey,
-    );
-
-    const wal = Wallet.TestNet();
-    const stellar = wal.stellar();
-
-    const txBuilder = await stellar.transaction({
-      sourceAddress: txnSourceKp,
-      baseFee: 100,
-    });
-
-    const buildingFunction = (builder) => builder.createAccount(newKp, "0");
-
-    const txn = txBuilder
-      .sponsoring(txnSourceKp, buildingFunction, newKp)
-      .build();
-    console.log(txn.toXDR()); // ALEC TODO - remove
-
-    // sponsorKp.sign(txn);
-    newKp.sign(txn);
-    txnSourceKp.sign(txn);
-
-    const res = await stellar.submitTransaction(txn);
-    expect(res).toBe(true);
-  }, 30000);
-
-  // ALEC TODO - uncomment
-  // it("should sponsor adding trustlines", async () => {
-  //   const kp = new SigningKeypair(Keypair.random());
-  //   console.log(`kp: ${kp.publicKey}`); // ALEC TODO - remove
-  //   const txnSourceKp = new SigningKeypair(Keypair.random());
-  //   console.log(`txnSourceKp: ${txnSourceKp.publicKey}`); // ALEC TODO - remove
-  //   await axios.get("https://friendbot.stellar.org/?addr=" + kp.publicKey);
-  //   await axios.get(
-  //     "https://friendbot.stellar.org/?addr=" + txnSourceKp.publicKey,
-  //   );
-
-  //   const wal = Wallet.TestNet();
-  //   const stellar = wal.stellar();
-
-  //   const txBuilder = await stellar.transaction({
-  //     sourceAddress: txnSourceKp,
-  //     baseFee: 100,
-  //   });
-
-  //   const buildingFunction = (builder) =>
-  //     builder.addAssetSupport(
-  //       new IssuedAssetId(
-  //         "USDC",
-  //         "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
-  //       ),
-  //     );
-
-  //   const txn = txBuilder.sponsoring(kp, buildingFunction).build();
-  //   console.log(txn.toXDR()); // ALEC TODO - remove
-
-  //   kp.sign(txn);
-  //   txnSourceKp.sign(txn);
-
-  //   const res = await stellar.submitTransaction(txn);
-  //   expect(res).toBe(true);
-  // }, 30000);
-});
 
 let wal: Wallet;
 let stellar: Stellar;
@@ -330,6 +224,79 @@ describe("Stellar", () => {
       .build();
     expect(txn).toBeTruthy();
   });
+});
+
+let txnSourceKp;
+let sponsorKp;
+let newKp;
+describe("SponsoringBuilder", () => {
+  beforeAll(async () => {
+    wal = Wallet.TestNet();
+    stellar = wal.stellar();
+
+    txnSourceKp = new SigningKeypair(Keypair.random());
+    sponsorKp = new SigningKeypair(Keypair.random());
+    newKp = new SigningKeypair(Keypair.random());
+    await axios.get(
+      "https://friendbot.stellar.org/?addr=" + sponsorKp.publicKey,
+    );
+    await axios.get(
+      "https://friendbot.stellar.org/?addr=" + txnSourceKp.publicKey,
+    );
+  }, 15000);
+
+  it("should sponsor creating an account", async () => {
+    const wal = Wallet.TestNet();
+    const stellar = wal.stellar();
+
+    const txBuilder = await stellar.transaction({
+      sourceAddress: txnSourceKp,
+      baseFee: 100,
+    });
+
+    // scenario of different txn source account from sponsor account
+    const txn = txBuilder
+      .sponsoring(sponsorKp, newKp)
+      .createAccount(newKp, 0)
+      .build();
+    newKp.sign(txn);
+    txnSourceKp.sign(txn);
+    sponsorKp.sign(txn);
+
+    const res = await stellar.submitTransaction(txn);
+    expect(res).toBe(true);
+
+    const sponsoredLoaded = (await stellar.server.loadAccount(
+      newKp.publicKey,
+    )) as any;
+    expect(sponsoredLoaded.num_sponsored).toBe(2);
+  }, 15000);
+
+  it("should sponsor adding trustlines", async () => {
+    const txBuilder = await stellar.transaction({
+      sourceAddress: txnSourceKp,
+      baseFee: 100,
+    });
+    const txn = txBuilder
+      .sponsoring(sponsorKp)
+      .addAssetSupport(
+        new IssuedAssetId(
+          "USDC",
+          "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+        ),
+      )
+      .build();
+    sponsorKp.sign(txn);
+    txnSourceKp.sign(txn);
+
+    const res = await stellar.submitTransaction(txn);
+    expect(res).toBe(true);
+
+    const sponsorLoaded = (await stellar.server.loadAccount(
+      sponsorKp.publicKey,
+    )) as any;
+    expect(sponsorLoaded.num_sponsoring).toBe(3);
+  }, 15000);
 });
 
 describe("Asset", () => {
