@@ -17,13 +17,12 @@ import {
 } from "../../Exceptions";
 import { IssuedAssetId, StellarAssetId } from "../../Asset";
 import { WithdrawTransaction, TransactionStatus } from "../../Types";
+import { CommonTransactionBuilder } from "./CommonTransactionBuilder";
+import { SponsoringBuilder } from "./SponsoringBuilder";
 
-export class TransactionBuilder {
-  private network: Networks;
-  private operations: Array<xdr.Operation>;
+export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuilder> {
+  private cfg: Config;
   private builder: StellarTransactionBuilder;
-
-  sourceAccount: string;
 
   constructor(
     cfg: Config,
@@ -32,8 +31,7 @@ export class TransactionBuilder {
     memo?: Memo,
     timebounds?: Server.Timebounds,
   ) {
-    this.network = cfg.stellar.network;
-    this.operations = [];
+    super(sourceAccount.accountId());
     this.builder = new StellarTransactionBuilder(sourceAccount, {
       fee: baseFee ? baseFee.toString() : cfg.stellar.baseFee.toString(),
       timebounds,
@@ -43,8 +41,17 @@ export class TransactionBuilder {
     if (!timebounds) {
       this.builder.setTimeout(cfg.stellar.defaultTimeout);
     }
+  }
 
-    this.sourceAccount = sourceAccount.accountId();
+  sponsoring(
+    sponsorAccount: AccountKeypair,
+    sponsoredAccount?: AccountKeypair,
+  ): SponsoringBuilder {
+    return new SponsoringBuilder(
+      sponsoredAccount ? sponsoredAccount.publicKey : this.sourceAddress,
+      sponsorAccount,
+      this.builder,
+    );
   }
 
   createAccount(
@@ -59,7 +66,7 @@ export class TransactionBuilder {
       StellarSdk.Operation.createAccount({
         destination: newAccount.publicKey,
         startingBalance: startingBalance.toString(),
-        source: this.sourceAccount,
+        source: this.sourceAddress,
       }),
     );
     return this;
@@ -80,6 +87,16 @@ export class TransactionBuilder {
     return this;
   }
 
+  addAssetSupport(asset: IssuedAssetId, trustLimit?: string) {
+    super.addAssetSupport(asset, trustLimit);
+    return this;
+  }
+
+  removeAssetSupport(asset: IssuedAssetId) {
+    super.removeAssetSupport(asset);
+    return this;
+  }
+
   addOperation(op: xdr.Operation): TransactionBuilder {
     this.builder.addOperation(op);
     return this;
@@ -88,31 +105,6 @@ export class TransactionBuilder {
   setMemo(memo: Memo): TransactionBuilder {
     this.builder.addMemo(memo);
     return this;
-  }
-
-  addAssetSupport(
-    asset: IssuedAssetId,
-    trustLimit?: string,
-  ): TransactionBuilder {
-    this.operations.push(
-      StellarSdk.Operation.changeTrust({
-        asset: asset.toAsset(),
-        limit: trustLimit,
-        source: this.sourceAccount,
-      }),
-    );
-    return this;
-  }
-
-  removeAssetSupport(asset: IssuedAssetId): TransactionBuilder {
-    return this.addAssetSupport(asset, "0");
-  }
-
-  build(): Transaction {
-    this.operations.forEach((op) => {
-      this.builder.addOperation(op);
-    });
-    return this.builder.build();
   }
 
   transferWithdrawalTransaction(
@@ -136,5 +128,12 @@ export class TransactionBuilder {
       assetId,
       transaction.amount_in,
     );
+  }
+
+  build(): Transaction {
+    this.operations.forEach((op) => {
+      this.builder.addOperation(op);
+    });
+    return this.builder.build();
   }
 }
