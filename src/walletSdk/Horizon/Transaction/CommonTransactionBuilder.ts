@@ -10,7 +10,7 @@ export abstract class CommonTransactionBuilder<T> {
     this.operations = [];
   }
 
-  addAssetSupport(asset: IssuedAssetId, trustLimit?: string) {
+  addAssetSupport(asset: IssuedAssetId, trustLimit?: string): T {
     this.operations.push(
       StellarSdk.Operation.changeTrust({
         asset: asset.toAsset(),
@@ -18,9 +18,10 @@ export abstract class CommonTransactionBuilder<T> {
         source: this.sourceAddress,
       }),
     );
+    return this as any as T;
   }
 
-  removeAssetSupport(asset: IssuedAssetId) {
-    this.addAssetSupport(asset, "0");
+  removeAssetSupport(asset: IssuedAssetId): T {
+    return this.addAssetSupport(asset, "0");
   }
 }
