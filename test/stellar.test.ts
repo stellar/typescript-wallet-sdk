@@ -1,4 +1,4 @@
-import StellarSdk, {
+import {
   Keypair,
   Memo,
   MemoText,
