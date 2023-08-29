@@ -37,12 +37,15 @@ export class SponsoringBuilder extends CommonTransactionBuilder<SponsoringBuilde
     return this;
   }
 
-  addAssetSupport(asset: IssuedAssetId, trustLimit?: string) {
+  addAssetSupport(
+    asset: IssuedAssetId,
+    trustLimit?: string,
+  ): SponsoringBuilder {
     super.addAssetSupport(asset, trustLimit);
     return this;
   }
 
-  removeAssetSupport(asset: IssuedAssetId) {
+  removeAssetSupport(asset: IssuedAssetId): SponsoringBuilder {
     super.removeAssetSupport(asset);
     return this;
   }

@@ -87,12 +87,15 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
     return this;
   }
 
-  addAssetSupport(asset: IssuedAssetId, trustLimit?: string) {
+  addAssetSupport(
+    asset: IssuedAssetId,
+    trustLimit?: string,
+  ): TransactionBuilder {
     super.addAssetSupport(asset, trustLimit);
     return this;
   }
 
-  removeAssetSupport(asset: IssuedAssetId) {
+  removeAssetSupport(asset: IssuedAssetId): TransactionBuilder {
     super.removeAssetSupport(asset);
     return this;
   }
