@@ -1,6 +1,7 @@
 import StellarSdk, {
   TransactionBuilder as StellarTransactionBuilder,
   Transaction,
+  xdr,
 } from "stellar-sdk";
 import { IssuedAssetId } from "../../Asset";
 
@@ -9,18 +10,19 @@ import { AccountKeypair } from "../Account";
 
 export class SponsoringBuilder extends CommonTransactionBuilder<SponsoringBuilder> {
   private sponsorAccount: AccountKeypair;
-  private builder: StellarTransactionBuilder;
 
   constructor(
     sponsoredAddress: string,
     sponsorAccount: AccountKeypair,
-    builder: StellarTransactionBuilder,
+    operations: Array<xdr.Operation>,
+    buildingFunction: (SponsoringBuilder) => SponsoringBuilder,
   ) {
-    super(sponsoredAddress);
+    super(sponsoredAddress, operations);
     this.sponsorAccount = sponsorAccount;
-    this.builder = builder;
 
     this.startSponsoring();
+    buildingFunction(this);
+    this.stopSponsoring();
   }
 
   createAccount(
@@ -52,13 +54,5 @@ export class SponsoringBuilder extends CommonTransactionBuilder<SponsoringBuilde
         source: this.sourceAddress,
       }),
     );
-  }
-
-  build(): Transaction {
-    this.stopSponsoring();
-    this.operations.forEach((op) => {
-      this.builder.addOperation(op);
-    });
-    return this.builder.build();
   }
 }

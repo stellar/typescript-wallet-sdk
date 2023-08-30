@@ -2,12 +2,12 @@ import StellarSdk, { xdr } from "stellar-sdk";
 import { IssuedAssetId } from "../../Asset";
 
 export abstract class CommonTransactionBuilder<T> {
-  sourceAddress: string;
-  operations: Array<xdr.Operation>;
+  protected sourceAddress: string;
+  protected operations: Array<xdr.Operation>;
 
-  constructor(sourceAddress: string) {
+  constructor(sourceAddress: string, operations: Array<xdr.Operation>) {
     this.sourceAddress = sourceAddress;
-    this.operations = [];
+    this.operations = operations;
   }
 
   addAssetSupport(asset: IssuedAssetId, trustLimit?: string): T {

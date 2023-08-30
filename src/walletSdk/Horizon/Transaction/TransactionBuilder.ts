@@ -31,7 +31,7 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
     memo?: Memo,
     timebounds?: Server.Timebounds,
   ) {
-    super(sourceAccount.accountId());
+    super(sourceAccount.accountId(), []);
     this.builder = new StellarTransactionBuilder(sourceAccount, {
       fee: baseFee ? baseFee.toString() : cfg.stellar.baseFee.toString(),
       timebounds,
@@ -45,13 +45,16 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
 
   sponsoring(
     sponsorAccount: AccountKeypair,
+    buildingFunction: (SponsoringBuilder) => SponsoringBuilder,
     sponsoredAccount?: AccountKeypair,
-  ): SponsoringBuilder {
-    return new SponsoringBuilder(
+  ): TransactionBuilder {
+    new SponsoringBuilder(
       sponsoredAccount ? sponsoredAccount.publicKey : this.sourceAddress,
       sponsorAccount,
-      this.builder,
+      this.operations,
+      buildingFunction,
     );
+    return this;
   }
 
   createAccount(

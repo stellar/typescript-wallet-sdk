@@ -253,11 +253,10 @@ describe("SponsoringBuilder", () => {
       sourceAddress: txnSourceKp,
       baseFee: 100,
     });
-
+    const buildingFunction = (bldr) => bldr.createAccount(newKp, 0);
     // scenario of different txn source account from sponsor account
     const txn = txBuilder
-      .sponsoring(sponsorKp, newKp)
-      .createAccount(newKp, 0)
+      .sponsoring(sponsorKp, buildingFunction, newKp)
       .build();
     newKp.sign(txn);
     txnSourceKp.sign(txn);
@@ -277,14 +276,41 @@ describe("SponsoringBuilder", () => {
       sourceAddress: txnSourceKp,
       baseFee: 100,
     });
-    const txn = txBuilder
-      .sponsoring(sponsorKp)
-      .addAssetSupport(
+    const buildingFunction = (bldr) =>
+      bldr.addAssetSupport(
         new IssuedAssetId(
           "USDC",
           "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
         ),
-      )
+      );
+    const txn = txBuilder.sponsoring(sponsorKp, buildingFunction).build();
+    sponsorKp.sign(txn);
+    txnSourceKp.sign(txn);
+
+    const res = await stellar.submitTransaction(txn);
+    expect(res).toBe(true);
+
+    const sponsorLoaded = (await stellar.server.loadAccount(
+      sponsorKp.publicKey,
+    )) as any;
+    expect(sponsorLoaded.num_sponsoring).toBe(3);
+  }, 15000);
+
+  it("should allow sponsoring and regular operations in same transaction", async () => {
+    const txBuilder = await stellar.transaction({
+      sourceAddress: txnSourceKp,
+      baseFee: 100,
+    });
+    const buildingFunction = (bldr) =>
+      bldr.addAssetSupport(
+        new IssuedAssetId(
+          "USDC",
+          "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+        ),
+      );
+    const txn = txBuilder
+      .sponsoring(sponsorKp, buildingFunction)
+      .transfer(sponsorKp.publicKey, new NativeAssetId(), "5")
       .build();
     sponsorKp.sign(txn);
     txnSourceKp.sign(txn);
