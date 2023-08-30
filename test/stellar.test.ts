@@ -226,6 +226,105 @@ describe("Stellar", () => {
   });
 });
 
+let txnSourceKp;
+let sponsorKp;
+let newKp;
+describe("SponsoringBuilder", () => {
+  beforeAll(async () => {
+    wal = Wallet.TestNet();
+    stellar = wal.stellar();
+
+    txnSourceKp = new SigningKeypair(Keypair.random());
+    sponsorKp = new SigningKeypair(Keypair.random());
+    newKp = new SigningKeypair(Keypair.random());
+    await axios.get(
+      "https://friendbot.stellar.org/?addr=" + sponsorKp.publicKey,
+    );
+    await axios.get(
+      "https://friendbot.stellar.org/?addr=" + txnSourceKp.publicKey,
+    );
+  }, 15000);
+
+  it("should sponsor creating an account", async () => {
+    const wal = Wallet.TestNet();
+    const stellar = wal.stellar();
+
+    const txBuilder = await stellar.transaction({
+      sourceAddress: txnSourceKp,
+      baseFee: 100,
+    });
+    const buildingFunction = (bldr) => bldr.createAccount(newKp, 0);
+    // scenario of different txn source account from sponsor account
+    const txn = txBuilder
+      .sponsoring(sponsorKp, buildingFunction, newKp)
+      .build();
+    newKp.sign(txn);
+    txnSourceKp.sign(txn);
+    sponsorKp.sign(txn);
+
+    const res = await stellar.submitTransaction(txn);
+    expect(res).toBe(true);
+
+    const sponsoredLoaded = (await stellar.server.loadAccount(
+      newKp.publicKey,
+    )) as any;
+    expect(sponsoredLoaded.num_sponsored).toBe(2);
+  }, 15000);
+
+  it("should sponsor adding trustlines", async () => {
+    const txBuilder = await stellar.transaction({
+      sourceAddress: txnSourceKp,
+      baseFee: 100,
+    });
+    const buildingFunction = (bldr) =>
+      bldr.addAssetSupport(
+        new IssuedAssetId(
+          "USDC",
+          "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+        ),
+      );
+    const txn = txBuilder.sponsoring(sponsorKp, buildingFunction).build();
+    sponsorKp.sign(txn);
+    txnSourceKp.sign(txn);
+
+    const res = await stellar.submitTransaction(txn);
+    expect(res).toBe(true);
+
+    const sponsorLoaded = (await stellar.server.loadAccount(
+      sponsorKp.publicKey,
+    )) as any;
+    expect(sponsorLoaded.num_sponsoring).toBe(3);
+  }, 15000);
+
+  it("should allow sponsoring and regular operations in same transaction", async () => {
+    const txBuilder = await stellar.transaction({
+      sourceAddress: txnSourceKp,
+      baseFee: 100,
+    });
+    const buildingFunction = (bldr) =>
+      bldr.addAssetSupport(
+        new IssuedAssetId(
+          "USDC",
+          "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+        ),
+      );
+    const txn = txBuilder
+      .sponsoring(sponsorKp, buildingFunction)
+      .transfer(sponsorKp.publicKey, new NativeAssetId(), "5")
+      .build();
+    sponsorKp.sign(txn);
+    txnSourceKp.sign(txn);
+
+    const res = await stellar.submitTransaction(txn);
+    expect(res).toBe(true);
+
+    const sponsorLoaded = (await stellar.server.loadAccount(
+      sponsorKp.publicKey,
+    )) as any;
+    expect(sponsorLoaded.num_sponsoring).toBe(3);
+  }, 15000);
+});
+
 describe("Asset", () => {
   it("should create an asset", () => {
     const issued = new IssuedAssetId(

@@ -23,6 +23,7 @@ export {
   AccountService,
   Stellar,
   TransactionBuilder,
+  SponsoringBuilder,
 } from "./walletSdk/Horizon";
 export { Recovery } from "./walletSdk/Recovery";
 export { Watcher } from "./walletSdk/Watcher";
