@@ -210,7 +210,6 @@ describe("Horizon/Transaction", () => {
   }, 30000);
 
   it("should return error for sending payment to invalid Muxed address", async () => {
-    // Try submitting the non-native payment without adding the trustline
     const txBuilder = await stellar.transaction({
       sourceAddress: testingDistributionKp,
       baseFee: 100,
