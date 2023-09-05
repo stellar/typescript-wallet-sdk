@@ -2,9 +2,7 @@ import axios from "axios";
 import { Horizon, MuxedAccount } from "stellar-sdk";
 
 import { AccountService, SigningKeypair, Stellar, Wallet } from "../src";
-import { HORIZON_ORDER } from "../src/walletSdk/Types";
 import { IssuedAssetId, NativeAssetId } from "../src/walletSdk/Asset";
-import { AccountKeypair, PublicKeypair } from "../src/walletSdk/Horizon/Account";
 
 let wallet: Wallet;
 let stellar: Stellar;
