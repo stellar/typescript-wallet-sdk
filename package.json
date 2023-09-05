@@ -4,8 +4,8 @@
   "engines": {
     "node": ">=18"
   },
-  "browser": "./lib/bundle.js",
-  "main": "./lib/bundle_node.js",
+  "browser": "./lib/bundle_browser.js",
+  "main": "./lib/bundle.js",
   "types": "./lib/index.d.ts",
   "license": "Apache-2.0",
   "private": false,

@@ -28,7 +28,7 @@ module.exports = (env = { NODE: false }) => ({
     library: "WalletSDK",
     libraryTarget: "umd",
     globalObject: "this",
-    filename: `bundle${env.NODE ? "_node" : ""}.js`,
+    filename: `bundle${!env.NODE ? "_browser" : ""}.js`,
     path: path.resolve(__dirname, "lib"),
   },
   target: env.NODE ? "node" : "web",
