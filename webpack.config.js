@@ -1,6 +1,6 @@
 const path = require("path");
 
-module.exports = {
+module.exports = (env = { NODE: false }) => ({
   mode: "development",
   entry: "./src/index.ts",
   devtool: "source-map",
@@ -25,10 +25,11 @@ module.exports = {
     },
   },
   output: {
-    library: "MyLibrary",
+    library: "WalletSDK",
     libraryTarget: "umd",
     globalObject: "this",
-    filename: "bundle.js",
+    filename: `bundle${env.NODE ? "_node" : ""}.js`,
     path: path.resolve(__dirname, "lib"),
   },
-};
+  target: env.NODE ? "node" : "web",
+});
