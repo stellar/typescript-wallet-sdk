@@ -18,6 +18,7 @@ import {
 } from "../src/walletSdk/Auth/WalletSigner";
 import { SigningKeypair } from "../src/walletSdk/Horizon/Account";
 import { Sep24 } from "../src/walletSdk/Anchor/Sep24";
+import { DomainSigner } from "../src/walletSdk/Auth/WalletSigner";
 
 import { TransactionsResponse } from "../test/fixtures/TransactionsResponse";
 
@@ -27,6 +28,28 @@ function sleep(time: number) {
     originalSetTimeout(resolve, time);
   });
 }
+
+// ALEC TODO - move
+
+describe("DomainSigner", () => {
+  it("should work", async () => {
+    jest.spyOn(DefaultClient, "post").mockResolvedValue({
+      data: {
+        transaction:
+          "AAAAAgAAAADVJRbxdB+qXZjUMLcrL/VVoS6megW1ReSxIO33pvO61AAAB9AAAAAAAAAAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAACwAAAAAAAAACAAAAAAAAAAA=",
+      },
+    });
+    const signer = new DomainSigner("example url");
+    const txn = await signer.signWithDomainAccount({
+      transactionXDR: "test-xdr",
+      networkPassphrase: "Test SDF Network ; September 2015",
+      accountKp: SigningKeypair.fromSecret(
+        "SBYAW5H46NNDGCECWMWWM32DE4DPNN3RHVMNTR3BXXZX2DJF6LZWBMWZ",
+      ),
+    });
+    expect(txn).toBeTruthy();
+  });
+});
 
 describe("Wallet", () => {
   it("should init", () => {
