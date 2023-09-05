@@ -40,9 +40,9 @@ export const DefaultSigner: WalletSigner = {
 export class DomainSigner implements WalletSigner {
   private url: string;
   private client: AxiosInstance;
-  constructor(url: string) {
+  constructor(url: string, httpClient?: AxiosInstance) {
     this.url = url;
-    this.client = DefaultClient;
+    this.client = httpClient || DefaultClient;
   }
 
   signWithClientAccount({
