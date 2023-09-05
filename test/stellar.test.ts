@@ -323,6 +323,28 @@ describe("SponsoringBuilder", () => {
     )) as any;
     expect(sponsorLoaded.num_sponsoring).toBe(3);
   }, 15000);
+  it("should sponsor account modification", async () => {
+    const txBuilder = await stellar.transaction({
+      sourceAddress: txnSourceKp,
+      baseFee: 100,
+    });
+    const otherKp = new SigningKeypair(Keypair.random());
+
+    const txn = txBuilder
+      .sponsoring(sponsorKp, (bldr) => bldr.addAccountSigner(otherKp, 2))
+      .build();
+    sponsorKp.sign(txn);
+    txnSourceKp.sign(txn);
+
+    await stellar.submitTransaction(txn);
+    const sourceLoaded = (await stellar.server.loadAccount(
+      txnSourceKp.publicKey,
+    )) as any;
+    expect(
+      sourceLoaded.signers.find((signer) => signer.key === otherKp.publicKey)
+        .weight,
+    ).toBe(2);
+  }, 15000);
 });
 
 describe("Asset", () => {
@@ -343,4 +365,81 @@ describe("Asset", () => {
     const fiat = new FiatAssetId("USD");
     expect(fiat.sep38).toBe("iso4217:USD");
   });
+});
+
+describe("Account Modifying", () => {
+  it("should modify account ", async () => {
+    const wallet = Wallet.TestNet();
+    const stellar = wallet.stellar();
+
+    const sourceKp = new SigningKeypair(Keypair.random());
+    const otherKp = new SigningKeypair(Keypair.random());
+    await axios.get(
+      "https://friendbot.stellar.org/?addr=" + sourceKp.publicKey,
+    );
+    await axios.get("https://friendbot.stellar.org/?addr=" + otherKp.publicKey);
+
+    // Add account signer
+    let txBuilder = await stellar.transaction({
+      sourceAddress: sourceKp,
+      baseFee: 1000,
+    });
+    const tx = txBuilder.addAccountSigner(otherKp, 1).build();
+    tx.sign(sourceKp.keypair);
+    await stellar.submitTransaction(tx);
+
+    let resp = await stellar.server.loadAccount(sourceKp.publicKey);
+
+    expect(
+      resp.signers.find((signer) => signer.key === sourceKp.publicKey),
+    ).toBeTruthy();
+    expect(
+      resp.signers.find((signer) => signer.key === otherKp.publicKey),
+    ).toBeTruthy();
+
+    // Remove account signer
+    txBuilder = await stellar.transaction({
+      sourceAddress: sourceKp,
+      baseFee: 1000,
+    });
+    const removeTx = txBuilder.removeAccountSigner(otherKp).build();
+    removeTx.sign(sourceKp.keypair);
+    await stellar.submitTransaction(removeTx);
+
+    resp = await stellar.server.loadAccount(sourceKp.publicKey);
+    expect(
+      resp.signers.find((signer) => signer.key === sourceKp.publicKey),
+    ).toBeTruthy();
+    expect(
+      resp.signers.find((signer) => signer.key === otherKp.publicKey),
+    ).toBeFalsy();
+
+    // Change account thresholds
+    txBuilder = await stellar.transaction({
+      sourceAddress: sourceKp,
+      baseFee: 1000,
+    });
+    const thresholdTx = txBuilder.setThreshold({ low: 0, high: 1 }).build();
+    thresholdTx.sign(sourceKp.keypair);
+    await stellar.submitTransaction(thresholdTx);
+
+    resp = await stellar.server.loadAccount(sourceKp.publicKey);
+    expect(resp.thresholds).toEqual({
+      low_threshold: 0,
+      med_threshold: 0,
+      high_threshold: 1,
+    });
+
+    // Lock master account
+    txBuilder = await stellar.transaction({
+      sourceAddress: sourceKp,
+      baseFee: 1000,
+    });
+    const lockTx = txBuilder.lockAccountMasterKey().build();
+    lockTx.sign(sourceKp.keypair);
+    await stellar.submitTransaction(lockTx);
+
+    resp = await stellar.server.loadAccount(sourceKp.publicKey);
+    expect(resp.signers[0].weight).toBe(0);
+  }, 45000);
 });
