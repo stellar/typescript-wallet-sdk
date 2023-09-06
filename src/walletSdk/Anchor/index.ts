@@ -50,12 +50,7 @@ export class Anchor {
 
   async sep10(): Promise<Sep10> {
     const tomlInfo = await this.sep1();
-    return new Sep10({
-      cfg: this.cfg,
-      webAuthEndpoint: tomlInfo.webAuthEndpoint,
-      homeDomain: this.homeDomain,
-      httpClient: this.httpClient,
-    });
+    return new Sep10({ cfg: this.cfg, webAuthEndpoint: tomlInfo.webAuthEndpoint, homeDomain: this.homeDomain, httpClient: this.httpClient });
   }
 
   sep24(): Sep24 {
