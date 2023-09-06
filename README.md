@@ -1,30 +1,43 @@
-# typescript-wallet-sdk
+# Stellar Typescript Wallet SDK [![npm version](https://badge.fury.io/js/@stellar%2Ftypescript-wallet-sdk.svg)](https://badge.fury.io/js/@stellar%2Ftypescript-wallet-sdk) 
 
-Typescript Wallet SDK to build Stellar wallets
+Typescript Wallet SDK is a library that allows developers to build wallet applications on the Stellar network faster. It
+utilizes [Javascript Stellar SDK](https://github.com/stellar/js-stellar-sdk) to communicate with a Stellar Horizon server.  
+It offers wide range of functionality to simplify integration with the Stellar network, and connect to the anchors easily, utilizing 
+various Stellar protocols (SEPs) 
 
-### This SDK is currently in development. Some features may not work as expected. Please use at your own risk.
+## Dependency
 
-### To use locally you can use npm link:
+The library is available via npm.
+To import `typescript-wallet-sdk` library you need to add it as a dependency to your code:
 
-```
-// build wallet sdk
-cd typescript-wallet-sdk
-yarn
-yarn run build
+yarn:
 
-// add npm link of sdk directory
-npm link
-
-// change to your wallet directory, and then create npm link
-cd my-wallet
-npm link @stellar/typescript-wallet-sdk
-
-// import in wallet code
-import typescript-wallet-sdk from "@stellar/typescript-wallet-sdk"
+```shell
+yarn add @stellar/typescript-wallet-sdk
 ```
 
-### To run tests:
+npm:
 
+```shell
+npm install @stellar/typescript-wallet-sdk
 ```
-yarn test
+
+## Introduction
+
+Here's a small example creating main wallet class with default configuration connected to testnet network:
+
+```typescript
+let wallet = walletSdk.Wallet.TestNet();
 ```
+
+It should later be re-used across the code, as it has access to various useful children classes. For example, you can 
+authenticate with the `testanchor` as simple as:
+
+```typescript
+const authKey = SigningKeypair.fromSecret("my secret key");
+const sep10 = await anchor.sep10()
+
+const authToken = await sep10.authenticate({accountKp: authKey});
+```
+
+Read [full wallet guide](https://developers.stellar.org/docs/category/build-a-wallet) for more info
