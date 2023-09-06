@@ -29,28 +29,6 @@ function sleep(time: number) {
   });
 }
 
-// ALEC TODO - move
-
-describe("DomainSigner", () => {
-  it("should work", async () => {
-    jest.spyOn(DefaultClient, "post").mockResolvedValue({
-      data: {
-        transaction:
-          "AAAAAgAAAADVJRbxdB+qXZjUMLcrL/VVoS6megW1ReSxIO33pvO61AAAB9AAAAAAAAAAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAACwAAAAAAAAACAAAAAAAAAAA=",
-      },
-    });
-    const signer = new DomainSigner("example url");
-    const txn = await signer.signWithDomainAccount({
-      transactionXDR: "test-xdr",
-      networkPassphrase: "Test SDF Network ; September 2015",
-      accountKp: SigningKeypair.fromSecret(
-        "SBYAW5H46NNDGCECWMWWM32DE4DPNN3RHVMNTR3BXXZX2DJF6LZWBMWZ",
-      ),
-    });
-    expect(txn).toBeTruthy();
-  });
-});
-
 describe("Wallet", () => {
   it("should init", () => {
     Wallet.TestNet();
@@ -1709,6 +1687,26 @@ describe("Anchor", () => {
       expect(onSuccess.callCount).toBe(0);
       expect(onError.callCount).toBe(1);
     });
+  });
+});
+
+describe("DomainSigner", () => {
+  it("should work", async () => {
+    jest.spyOn(DefaultClient, "post").mockResolvedValue({
+      data: {
+        transaction:
+          "AAAAAgAAAADVJRbxdB+qXZjUMLcrL/VVoS6megW1ReSxIO33pvO61AAAB9AAAAAAAAAAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAACwAAAAAAAAACAAAAAAAAAAA=",
+      },
+    });
+    const signer = new DomainSigner("example url");
+    const txn = await signer.signWithDomainAccount({
+      transactionXDR: "test-xdr",
+      networkPassphrase: "Test SDF Network ; September 2015",
+      accountKp: SigningKeypair.fromSecret(
+        "SBYAW5H46NNDGCECWMWWM32DE4DPNN3RHVMNTR3BXXZX2DJF6LZWBMWZ",
+      ),
+    });
+    expect(txn).toBeTruthy();
   });
 });
 
