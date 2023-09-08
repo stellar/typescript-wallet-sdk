@@ -35,7 +35,8 @@ authenticate with the `testanchor` as simple as:
 
 ```typescript
 const authKey = SigningKeypair.fromSecret("my secret key");
-const sep10 = await anchor.sep10()
+const anchor = wallet.anchor({ homeDomain: "testanchor.stellar.org" });
+const sep10 = await anchor.sep10();
 
 const authToken = await sep10.authenticate({accountKp: authKey});
 ```
