@@ -1,5 +1,3 @@
-import isEqual from "lodash/isEqual";
-
 import { Anchor } from "../Anchor";
 import {
   AnchorTransaction,
