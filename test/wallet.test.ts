@@ -1170,7 +1170,7 @@ describe("Anchor", () => {
     });
 
     test("Several pending transactions, one completed, no more after that", async () => {
-      const onMessage = sinon.spy(() => {
+      const onMessage = sinon.spy((m) => {
         expect(onMessage.callCount).toBeLessThanOrEqual(8);
       });
 
@@ -1192,27 +1192,31 @@ describe("Anchor", () => {
         .mockResolvedValueOnce(
           makeTransaction(2, TransactionStatus.pending_anchor),
         )
+        // should not be logged to onMessage
         .mockResolvedValueOnce(
-          makeTransaction(3, TransactionStatus.pending_external),
+          makeTransaction(3, TransactionStatus.pending_anchor),
         )
         .mockResolvedValueOnce(
-          makeTransaction(4, TransactionStatus.pending_stellar),
+          makeTransaction(4, TransactionStatus.pending_external),
         )
         .mockResolvedValueOnce(
-          makeTransaction(5, TransactionStatus.pending_trust),
+          makeTransaction(5, TransactionStatus.pending_stellar),
         )
         .mockResolvedValueOnce(
-          makeTransaction(6, TransactionStatus.pending_user_transfer_start),
+          makeTransaction(6, TransactionStatus.pending_trust),
         )
         .mockResolvedValueOnce(
-          makeTransaction(7, TransactionStatus.pending_user_transfer_complete),
-        )
-        .mockResolvedValueOnce(makeTransaction(8, TransactionStatus.completed))
-        .mockResolvedValueOnce(
-          makeTransaction(9, TransactionStatus.pending_anchor),
+          makeTransaction(7, TransactionStatus.pending_user_transfer_start),
         )
         .mockResolvedValueOnce(
-          makeTransaction(10, TransactionStatus.pending_external),
+          makeTransaction(8, TransactionStatus.pending_user_transfer_complete),
+        )
+        .mockResolvedValueOnce(makeTransaction(9, TransactionStatus.completed))
+        .mockResolvedValueOnce(
+          makeTransaction(10, TransactionStatus.pending_anchor),
+        )
+        .mockResolvedValueOnce(
+          makeTransaction(11, TransactionStatus.pending_external),
         );
 
       // start watching
@@ -1233,6 +1237,9 @@ describe("Anchor", () => {
       expect(onError.callCount).toBe(0);
 
       // loop through all pending statuses updates
+      await sleep(1);
+
+      clock.next();
       await sleep(1);
 
       clock.next();
@@ -1741,6 +1748,7 @@ describe("Anchor", () => {
       const txn1 = makeTransaction(0, TransactionStatus.incomplete);
       const txn2 = makeTransaction(0, TransactionStatus.incomplete);
       txn2.message = "message changing";
+      const txn3 = makeTransaction(0, TransactionStatus.pending_anchor);
 
       const onMessage = sinon.spy((m) => {
         expect(m.message).toBe("some message");
@@ -1759,7 +1767,8 @@ describe("Anchor", () => {
       jest
         .spyOn(Sep24.prototype, "getTransactionBy")
         .mockResolvedValueOnce(txn1)
-        .mockResolvedValueOnce(txn2);
+        .mockResolvedValueOnce(txn2)
+        .mockResolvedValueOnce(txn3);
 
       // start watching
       const watcher = anchor.sep24().watcher();
@@ -1782,8 +1791,10 @@ describe("Anchor", () => {
       await sleep(1);
       clock.next();
       await sleep(1);
+      clock.next();
+      await sleep(1);
 
-      expect(onMessage.callCount).toBe(1);
+      expect(onMessage.callCount).toBe(2);
       expect(onError.callCount).toBe(0);
       expect(onSuccess.callCount).toBe(0);
 

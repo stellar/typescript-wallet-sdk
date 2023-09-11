@@ -295,11 +295,12 @@ export class Watcher {
           this._transactionsRegistry[assetCode][transaction.id];
 
         // if we've had the transaction before, only report if there is a status change
+        let isChanged = true;
         if (
           registeredTransaction &&
           registeredTransaction.status === transaction.status
         ) {
-          return;
+          isChanged = false;
         }
 
         this._transactionsRegistry[assetCode][transaction.id] = transaction;
@@ -318,7 +319,9 @@ export class Watcher {
               isRetry: true,
             });
           }, timeout);
-          onMessage(transaction);
+          if (isChanged) {
+            onMessage(transaction);
+          }
         } else if (
           [
             TransactionStatus.completed,
