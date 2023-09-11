@@ -151,9 +151,9 @@ export class Watcher {
               return isInProgress;
             }
 
-            // if we've had the transaction before, only report updates
+            // if we've had the transaction before, only report updates if status changed
             if (registeredTransaction) {
-              return !isEqual(registeredTransaction, transaction);
+              return registeredTransaction.status !== transaction.status;
             }
 
             // if it's NOT a registered transaction, and it's not the first
@@ -296,10 +296,10 @@ export class Watcher {
         const registeredTransaction =
           this._transactionsRegistry[assetCode][transaction.id];
 
-        // if we've had the transaction before, only report if there is a change
+        // if we've had the transaction before, only report if there is a status change
         if (
           registeredTransaction &&
-          isEqual(registeredTransaction, transaction)
+          registeredTransaction.status === transaction.status
         ) {
           return;
         }

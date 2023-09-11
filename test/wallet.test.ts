@@ -64,6 +64,13 @@ describe("SEP-24 flow", () => {
 let anchor: Anchor;
 let accountKp: SigningKeypair;
 let authToken: string;
+const makeTransaction = (eta: number, txStatus: TransactionStatus) => ({
+  kind: "deposit",
+  id: "TEST",
+  status: txStatus,
+  status_eta: eta,
+  message: "some message",
+});
 describe("Anchor", () => {
   beforeAll(() => {
     const Wal = Wallet.TestNet();
@@ -812,18 +819,61 @@ describe("Anchor", () => {
       // stops watching
       stop();
     });
+    it("should only report transactions with changed status", async () => {
+      const txn1 = makeTransaction(0, TransactionStatus.incomplete);
+      const txn2 = makeTransaction(0, TransactionStatus.incomplete);
+      txn2.message = "message changing";
+      const txn3 = makeTransaction(0, TransactionStatus.pending_anchor);
+
+      const onMessage = sinon.spy((m) => {
+        expect(m.message).toBe("some message");
+        expect(onMessage.callCount).toBeLessThan(3);
+      });
+
+      const onError = sinon.spy((e) => {
+        expect(e).toBeUndefined();
+      });
+
+      // mock default transactions response
+      jest
+        .spyOn(Sep24.prototype, "getTransactionsForAsset")
+        .mockResolvedValueOnce([txn1])
+        .mockResolvedValueOnce([txn2])
+        .mockResolvedValueOnce([txn3]);
+
+      // start watching
+      const watcher = anchor.sep24().watcher();
+      const { stop } = watcher.watchAllTransactions({
+        authToken,
+        assetCode: "SRT",
+        lang: "en-US",
+        onMessage,
+        onError,
+        timeout: 1,
+      });
+
+      // nothing should run at first (async api call in progress)
+      expect(onMessage.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+
+      clock.next();
+      await sleep(1);
+      clock.next();
+      await sleep(1);
+      clock.next();
+      await sleep(1);
+
+      expect(onMessage.callCount).toBe(2);
+      expect(onError.callCount).toBe(0);
+
+      // stops watching
+      stop();
+    });
   });
 
   describe("watchOneTransaction", () => {
     let clock: sinon.SinonFakeTimers;
     let watcher: Watcher;
-
-    const makeTransaction = (eta: number, txStatus: TransactionStatus) => ({
-      kind: "deposit",
-      id: "TEST",
-      status: txStatus,
-      status_eta: eta,
-    });
 
     beforeEach(async () => {
       clock = sinon.useFakeTimers(0);
@@ -1685,6 +1735,60 @@ describe("Anchor", () => {
       expect(onMessage.callCount).toBe(2);
       expect(onSuccess.callCount).toBe(0);
       expect(onError.callCount).toBe(1);
+    });
+
+    it("should only report transactions with changed status", async () => {
+      const txn1 = makeTransaction(0, TransactionStatus.incomplete);
+      const txn2 = makeTransaction(0, TransactionStatus.incomplete);
+      txn2.message = "message changing";
+
+      const onMessage = sinon.spy((m) => {
+        expect(m.message).toBe("some message");
+        expect(onMessage.callCount).toBeLessThan(3);
+      });
+
+      const onSuccess = sinon.spy(() => {
+        expect(onSuccess.callCount).toBe(0);
+      });
+
+      const onError = sinon.spy((e) => {
+        expect(e).toBeUndefined();
+      });
+
+      // mock default transactions response
+      jest
+        .spyOn(Sep24.prototype, "getTransactionBy")
+        .mockResolvedValueOnce(txn1)
+        .mockResolvedValueOnce(txn2);
+
+      // start watching
+      const watcher = anchor.sep24().watcher();
+      const { stop } = watcher.watchOneTransaction({
+        authToken,
+        assetCode: "SRT",
+        id: "TEST",
+        lang: "en-US",
+        onMessage,
+        onSuccess,
+        onError,
+        timeout: 1,
+      });
+
+      // nothing should run at first (async api call in progress)
+      expect(onMessage.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+
+      clock.next();
+      await sleep(1);
+      clock.next();
+      await sleep(1);
+
+      expect(onMessage.callCount).toBe(1);
+      expect(onError.callCount).toBe(0);
+      expect(onSuccess.callCount).toBe(0);
+
+      // stops watching
+      stop();
     });
   });
 });
