@@ -27,34 +27,61 @@ describe("ALEC TODO", () => {
   it("should send path payment", async () => {
     const wal = Wallet.TestNet();
     const stellar = wal.stellar();
+    const account = wal.stellar().account();
 
-    const txnSourceKp = SigningKeypair.fromSecret(
-      "SDAHZAV63BFFBHEEK6P5SD2B4DFP544TKBR5WOFKRMQ42U4UV3QVLWHC",
-    );
+    const txnSourceKp = account.createKeypair();
     console.log("txnSourceKp:", txnSourceKp.publicKey); // ALEC TODO - remove
-    const otherKp = SigningKeypair.fromSecret(
-      "SB5VNY7XL2NO7HPFXP4PEMGXCDH4DPFCGOUCJLVR4S4CYZ57HM2FTHAI",
-    );
+    const otherKp = account.createKeypair();
     console.log("otherKp:", otherKp.publicKey); // ALEC TODO - remove
 
-    const txBuilder = await stellar.transaction({
+    await axios.get(
+      "https://friendbot.stellar.org/?addr=" + txnSourceKp.publicKey,
+    );
+    await axios.get("https://friendbot.stellar.org/?addr=" + otherKp.publicKey);
+
+    const asset = new IssuedAssetId(
+      "USDC",
+      "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+    );
+
+    // add trustlines 1
+    let txBuilder = await stellar.transaction({
+      sourceAddress: otherKp,
+    });
+    let txn = txBuilder.addAssetSupport(asset).build();
+    otherKp.sign(txn);
+
+    await stellar.submitTransaction(txn);
+
+    // add trustlines 2
+    txBuilder = await stellar.transaction({
       sourceAddress: txnSourceKp,
     });
-    const txn = txBuilder
-      .pathPay(
-        otherKp.publicKey,
-        new NativeAssetId(),
-        new IssuedAssetId(
-          "USDC",
-          "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
-        ),
-        "5",
-      )
+    txn = txBuilder.addAssetSupport(asset).build();
+    txnSourceKp.sign(txn);
+
+    await stellar.submitTransaction(txn);
+
+    // send path pay
+    txBuilder = await stellar.transaction({
+      sourceAddress: txnSourceKp,
+    });
+    txn = txBuilder
+      .pathPay(otherKp.publicKey, new NativeAssetId(), asset, "5")
       .build();
     txnSourceKp.sign(txn);
 
     await stellar.submitTransaction(txn);
-  }, 15000);
+
+    // swap
+    txBuilder = await stellar.transaction({
+      sourceAddress: txnSourceKp,
+    });
+    txn = txBuilder.swap(new NativeAssetId(), asset, "5").build();
+    txnSourceKp.sign(txn);
+
+    await stellar.submitTransaction(txn);
+  }, 60000);
 });
 
 let wal: Wallet;

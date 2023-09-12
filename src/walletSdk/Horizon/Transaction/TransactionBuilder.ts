@@ -109,6 +109,16 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
     return this;
   }
 
+  swap(
+    fromAsset: StellarAssetId,
+    toAsset: StellarAssetId,
+    amount: string,
+    destMin?: string,
+  ): TransactionBuilder {
+    this.pathPay(this.sourceAddress, fromAsset, toAsset, amount, destMin);
+    return this;
+  }
+
   addOperation(op: xdr.Operation): TransactionBuilder {
     this.builder.addOperation(op);
     return this;
