@@ -45,7 +45,7 @@
     "utility-types": "^3.10.0"
   },
   "scripts": {
-    "prepare": "yarn build",
+    "prepare": "husky install",
     "test": "jest --watchAll",
     "build": "webpack --config webpack.config.js"
   }

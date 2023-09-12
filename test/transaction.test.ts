@@ -30,38 +30,39 @@ describe("Horizon/Transaction", () => {
     testingDistributionKp = receivingKeys;
 
     // This is the testing asset we'll use to test sending non-native payments
-    testingAsset = new IssuedAssetId(
-      "TSWT",
-      issuingKeys.publicKey,
-    );
+    testingAsset = new IssuedAssetId("TSWT", issuingKeys.publicKey);
 
     let assetAlreadyCreated = false;
     try {
-      const receivingAccountInfo = await accountService.getInfo({ accountAddress: receivingKeys.publicKey });
-      
-      const tswtAssetBalance = receivingAccountInfo.balances.find((balanceLine) => {     
-        const { asset_code, balance } = balanceLine as Horizon.BalanceLineAsset;
-        return asset_code === testingAsset.code && Number(balance) > 1000;
+      const receivingAccountInfo = await accountService.getInfo({
+        accountAddress: receivingKeys.publicKey,
       });
+
+      const tswtAssetBalance = receivingAccountInfo.balances.find(
+        (balanceLine) => {
+          const { asset_code, balance } =
+            balanceLine as Horizon.BalanceLineAsset;
+          return asset_code === testingAsset.code && Number(balance) > 1000;
+        },
+      );
 
       if (tswtAssetBalance) {
         assetAlreadyCreated = true;
       }
     } catch {}
 
-    if(assetAlreadyCreated) {
+    if (assetAlreadyCreated) {
       return;
     }
 
     // If the TSWT asset is not there yet, let's issue and distribute it!
     try {
-
       // First make sure both issuing and receiving(distribution) accounts
       // are funded
       await axios.get(
         "https://friendbot.stellar.org/?addr=" + issuingKeys.publicKey,
       );
-  
+
       await axios.get(
         "https://friendbot.stellar.org/?addr=" + receivingKeys.publicKey,
       );
@@ -84,11 +85,9 @@ describe("Horizon/Transaction", () => {
         sourceAddress: issuingKeys,
         baseFee: 100,
       });
-      const fundingPaymentTx = txBuilder2.transfer(
-        receivingKeys.publicKey, 
-        testingAsset, 
-        "100000000"
-      ).build();
+      const fundingPaymentTx = txBuilder2
+        .transfer(receivingKeys.publicKey, testingAsset, "100000000")
+        .build();
       fundingPaymentTx.sign(issuingKeys.keypair);
       await stellar.submitTransaction(fundingPaymentTx);
     } catch {
@@ -109,7 +108,9 @@ describe("Horizon/Transaction", () => {
       );
     } catch {}
 
-    const baseAccount =  await stellar.server.loadAccount(baseAccoutKp.publicKey);
+    const baseAccount = await stellar.server.loadAccount(
+      baseAccoutKp.publicKey,
+    );
     const muxedAccount = new MuxedAccount(baseAccount, "123");
 
     const txBuilder = await stellar.transaction({
@@ -117,11 +118,9 @@ describe("Horizon/Transaction", () => {
       baseFee: 100,
     });
 
-    const sendNativePaymentTx = txBuilder.transfer(
-      muxedAccount.accountId(), 
-      new NativeAssetId(), 
-      "1"
-    ).build();
+    const sendNativePaymentTx = txBuilder
+      .transfer(muxedAccount.accountId(), new NativeAssetId(), "1")
+      .build();
     sendNativePaymentTx.sign(testingDistributionKp.keypair);
 
     const response = await stellar.submitTransaction(sendNativePaymentTx);
@@ -140,7 +139,9 @@ describe("Horizon/Transaction", () => {
       );
     } catch {}
 
-    const baseAccount =  await stellar.server.loadAccount(baseAccoutKp.publicKey);
+    const baseAccount = await stellar.server.loadAccount(
+      baseAccoutKp.publicKey,
+    );
     const muxedAccount = new MuxedAccount(baseAccount, "456");
 
     // First add support for the non-native asset
@@ -158,11 +159,9 @@ describe("Horizon/Transaction", () => {
       baseFee: 100,
     });
 
-    const sendNonNativePaymentTx = txBuilder2.transfer(
-      muxedAccount.accountId(), 
-      testingAsset, 
-      "1"
-    ).build();
+    const sendNonNativePaymentTx = txBuilder2
+      .transfer(muxedAccount.accountId(), testingAsset, "1")
+      .build();
     sendNonNativePaymentTx.sign(testingDistributionKp.keypair);
 
     const response = await stellar.submitTransaction(sendNonNativePaymentTx);
@@ -181,7 +180,9 @@ describe("Horizon/Transaction", () => {
       );
     } catch {}
 
-    const baseAccount =  await stellar.server.loadAccount(baseAccoutKp.publicKey);
+    const baseAccount = await stellar.server.loadAccount(
+      baseAccoutKp.publicKey,
+    );
     const muxedAccount = new MuxedAccount(baseAccount, "789");
 
     // Try submitting the non-native payment without adding the trustline
@@ -190,11 +191,9 @@ describe("Horizon/Transaction", () => {
       baseFee: 100,
     });
 
-    const sendNonNativePaymentTx = txBuilder.transfer(
-      muxedAccount.accountId(), 
-      testingAsset, 
-      "1"
-    ).build();
+    const sendNonNativePaymentTx = txBuilder
+      .transfer(muxedAccount.accountId(), testingAsset, "1")
+      .build();
     sendNonNativePaymentTx.sign(testingDistributionKp.keypair);
 
     try {
@@ -202,7 +201,7 @@ describe("Horizon/Transaction", () => {
     } catch (error) {
       expect(error?.response?.status === 400).toBeTruthy();
 
-      const resultCodeOperations: Array<string> = 
+      const resultCodeOperations: Array<string> =
         error?.response?.data?.extras?.result_codes?.operations || [];
 
       expect(resultCodeOperations).toContain("op_no_trust");
@@ -216,16 +215,18 @@ describe("Horizon/Transaction", () => {
     });
 
     try {
-      txBuilder.transfer(
-        // Invalid Muxed address ending in "XXXXXX"
-        "MBE3SABPOQFUSVCNDO5WNSS4N2KD7ZUFIYDRBP6Q3UBXBMYZFYWLSAAAAAAAAAAXXXXXX", 
-        new NativeAssetId(), 
-        "1"
-      ).build();
+      txBuilder
+        .transfer(
+          // Invalid Muxed address ending in "XXXXXX"
+          "MBE3SABPOQFUSVCNDO5WNSS4N2KD7ZUFIYDRBP6Q3UBXBMYZFYWLSAAAAAAAAAAXXXXXX",
+          new NativeAssetId(),
+          "1",
+        )
+        .build();
     } catch (error) {
       const lowercaseError = error.toString().toLowerCase();
       // Catches "Error: destination is invalid" error message
       expect(lowercaseError.match(/destination.*invalid/)).toBeTruthy();
-    }    
+    }
   });
 });
