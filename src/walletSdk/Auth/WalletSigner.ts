@@ -8,6 +8,7 @@ import { AxiosInstance } from "axios";
 import {
   SignWithClientAccountParams,
   SignWithDomainAccountParams,
+  HttpHeaders,
 } from "../Types";
 import { AccountKeypair } from "../Horizon/Account";
 import { DefaultClient } from "../";
@@ -40,9 +41,11 @@ export const DefaultSigner: WalletSigner = {
 export class DomainSigner implements WalletSigner {
   private url: string;
   private client: AxiosInstance;
-  constructor(url: string, httpClient?: AxiosInstance) {
+  private headers: HttpHeaders;
+  constructor(url: string, headers: HttpHeaders) {
     this.url = url;
-    this.client = httpClient || DefaultClient;
+    this.client = DefaultClient;
+    this.headers = headers;
   }
 
   signWithClientAccount({
@@ -58,10 +61,14 @@ export class DomainSigner implements WalletSigner {
     networkPassphrase,
     accountKp,
   }: SignWithDomainAccountParams): Promise<Transaction> {
-    const response = await this.client.post(this.url, {
-      transactionXDR,
-      networkPassphrase,
-    });
+    const response = await this.client.post(
+      this.url,
+      {
+        transactionXDR,
+        networkPassphrase,
+      },
+      { headers: this.headers },
+    );
 
     return StellarTransactionBuilder.fromXDR(
       response.data.transaction,

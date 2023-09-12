@@ -1698,7 +1698,10 @@ describe("DomainSigner", () => {
           "AAAAAgAAAADVJRbxdB+qXZjUMLcrL/VVoS6megW1ReSxIO33pvO61AAAB9AAAAAAAAAAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAACwAAAAAAAAACAAAAAAAAAAA=",
       },
     });
-    const signer = new DomainSigner("example url");
+    const signer = new DomainSigner("example url", {
+      SampleHeader: "sample-header",
+    });
+
     const txn = await signer.signWithDomainAccount({
       transactionXDR: "test-xdr",
       networkPassphrase: "Test SDF Network ; September 2015",
