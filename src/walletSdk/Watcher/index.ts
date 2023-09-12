@@ -1,5 +1,3 @@
-import isEqual from "lodash/isEqual";
-
 import { Anchor } from "../Anchor";
 import {
   AnchorTransaction,
@@ -151,9 +149,9 @@ export class Watcher {
               return isInProgress;
             }
 
-            // if we've had the transaction before, only report updates
+            // if we've had the transaction before, only report updates if status changed
             if (registeredTransaction) {
-              return !isEqual(registeredTransaction, transaction);
+              return registeredTransaction.status !== transaction.status;
             }
 
             // if it's NOT a registered transaction, and it's not the first
@@ -296,12 +294,13 @@ export class Watcher {
         const registeredTransaction =
           this._transactionsRegistry[assetCode][transaction.id];
 
-        // if we've had the transaction before, only report if there is a change
+        // if we've had the transaction before, only report if there is a status change
+        let isChanged = true;
         if (
           registeredTransaction &&
-          isEqual(registeredTransaction, transaction)
+          registeredTransaction.status === transaction.status
         ) {
-          return;
+          isChanged = false;
         }
 
         this._transactionsRegistry[assetCode][transaction.id] = transaction;
@@ -320,7 +319,9 @@ export class Watcher {
               isRetry: true,
             });
           }, timeout);
-          onMessage(transaction);
+          if (isChanged) {
+            onMessage(transaction);
+          }
         } else if (
           [
             TransactionStatus.completed,
