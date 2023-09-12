@@ -43,7 +43,6 @@ describe("Stellar", () => {
     const txBuilderParams = [
       {
         sourceAddress: kp,
-        baseFee: 100,
         startingBalance: 2,
       },
       {
