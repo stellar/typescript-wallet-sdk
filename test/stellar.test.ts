@@ -20,6 +20,43 @@ import {
 } from "../src/walletSdk/Asset";
 import { TransactionStatus, WithdrawTransaction } from "../src/walletSdk/Types";
 
+// ALEC TODO - move / remove
+
+describe("ALEC TODO", () => {
+  // ALEC TODO - test with native and non-native
+  it("should send path payment", async () => {
+    const wal = Wallet.TestNet();
+    const stellar = wal.stellar();
+
+    const txnSourceKp = SigningKeypair.fromSecret(
+      "SDAHZAV63BFFBHEEK6P5SD2B4DFP544TKBR5WOFKRMQ42U4UV3QVLWHC",
+    );
+    console.log("txnSourceKp:", txnSourceKp.publicKey); // ALEC TODO - remove
+    const otherKp = SigningKeypair.fromSecret(
+      "SB5VNY7XL2NO7HPFXP4PEMGXCDH4DPFCGOUCJLVR4S4CYZ57HM2FTHAI",
+    );
+    console.log("otherKp:", otherKp.publicKey); // ALEC TODO - remove
+
+    const txBuilder = await stellar.transaction({
+      sourceAddress: txnSourceKp,
+    });
+    const txn = txBuilder
+      .pathPay(
+        otherKp.publicKey,
+        new NativeAssetId(),
+        new IssuedAssetId(
+          "USDC",
+          "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+        ),
+        "5",
+      )
+      .build();
+    txnSourceKp.sign(txn);
+
+    await stellar.submitTransaction(txn);
+  }, 15000);
+});
+
 let wal: Wallet;
 let stellar: Stellar;
 const kp = SigningKeypair.fromSecret(

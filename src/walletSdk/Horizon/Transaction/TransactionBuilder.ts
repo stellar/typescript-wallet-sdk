@@ -90,6 +90,25 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
     return this;
   }
 
+  pathPay(
+    destinationAddress: string,
+    sendAsset: StellarAssetId,
+    destAsset: StellarAssetId,
+    amount: string,
+    destMin?: string,
+  ): TransactionBuilder {
+    this.operations.push(
+      StellarSdk.Operation.pathPaymentStrictSend({
+        destination: destinationAddress,
+        sendAsset: sendAsset.toAsset(),
+        sendAmount: amount,
+        destAsset: destAsset.toAsset(),
+        destMin: destMin || ".0000001",
+      }),
+    );
+    return this;
+  }
+
   addOperation(op: xdr.Operation): TransactionBuilder {
     this.builder.addOperation(op);
     return this;
