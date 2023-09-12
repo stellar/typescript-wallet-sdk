@@ -9,7 +9,7 @@ export enum NETWORK_URLS {
 
 export type TransactionParams = {
   sourceAddress: AccountKeypair;
-  baseFee: number;
+  baseFee?: number;
   memo?: Memo;
   timebounds?: Server.Timebounds | number;
 };
