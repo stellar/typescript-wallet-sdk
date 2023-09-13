@@ -4,13 +4,13 @@ import { Horizon, MuxedAccount } from "stellar-sdk";
 import { AccountService, SigningKeypair, Stellar, Wallet } from "../src";
 import { IssuedAssetId, NativeAssetId } from "../src/walletSdk/Asset";
 
-let wallet: Wallet;
-let stellar: Stellar;
-let accountService: AccountService;
-let testingDistributionKp: SigningKeypair;
-let testingAsset: IssuedAssetId;
+describe("Muxed Transactions", () => {
+  let wallet: Wallet;
+  let stellar: Stellar;
+  let accountService: AccountService;
+  let testingDistributionKp: SigningKeypair;
+  let testingAsset: IssuedAssetId;
 
-describe("Horizon/Transaction", () => {
   // Creates testing stellar account with testing TSWT asset
   // in case it doesn't exist just yet
   beforeAll(async () => {
@@ -229,4 +229,73 @@ describe("Horizon/Transaction", () => {
       expect(lowercaseError.match(/destination.*invalid/)).toBeTruthy();
     }
   });
+});
+
+describe("Path Payment", () => {
+  let wallet: Wallet;
+  let stellar: Stellar;
+  let sourceKp;
+  let receivingKp;
+  const usdcAsset = new IssuedAssetId(
+    "USDC",
+    "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+  );
+  beforeAll(async () => {
+    wallet = Wallet.TestNet();
+    stellar = wallet.stellar();
+
+    // set up accounts
+    sourceKp = SigningKeypair.fromSecret(
+      "SBTMCNDNPMJFEYUHLCAMFM5C2PWI7ZUI7PFMLI53O62CSSXFSAXEDTS6",
+    );
+    receivingKp = SigningKeypair.fromSecret(
+      "SDU4Z54AAFF3Y3GA6U27QSSYYX5FLDV6KWGFCCWSMSOSFWHSABJFBFOD",
+    );
+    try {
+      await stellar.server.loadAccount(sourceKp.publicKey);
+      await stellar.server.loadAccount(receivingKp.publicKey);
+    } catch (e) {
+      await axios.get(
+        "https://friendbot.stellar.org/?addr=" + sourceKp.publicKey,
+      );
+      await axios.get(
+        "https://friendbot.stellar.org/?addr=" + receivingKp.publicKey,
+      );
+
+      // add trustlines if new accounts
+      let txBuilder = await stellar.transaction({
+        sourceAddress: receivingKp,
+      });
+      let txn = txBuilder.addAssetSupport(usdcAsset).build();
+      receivingKp.sign(txn);
+      await stellar.submitTransaction(txn);
+
+      txBuilder = await stellar.transaction({
+        sourceAddress: sourceKp,
+      });
+      txn = txBuilder.addAssetSupport(usdcAsset).build();
+      sourceKp.sign(txn);
+      await stellar.submitTransaction(txn);
+    }
+  }, 20000);
+  it("should send path payment and swap", async () => {
+    const txBuilder = await stellar.transaction({
+      sourceAddress: sourceKp,
+    });
+    const txn = txBuilder
+      .pathPay(receivingKp.publicKey, new NativeAssetId(), usdcAsset, "5")
+      .build();
+    sourceKp.sign(txn);
+    const success = await stellar.submitTransaction(txn);
+    expect(success).toBe(true);
+  }, 15000);
+  it("should swap", async () => {
+    const txBuilder = await stellar.transaction({
+      sourceAddress: sourceKp,
+    });
+    const txn = txBuilder.swap(new NativeAssetId(), usdcAsset, "1").build();
+    sourceKp.sign(txn);
+    const success = await stellar.submitTransaction(txn);
+    expect(success).toBe(true);
+  }, 15000);
 });

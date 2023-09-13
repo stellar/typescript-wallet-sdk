@@ -94,7 +94,6 @@ export class Stellar {
       }
       return true;
     } catch (e) {
-      console.log(e.response.data.extras.result_codes); // ALEC TODO - remove
       if (e.response.status === 504) {
         // in case of 504, keep retrying this tx until submission succeeds or we get a different error
         // https://developers.stellar.org/api/errors/http-status-codes/horizon-specific/timeout
