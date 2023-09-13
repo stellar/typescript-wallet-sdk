@@ -90,6 +90,19 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
     return this;
   }
 
+  /**
+   * Creates and adds a path payment operation to the transaction builder.
+   *
+   * @param {string} destinationAddress - The destination Stellar address to which the payment is sent.
+   * @param {StellarAssetId} sendAsset - The asset to be sent.
+   * @param {StellarAssetId} destAsset - The asset the destination will receive.
+   * @param {string} amount - The amount to be sent as a string.
+   * @param {string} [destMin] - The minimum amount of the destination asset to be receive. This is a
+   * protective measure, it allows you to specify a lower bound for an  acceptable conversion.
+   * (optional, default is ".0000001").
+   *
+   * @returns {TransactionBuilder} - Returns the current TransactionBuilder instance for method chaining.
+   */
   pathPay(
     destinationAddress: string,
     sendAsset: StellarAssetId,
