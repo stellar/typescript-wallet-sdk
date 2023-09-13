@@ -18,6 +18,7 @@ import {
 } from "../src/walletSdk/Auth/WalletSigner";
 import { SigningKeypair } from "../src/walletSdk/Horizon/Account";
 import { Sep24 } from "../src/walletSdk/Anchor/Sep24";
+import { DomainSigner } from "../src/walletSdk/Auth/WalletSigner";
 
 import { TransactionsResponse } from "../test/fixtures/TransactionsResponse";
 
@@ -64,6 +65,13 @@ describe("SEP-24 flow", () => {
 let anchor: Anchor;
 let accountKp: SigningKeypair;
 let authToken: string;
+const makeTransaction = (eta: number, txStatus: TransactionStatus) => ({
+  kind: "deposit",
+  id: "TEST",
+  status: txStatus,
+  status_eta: eta,
+  message: "some message",
+});
 describe("Anchor", () => {
   beforeAll(() => {
     const Wal = Wallet.TestNet();
@@ -812,18 +820,61 @@ describe("Anchor", () => {
       // stops watching
       stop();
     });
+    it("should only report transactions with changed status", async () => {
+      const txn1 = makeTransaction(0, TransactionStatus.incomplete);
+      const txn2 = makeTransaction(0, TransactionStatus.incomplete);
+      txn2.message = "message changing";
+      const txn3 = makeTransaction(0, TransactionStatus.pending_anchor);
+
+      const onMessage = sinon.spy((m) => {
+        expect(m.message).toBe("some message");
+        expect(onMessage.callCount).toBeLessThan(3);
+      });
+
+      const onError = sinon.spy((e) => {
+        expect(e).toBeUndefined();
+      });
+
+      // mock default transactions response
+      jest
+        .spyOn(Sep24.prototype, "getTransactionsForAsset")
+        .mockResolvedValueOnce([txn1])
+        .mockResolvedValueOnce([txn2])
+        .mockResolvedValueOnce([txn3]);
+
+      // start watching
+      const watcher = anchor.sep24().watcher();
+      const { stop } = watcher.watchAllTransactions({
+        authToken,
+        assetCode: "SRT",
+        lang: "en-US",
+        onMessage,
+        onError,
+        timeout: 1,
+      });
+
+      // nothing should run at first (async api call in progress)
+      expect(onMessage.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+
+      clock.next();
+      await sleep(1);
+      clock.next();
+      await sleep(1);
+      clock.next();
+      await sleep(1);
+
+      expect(onMessage.callCount).toBe(2);
+      expect(onError.callCount).toBe(0);
+
+      // stops watching
+      stop();
+    });
   });
 
   describe("watchOneTransaction", () => {
     let clock: sinon.SinonFakeTimers;
     let watcher: Watcher;
-
-    const makeTransaction = (eta: number, txStatus: TransactionStatus) => ({
-      kind: "deposit",
-      id: "TEST",
-      status: txStatus,
-      status_eta: eta,
-    });
 
     beforeEach(async () => {
       clock = sinon.useFakeTimers(0);
@@ -1120,7 +1171,7 @@ describe("Anchor", () => {
     });
 
     test("Several pending transactions, one completed, no more after that", async () => {
-      const onMessage = sinon.spy(() => {
+      const onMessage = sinon.spy((m) => {
         expect(onMessage.callCount).toBeLessThanOrEqual(8);
       });
 
@@ -1142,27 +1193,31 @@ describe("Anchor", () => {
         .mockResolvedValueOnce(
           makeTransaction(2, TransactionStatus.pending_anchor),
         )
+        // should not be logged to onMessage
         .mockResolvedValueOnce(
-          makeTransaction(3, TransactionStatus.pending_external),
+          makeTransaction(3, TransactionStatus.pending_anchor),
         )
         .mockResolvedValueOnce(
-          makeTransaction(4, TransactionStatus.pending_stellar),
+          makeTransaction(4, TransactionStatus.pending_external),
         )
         .mockResolvedValueOnce(
-          makeTransaction(5, TransactionStatus.pending_trust),
+          makeTransaction(5, TransactionStatus.pending_stellar),
         )
         .mockResolvedValueOnce(
-          makeTransaction(6, TransactionStatus.pending_user_transfer_start),
+          makeTransaction(6, TransactionStatus.pending_trust),
         )
         .mockResolvedValueOnce(
-          makeTransaction(7, TransactionStatus.pending_user_transfer_complete),
-        )
-        .mockResolvedValueOnce(makeTransaction(8, TransactionStatus.completed))
-        .mockResolvedValueOnce(
-          makeTransaction(9, TransactionStatus.pending_anchor),
+          makeTransaction(7, TransactionStatus.pending_user_transfer_start),
         )
         .mockResolvedValueOnce(
-          makeTransaction(10, TransactionStatus.pending_external),
+          makeTransaction(8, TransactionStatus.pending_user_transfer_complete),
+        )
+        .mockResolvedValueOnce(makeTransaction(9, TransactionStatus.completed))
+        .mockResolvedValueOnce(
+          makeTransaction(10, TransactionStatus.pending_anchor),
+        )
+        .mockResolvedValueOnce(
+          makeTransaction(11, TransactionStatus.pending_external),
         );
 
       // start watching
@@ -1183,6 +1238,9 @@ describe("Anchor", () => {
       expect(onError.callCount).toBe(0);
 
       // loop through all pending statuses updates
+      await sleep(1);
+
+      clock.next();
       await sleep(1);
 
       clock.next();
@@ -1686,6 +1744,87 @@ describe("Anchor", () => {
       expect(onSuccess.callCount).toBe(0);
       expect(onError.callCount).toBe(1);
     });
+
+    it("should only report transactions with changed status", async () => {
+      const txn1 = makeTransaction(0, TransactionStatus.incomplete);
+      const txn2 = makeTransaction(0, TransactionStatus.incomplete);
+      txn2.message = "message changing";
+      const txn3 = makeTransaction(0, TransactionStatus.pending_anchor);
+
+      const onMessage = sinon.spy((m) => {
+        expect(m.message).toBe("some message");
+        expect(onMessage.callCount).toBeLessThan(3);
+      });
+
+      const onSuccess = sinon.spy(() => {
+        expect(onSuccess.callCount).toBe(0);
+      });
+
+      const onError = sinon.spy((e) => {
+        expect(e).toBeUndefined();
+      });
+
+      // mock default transactions response
+      jest
+        .spyOn(Sep24.prototype, "getTransactionBy")
+        .mockResolvedValueOnce(txn1)
+        .mockResolvedValueOnce(txn2)
+        .mockResolvedValueOnce(txn3);
+
+      // start watching
+      const watcher = anchor.sep24().watcher();
+      const { stop } = watcher.watchOneTransaction({
+        authToken,
+        assetCode: "SRT",
+        id: "TEST",
+        lang: "en-US",
+        onMessage,
+        onSuccess,
+        onError,
+        timeout: 1,
+      });
+
+      // nothing should run at first (async api call in progress)
+      expect(onMessage.callCount).toBe(0);
+      expect(onError.callCount).toBe(0);
+
+      clock.next();
+      await sleep(1);
+      clock.next();
+      await sleep(1);
+      clock.next();
+      await sleep(1);
+
+      expect(onMessage.callCount).toBe(2);
+      expect(onError.callCount).toBe(0);
+      expect(onSuccess.callCount).toBe(0);
+
+      // stops watching
+      stop();
+    });
+  });
+});
+
+describe("DomainSigner", () => {
+  it("should work", async () => {
+    jest.spyOn(DefaultClient, "post").mockResolvedValue({
+      data: {
+        transaction:
+          "AAAAAgAAAADVJRbxdB+qXZjUMLcrL/VVoS6megW1ReSxIO33pvO61AAAB9AAAAAAAAAAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAACwAAAAAAAAACAAAAAAAAAAA=",
+      },
+    });
+    const signer = new DomainSigner("example url", {
+      SampleHeader: "sample-header",
+    });
+
+    const txn = await signer.signWithDomainAccount({
+      transactionXDR: "test-xdr",
+      networkPassphrase: "Test SDF Network ; September 2015",
+      accountKp: SigningKeypair.fromSecret(
+        "SBYAW5H46NNDGCECWMWWM32DE4DPNN3RHVMNTR3BXXZX2DJF6LZWBMWZ",
+      ),
+    });
+    expect(txn).toBeTruthy();
   });
 });
 
