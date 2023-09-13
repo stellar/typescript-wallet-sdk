@@ -38,10 +38,25 @@ export const DefaultSigner: WalletSigner = {
   },
 };
 
+/**
+ * Represents a Domain Signer used for signing Stellar transactions with a domain server.
+ *
+ * @class
+ * @implements {WalletSigner}
+ */
 export class DomainSigner implements WalletSigner {
   private url: string;
   private client: AxiosInstance;
   private headers: HttpHeaders;
+
+  /**
+   * Create a new instance of the DomainSigner class.
+   *
+   * @constructor
+   * @param {string} url - The URL of the domain server.
+   * @param {HttpHeaders} headers - The HTTP headers for requests to the domain server.
+   * These headers can be used for authentication purposes.
+   */
   constructor(url: string, headers: HttpHeaders) {
     this.url = url;
     this.client = DefaultClient;
