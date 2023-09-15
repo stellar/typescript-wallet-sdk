@@ -45,7 +45,7 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
 
   sponsoring(
     sponsorAccount: AccountKeypair,
-    buildingFunction: (SponsoringBuilder) => SponsoringBuilder,
+    buildingFunction: (builder: SponsoringBuilder) => SponsoringBuilder,
     sponsoredAccount?: AccountKeypair,
   ): TransactionBuilder {
     new SponsoringBuilder(
