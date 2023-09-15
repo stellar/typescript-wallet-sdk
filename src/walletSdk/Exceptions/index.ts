@@ -153,9 +153,45 @@ export class PathPayOnlyOneAmountError extends Error {
     Object.setPrototypeOf(this, PathPayOnlyOneAmountError.prototype);
   }
 }
+
 export class WithdrawalTxMemoError extends Error {
   constructor() {
     super(`Error parsing withdrawal transaction memo`);
     Object.setPrototypeOf(this, WithdrawalTxMemoError.prototype);
+  }
+}
+
+export class RecoveryServerNotFoundError extends Error {
+  constructor(serverKey: string) {
+    super(`Server with key ${serverKey} was not found`);
+    Object.setPrototypeOf(this, RecoveryServerNotFoundError.prototype);
+  }
+}
+
+export class NotAllSignaturesFetchedError extends Error {
+  constructor() {
+    super(`Didn't get all recovery server signatures`);
+    Object.setPrototypeOf(this, NotAllSignaturesFetchedError.prototype);
+  }
+}
+
+export class LostSignerKeyNotFound extends Error {
+  constructor() {
+    super(`Lost key doesn't belong to the account`);
+    Object.setPrototypeOf(this, LostSignerKeyNotFound.prototype);
+  }
+}
+
+export class NoDeviceKeyForAccount extends Error {
+  constructor() {
+    super(`No device key is setup for this account`);
+    Object.setPrototypeOf(this, NoDeviceKeyForAccount.prototype);
+  }
+}
+
+export class UnableToDeduceKey extends Error {
+  constructor() {
+    super(`Couldn't deduce lost key. Please provide lost key explicitly`);
+    Object.setPrototypeOf(this, UnableToDeduceKey.prototype);
   }
 }

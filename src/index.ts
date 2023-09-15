@@ -18,6 +18,7 @@ export { Sep24 } from "./walletSdk/Anchor/Sep24";
 export { IssuedAssetId, NativeAssetId, FiatAssetId } from "./walletSdk/Asset";
 export { Sep10, WalletSigner, DefaultSigner } from "./walletSdk/Auth";
 export {
+  AccountKeypair,
   PublicKeypair,
   SigningKeypair,
   AccountService,

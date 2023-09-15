@@ -15,7 +15,7 @@ export class SponsoringBuilder extends CommonTransactionBuilder<SponsoringBuilde
     sponsoredAddress: string,
     sponsorAccount: AccountKeypair,
     operations: Array<xdr.Operation>,
-    buildingFunction: (SponsoringBuilder) => SponsoringBuilder,
+    buildingFunction: (builder: SponsoringBuilder) => SponsoringBuilder,
   ) {
     super(sponsoredAddress, operations);
     this.sponsorAccount = sponsorAccount;

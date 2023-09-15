@@ -25,8 +25,8 @@ export type SubmitWithFeeIncreaseParams = {
   sourceAddress: AccountKeypair;
   timeout: number;
   baseFeeIncrease: number;
-  buildingFunction: (TransactionBuilder) => TransactionBuilder;
-  signerFunction?: (Transaction) => Transaction;
+  buildingFunction: (builder: TransactionBuilder) => TransactionBuilder;
+  signerFunction?: (transaction: Transaction) => Transaction;
   baseFee?: number;
   memo?: Memo;
   maxFee?: number;
