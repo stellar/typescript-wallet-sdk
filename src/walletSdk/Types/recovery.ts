@@ -3,6 +3,7 @@ import { Transaction } from "stellar-sdk";
 import { WalletSigner } from "walletSdk/Auth";
 import { AccountKeypair, PublicKeypair } from "walletSdk/Horizon";
 import { AuthToken } from "./auth";
+import { CommonBuilder } from "./horizon";
 
 /**
  * Configuration for recoverable wallet
@@ -22,8 +23,7 @@ export type RecoverableWalletConfig = {
   accountIdentity: RecoveryIdentityMap;
   signerWeight: SignerWeight;
   sponsorAddress?: AccountKeypair;
-  // TODO: finish this
-  // builderExtra?: ((CommonTransactionBuilder<*>) -> Unit);
+  builderExtra?: (builder: CommonBuilder) => CommonBuilder;
 };
 
 export type RecoverableWallet = {

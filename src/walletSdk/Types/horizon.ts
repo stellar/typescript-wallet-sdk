@@ -1,6 +1,6 @@
-import { Memo, Server, xdr, Transaction } from "stellar-sdk";
+import { Memo, Server, Transaction } from "stellar-sdk";
 import { AccountKeypair } from "../Horizon/Account";
-import { TransactionBuilder } from "../Horizon/Transaction/TransactionBuilder";
+import { SponsoringBuilder, TransactionBuilder } from "walletSdk/Horizon";
 
 export enum NETWORK_URLS {
   PUBLIC = "https://horizon.stellar.org",
@@ -38,3 +38,5 @@ export enum HORIZON_ORDER {
   ASC = "asc",
   DESC = "desc",
 }
+
+export type CommonBuilder = TransactionBuilder | SponsoringBuilder;

@@ -15,7 +15,7 @@ import {
   WithdrawalTxMissingMemoError,
   WithdrawalTxNotPendingUserTransferStartError,
 } from "../../Exceptions";
-import { IssuedAssetId, StellarAssetId } from "../../Asset";
+import { StellarAssetId } from "../../Asset";
 import { WithdrawTransaction, TransactionStatus } from "../../Types";
 import { CommonTransactionBuilder } from "./CommonTransactionBuilder";
 import { SponsoringBuilder } from "./SponsoringBuilder";
