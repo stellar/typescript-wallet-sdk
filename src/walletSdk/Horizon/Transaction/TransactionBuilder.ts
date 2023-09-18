@@ -14,6 +14,7 @@ import {
   InsufficientStartingBalanceError,
   WithdrawalTxMissingMemoError,
   WithdrawalTxNotPendingUserTransferStartError,
+  WithdrawalTxMemoError,
 } from "../../Exceptions";
 import { IssuedAssetId, StellarAssetId } from "../../Asset";
 import { WithdrawTransaction, TransactionStatus } from "../../Types";
@@ -129,9 +130,20 @@ export class TransactionBuilder {
       throw new WithdrawalTxMissingMemoError();
     }
 
-    return this.setMemo(
-      new Memo(transaction.withdraw_memo_type, transaction.withdraw_memo),
-    ).transfer(
+    if (transaction.withdraw_memo_type === "hash") {
+      try {
+        const parsed = xdr["Memo"].fromXDR(transaction.withdraw_memo, "base64");
+        this.setMemo(Memo.fromXDRObject(parsed));
+      } catch {
+        throw new WithdrawalTxMemoError();
+      }
+    } else {
+      this.setMemo(
+        new Memo(transaction.withdraw_memo_type, transaction.withdraw_memo),
+      );
+    }
+
+    return this.transfer(
       transaction.withdraw_anchor_account,
       assetId,
       transaction.amount_in,
