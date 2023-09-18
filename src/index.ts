@@ -23,6 +23,7 @@ export {
   SigningKeypair,
   AccountService,
   Stellar,
+  CommonTransactionBuilder,
   TransactionBuilder,
   SponsoringBuilder,
 } from "./walletSdk/Horizon";

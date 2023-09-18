@@ -154,6 +154,13 @@ export class RecoveryServerNotFoundError extends Error {
   }
 }
 
+export class RecoveryIdentityNotFoundError extends Error {
+  constructor(serverKey: string) {
+    super(`Account identity for server ${serverKey} was not specified`);
+    Object.setPrototypeOf(this, RecoveryIdentityNotFoundError.prototype);
+  }
+}
+
 export class NotAllSignaturesFetchedError extends Error {
   constructor() {
     super(`Didn't get all recovery server signatures`);
@@ -168,16 +175,37 @@ export class LostSignerKeyNotFound extends Error {
   }
 }
 
-export class NoDeviceKeyForAccount extends Error {
+export class NoDeviceKeyForAccountError extends Error {
   constructor() {
     super(`No device key is setup for this account`);
-    Object.setPrototypeOf(this, NoDeviceKeyForAccount.prototype);
+    Object.setPrototypeOf(this, NoDeviceKeyForAccountError.prototype);
   }
 }
 
-export class UnableToDeduceKey extends Error {
+export class UnableToDeduceKeyError extends Error {
   constructor() {
     super(`Couldn't deduce lost key. Please provide lost key explicitly`);
-    Object.setPrototypeOf(this, UnableToDeduceKey.prototype);
+    Object.setPrototypeOf(this, UnableToDeduceKeyError.prototype);
+  }
+}
+
+export class NoAccountSignersError extends Error {
+  constructor() {
+    super(`There are no signers on this recovery server`);
+    Object.setPrototypeOf(this, NoAccountSignersError.prototype);
+  }
+}
+
+export class DeviceKeyEqualsMasterKeyError extends Error {
+  constructor() {
+    super(`Device key must be different from master (account) key`);
+    Object.setPrototypeOf(this, DeviceKeyEqualsMasterKeyError.prototype);
+  }
+}
+
+export class NoAccountAndNoSponsorError extends Error {
+  constructor() {
+    super(`Account does not exist and is not sponsored`);
+    Object.setPrototypeOf(this, NoAccountAndNoSponsorError.prototype);
   }
 }
