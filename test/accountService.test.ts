@@ -88,6 +88,17 @@ describe("Horizon", () => {
     ).toBeTruthy();
   });
 
+  it("should error 404 in case account not found", async () => {
+    // Any recently generated keypair won't be tied to a stellar account
+    const publicKeyWithoutAccount = accountService.createKeypair().publicKey;
+
+    try {
+      await accountService.getInfo({ accountAddress: publicKeyWithoutAccount });
+    } catch (e) {
+      expect(e?.response?.status).toBe(404);
+    }
+  });
+
   it("should return stellar account operations", async () => {
     const response = await accountService.getHistory({
       accountAddress,

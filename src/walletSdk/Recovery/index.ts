@@ -236,9 +236,18 @@ export class Recovery extends AccountRecover {
     sponsorAddress?: AccountKeypair,
     builderExtra?: (builder: CommonBuilder) => CommonBuilder,
   ): Promise<Transaction> {
-    const accountInfo = await this.stellar
-      .account()
-      .getInfo({ accountAddress: account.publicKey });
+    let accountInfo = undefined;
+
+    try {
+      accountInfo = await this.stellar
+        .account()
+        .getInfo({ accountAddress: account.publicKey });
+    } catch (e) {
+      // In case it's an "Account not found" error let the code continue
+      if (e?.response?.status !== 404) {
+        throw e;
+      }
+    }
 
     const sourceAddress = accountInfo ? account : sponsorAddress;
 
