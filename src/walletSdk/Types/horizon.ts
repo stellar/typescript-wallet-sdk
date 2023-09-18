@@ -1,6 +1,6 @@
-import { Memo, Server, xdr, Transaction } from "stellar-sdk";
+import { Memo, Server, Transaction } from "stellar-sdk";
 import { AccountKeypair } from "../Horizon/Account";
-import { TransactionBuilder } from "../Horizon/Transaction/TransactionBuilder";
+import { SponsoringBuilder, TransactionBuilder } from "walletSdk/Horizon";
 import { StellarAssetId } from "../Asset";
 
 export enum NETWORK_URLS {
@@ -49,3 +49,5 @@ export type PathPayParams = {
   destMin?: string;
   sendMax?: string;
 };
+
+export type CommonBuilder = TransactionBuilder | SponsoringBuilder;

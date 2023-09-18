@@ -6,6 +6,7 @@ import { Config } from "walletSdk";
 import {
   AccountSigner,
   AccountThreshold,
+  CommonBuilder,
   RecoverableAccountInfo,
   RecoverableWallet,
   RecoverableWalletConfig,
@@ -168,7 +169,7 @@ export class Recovery extends AccountRecover {
       accountSigners,
       config.accountThreshold,
       config.sponsorAddress,
-      // config.builderExtra
+      config.builderExtra,
     );
 
     return {
@@ -233,7 +234,7 @@ export class Recovery extends AccountRecover {
     accountSigner: AccountSigner[],
     accountThreshold: AccountThreshold,
     sponsorAddress?: AccountKeypair,
-    // builderExtra?: ((CommonTransactionBuilder<*>) -> Unit),
+    builderExtra?: (builder: CommonBuilder) => CommonBuilder,
   ): Promise<Transaction> {
     const accountInfo = await this.stellar
       .account()
@@ -256,6 +257,7 @@ export class Recovery extends AccountRecover {
             builder,
             accountSigner,
             accountThreshold,
+            builderExtra,
           ) as SponsoringBuilder;
 
         builder.sponsoring(sponsorAddress, buildingFunction);
@@ -266,25 +268,25 @@ export class Recovery extends AccountRecover {
             builder,
             accountSigner,
             accountThreshold,
+            builderExtra,
           ) as SponsoringBuilder;
         };
 
         builder.sponsoring(sponsorAddress, buildingFunction, account);
       }
     } else {
-      this.register(builder, accountSigner, accountThreshold);
+      this.register(builder, accountSigner, accountThreshold, builderExtra);
     }
 
     return builder.build();
   }
 
   private register(
-    builder: TransactionBuilder | SponsoringBuilder,
+    builder: CommonBuilder,
     accountSigner: AccountSigner[],
     accountThreshold: AccountThreshold,
-    // TODO: finish this
-    // builderExtra?: ((CommonTransactionBuilder<*>) -> Unit),
-  ): TransactionBuilder | SponsoringBuilder {
+    builderExtra?: (builder: CommonBuilder) => CommonBuilder,
+  ): CommonBuilder {
     builder.lockAccountMasterKey();
 
     accountSigner.forEach(({ address, weight }) =>
@@ -294,7 +296,7 @@ export class Recovery extends AccountRecover {
     const { low, medium, high } = accountThreshold;
     builder.setThreshold({ low, medium, high });
 
-    // builderExtra?.(builder);
+    builderExtra?.(builder);
 
     return builder;
   }
