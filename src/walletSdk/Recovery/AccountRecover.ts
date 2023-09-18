@@ -16,7 +16,7 @@ import {
   RecoveryServerNotFoundError,
   ServerRequestFailedError,
   UnableToDeduceKeyError,
-} from "walletSdk/Exceptions";
+} from "../Exceptions";
 import {
   AccountKeypair,
   PublicKeypair,

@@ -18,15 +18,15 @@ import {
   RecoveryServerKey,
   RecoveryServerMap,
 } from "walletSdk/Types";
+import { AccountRecover } from "./AccountRecover";
+import { Sep10 } from "../Auth";
 import {
   DeviceKeyEqualsMasterKeyError,
   NoAccountAndNoSponsorError,
   NoAccountSignersError,
   RecoveryIdentityNotFoundError,
   ServerRequestFailedError,
-} from "walletSdk/Exceptions";
-import { Sep10 } from "walletSdk/Auth";
-import { AccountRecover } from "./AccountRecover";
+} from "../Exceptions";
 import {
   AccountKeypair,
   PublicKeypair,
