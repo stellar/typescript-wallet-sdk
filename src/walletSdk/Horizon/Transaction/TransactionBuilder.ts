@@ -132,8 +132,9 @@ export class TransactionBuilder {
 
     if (transaction.withdraw_memo_type === "hash") {
       try {
-        const parsed = xdr["Memo"].fromXDR(transaction.withdraw_memo, "base64");
-        this.setMemo(Memo.fromXDRObject(parsed));
+        const buffer = Buffer.from(transaction.withdraw_memo, "base64");
+        const memo = Memo.hash(buffer.toString("hex"));
+        this.setMemo(memo);
       } catch {
         throw new WithdrawalTxMemoError();
       }

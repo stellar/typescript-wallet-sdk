@@ -36,7 +36,7 @@ describe("Stellar", () => {
     } catch (e) {
       await axios.get("https://friendbot.stellar.org/?addr=" + kp.publicKey);
     }
-  });
+  }, 10000);
   it("should create and submit a transaction", async () => {
     const now = Math.floor(Date.now() / 1000) - 5;
 
@@ -210,6 +210,10 @@ describe("Stellar", () => {
       {
         type: "hash",
         value: "AAAAAAAAAAAAAAAAAAAAAMAP+8deo0TViBD09TfOBY0=",
+      },
+      {
+        type: "hash",
+        value: "MV9b23bQeMQ7isAGTkoBZGErH853yGk0W/yUx1iU7dM=",
       },
     ];
 
