@@ -3,12 +3,7 @@ import { ServerApi, Transaction } from "stellar-sdk";
 import { AccountRecordSigners } from "stellar-sdk/lib/types/account";
 
 import {
-  AccountKeypair,
-  PublicKeypair,
-  SponsoringBuilder,
-  Stellar,
-} from "../Horizon";
-import {
+  RecoveryServer,
   RecoveryServerKey,
   RecoveryServerMap,
   RecoveryServerSigning,
@@ -16,25 +11,31 @@ import {
 } from "walletSdk/Types";
 import {
   LostSignerKeyNotFound,
-  NoDeviceKeyForAccount,
+  NoDeviceKeyForAccountError,
   NotAllSignaturesFetchedError,
+  RecoveryServerNotFoundError,
   ServerRequestFailedError,
-  UnableToDeduceKey,
+  UnableToDeduceKeyError,
 } from "walletSdk/Exceptions";
-import { getServer } from "walletSdk/Utils/recovery";
+import {
+  AccountKeypair,
+  PublicKeypair,
+  SponsoringBuilder,
+  Stellar,
+} from "../Horizon";
 
 export class AccountRecover {
-  private stellar: Stellar;
-  private client: AxiosInstance;
-  private servers: RecoveryServerMap;
+  protected stellar: Stellar;
+  protected httpClient: AxiosInstance;
+  protected servers: RecoveryServerMap;
 
   constructor(
     stellar: Stellar,
-    client: AxiosInstance,
+    httpClient: AxiosInstance,
     servers: RecoveryServerMap,
   ) {
     this.stellar = stellar;
-    this.client = client;
+    this.httpClient = httpClient;
     this.servers = servers;
   }
 
@@ -46,7 +47,7 @@ export class AccountRecover {
    * @param account keypair of the account that is recovered
    * @param serverAuth map of recovery servers to use
    * @return transaction with recovery server signatures
-   * @throws [NotAllSignaturesFetchedException] when all recovery servers don't return signatures
+   * @throws [NotAllSignaturesFetchedError] when all recovery servers don't return signatures
    */
   async signWithRecoveryServers(
     transaction: Transaction,
@@ -140,8 +141,8 @@ export class AccountRecover {
    * @param stellarAccount stellar account to lookup existing signers on account
    * @param serverAuth sap of recovery servers to use
    * @return deduced account signer
-   * @throws [NoDeviceKeyForAccount] when no existing("lost") device key is found
-   * @throws [UnableToDeduceKey] when no criteria matches
+   * @throws [NoDeviceKeyForAccountError] when no existing("lost") device key is found
+   * @throws [UnableToDeduceKeyError] when no criteria matches
    */
   private deduceKey(
     stellarAccount: ServerApi.AccountRecord,
@@ -162,7 +163,7 @@ export class AccountRecover {
 
     // Throws in case there is no signer other than the recovery signers
     if (nonRecoverySigners.length === 0) {
-      throw new NoDeviceKeyForAccount();
+      throw new NoDeviceKeyForAccountError();
     }
 
     // If we have only 1 signer that's not a recovery signer deduce it
@@ -181,7 +182,7 @@ export class AccountRecover {
     // Check if all recovery signers have the same weight
     const recoveryWeight = recoverySigners[0]?.weight || 0;
     if (recoverySigners.find(({ weight }) => weight !== recoveryWeight)) {
-      throw new UnableToDeduceKey();
+      throw new UnableToDeduceKeyError();
     }
 
     // Then in case we have only one non-recovery signer that has different
@@ -191,7 +192,7 @@ export class AccountRecover {
     );
 
     if (filtered.length !== 1) {
-      throw new UnableToDeduceKey();
+      throw new UnableToDeduceKeyError();
     }
 
     return filtered[0];
@@ -204,13 +205,13 @@ export class AccountRecover {
   ): Promise<void> {
     const [serverKey, auth] = recoveryAuth;
 
-    const server = getServer(this.servers, serverKey);
+    const server = this.getServer(serverKey);
 
     const requestUrl = `${server.endpoint}/accounts/${accountAddress}/sign/${auth.signerAddress}`;
 
     let signature: string;
     try {
-      const resp = await this.client.post(
+      const resp = await this.httpClient.post(
         requestUrl,
         {
           transaction: transaction.toXDR(),
@@ -234,4 +235,14 @@ export class AccountRecover {
 
     transaction.addSignature(auth.signerAddress, signature);
   }
+
+  protected getServer = (serverKey: RecoveryServerKey): RecoveryServer => {
+    const server = this.servers[serverKey];
+
+    if (!server) {
+      throw new RecoveryServerNotFoundError(serverKey);
+    }
+
+    return server;
+  };
 }
