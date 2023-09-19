@@ -38,7 +38,7 @@ describe("Recovery / Register Signers", () => {
         "https://friendbot.stellar.org/?addr=" + sponsorAccountKp.publicKey,
       );
     }
-  }, 30000);
+  }, 60000);
 
   it("defaults work", async () => {
     const transaction = await wallet
