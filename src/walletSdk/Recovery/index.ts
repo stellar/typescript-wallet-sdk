@@ -223,14 +223,14 @@ export class Recovery extends AccountRecover {
    * This transaction can be sponsored.
    *
    * @param account Stellar address of the account that is receiving new signers
-   * @param accountSigner A list of account signers and their weights
+   * @param accountSigners A list of account signers and their weights
    * @param accountThreshold Low, medium, and high thresholds to set on the account
    * @param sponsorAddress optional Stellar address of the account sponsoring this transaction
    * @return transaction
    */
   async registerRecoveryServerSigners(
     account: AccountKeypair,
-    accountSigner: AccountSigner[],
+    accountSigners: AccountSigner[],
     accountThreshold: AccountThreshold,
     sponsorAddress?: AccountKeypair,
     builderExtra?: (builder: CommonBuilder) => CommonBuilder,
@@ -263,7 +263,7 @@ export class Recovery extends AccountRecover {
         const buildingFunction = (builder: SponsoringBuilder) =>
           this.register(
             builder,
-            accountSigner,
+            accountSigners,
             accountThreshold,
             builderExtra,
           ) as SponsoringBuilder;
@@ -274,7 +274,7 @@ export class Recovery extends AccountRecover {
           builder.createAccount(account);
           return this.register(
             builder,
-            accountSigner,
+            accountSigners,
             accountThreshold,
             builderExtra,
           ) as SponsoringBuilder;
@@ -283,7 +283,7 @@ export class Recovery extends AccountRecover {
         builder.sponsoring(sponsorAddress, buildingFunction, account);
       }
     } else {
-      this.register(builder, accountSigner, accountThreshold, builderExtra);
+      this.register(builder, accountSigners, accountThreshold, builderExtra);
     }
 
     return builder.build();
@@ -291,13 +291,13 @@ export class Recovery extends AccountRecover {
 
   private register(
     builder: CommonBuilder,
-    accountSigner: AccountSigner[],
+    accountSigners: AccountSigner[],
     accountThreshold: AccountThreshold,
     builderExtra?: (builder: CommonBuilder) => CommonBuilder,
   ): CommonBuilder {
     builder.lockAccountMasterKey();
 
-    accountSigner.forEach(({ address, weight }) =>
+    accountSigners.forEach(({ address, weight }) =>
       builder.addAccountSigner(address, weight),
     );
 
