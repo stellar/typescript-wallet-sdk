@@ -125,7 +125,7 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
     destMin,
     sendMax,
   }: PathPayParams): TransactionBuilder {
-    if ((sendAmount && destAmount) || !(sendAmount || destAmount)) {
+    if ((sendAmount && destAmount) || (!sendAmount && !destAmount)) {
       throw new PathPayOnlyOneAmountError();
     }
     if (sendAmount) {
