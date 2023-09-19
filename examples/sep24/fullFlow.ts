@@ -7,8 +7,13 @@ import {
   SigningKeypair,
 } from "@stellar/typescript-wallet-sdk";
 
-import { runDeposit, runDepositWatcher, depositDone } from "./deposit";
-import { runWithdraw, runWithdrawWatcher } from "./withdraw";
+import {
+  runDeposit,
+  runDepositWatcher,
+  depositDone,
+  runWithdraw,
+  runWithdrawWatcher,
+} from "./sep24";
 import { askQuestion } from "./question";
 
 const wallet = walletSdk.Wallet.TestNet();

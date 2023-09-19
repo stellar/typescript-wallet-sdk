@@ -3,7 +3,7 @@
 ## Example code
 
 To view how the wallet-sdk can be used to create sep-24 deposits and withdrawals
-look at `deposit.ts` and `withdraw.ts`.
+look at `sep24.ts`.
 
 ## Running deposit and withdrawals
 
