@@ -1,5 +1,6 @@
 import StellarSdk, { xdr } from "stellar-sdk";
-import { IssuedAssetId } from "../../Asset";
+
+import { IssuedAssetId } from "walletSdk/Asset";
 import { AccountKeypair } from "../Account";
 
 export abstract class CommonTransactionBuilder<T> {

@@ -147,6 +147,13 @@ export class WithdrawalTxMissingMemoError extends Error {
   }
 }
 
+export class PathPayOnlyOneAmountError extends Error {
+  constructor() {
+    super("Must give sendAmount or destAmount value, but not both");
+    Object.setPrototypeOf(this, PathPayOnlyOneAmountError.prototype);
+  }
+}
+
 export class RecoveryServerNotFoundError extends Error {
   constructor(serverKey: string) {
     super(`Server with key ${serverKey} was not found`);

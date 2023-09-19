@@ -1,6 +1,8 @@
 import { Memo, Server, Transaction } from "stellar-sdk";
-import { AccountKeypair } from "../Horizon/Account";
+
 import { SponsoringBuilder, TransactionBuilder } from "walletSdk/Horizon";
+import { AccountKeypair } from "../Horizon/Account";
+import { StellarAssetId } from "../Asset";
 
 export enum NETWORK_URLS {
   PUBLIC = "https://horizon.stellar.org",
@@ -38,5 +40,15 @@ export enum HORIZON_ORDER {
   ASC = "asc",
   DESC = "desc",
 }
+
+export type PathPayParams = {
+  destinationAddress: string;
+  sendAsset: StellarAssetId;
+  destAsset: StellarAssetId;
+  sendAmount?: string;
+  destAmount?: string;
+  destMin?: string;
+  sendMax?: string;
+};
 
 export type CommonBuilder = TransactionBuilder | SponsoringBuilder;

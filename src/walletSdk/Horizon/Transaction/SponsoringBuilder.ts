@@ -1,9 +1,4 @@
-import StellarSdk, {
-  TransactionBuilder as StellarTransactionBuilder,
-  Transaction,
-  xdr,
-} from "stellar-sdk";
-import { IssuedAssetId } from "../../Asset";
+import StellarSdk, { xdr } from "stellar-sdk";
 
 import { CommonTransactionBuilder } from "./CommonTransactionBuilder";
 import { AccountKeypair } from "../Account";
