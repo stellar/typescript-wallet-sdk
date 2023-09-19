@@ -278,17 +278,41 @@ describe("Path Payment", () => {
       await stellar.submitTransaction(txn);
     }
   }, 20000);
-  it("should send path payment and swap", async () => {
+
+  it("should use path payment send", async () => {
     const txBuilder = await stellar.transaction({
       sourceAddress: sourceKp,
     });
     const txn = txBuilder
-      .pathPay(receivingKp.publicKey, new NativeAssetId(), usdcAsset, "5")
+      .pathPay({
+        destinationAddress: receivingKp.publicKey,
+        sendAsset: new NativeAssetId(),
+        destAsset: usdcAsset,
+        sendAmount: "5",
+      })
       .build();
     sourceKp.sign(txn);
     const success = await stellar.submitTransaction(txn);
     expect(success).toBe(true);
   }, 15000);
+
+  it("should use path payment receive", async () => {
+    const txBuilder = await stellar.transaction({
+      sourceAddress: sourceKp,
+    });
+    const txn = txBuilder
+      .pathPay({
+        destinationAddress: receivingKp.publicKey,
+        sendAsset: new NativeAssetId(),
+        destAsset: usdcAsset,
+        destAmount: "5",
+      })
+      .build();
+    sourceKp.sign(txn);
+    const success = await stellar.submitTransaction(txn);
+    expect(success).toBe(true);
+  }, 15000);
+
   it("should swap", async () => {
     const txBuilder = await stellar.transaction({
       sourceAddress: sourceKp,
