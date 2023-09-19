@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "ts-node fullFlow.ts"
+    "start": "ts-node sep24.ts"
   },
   "author": "",
   "license": "ISC",
