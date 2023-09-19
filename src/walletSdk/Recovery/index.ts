@@ -1,4 +1,3 @@
-// TODO - https://stellarorg.atlassian.net/browse/WAL-815?atlOrigin=eyJpIjoiYTE4MTdlZDIwMDU1NGU2YjlhZjQ3MDFlYmJhZWM1NTciLCJwIjoiaiJ9
 import { AxiosInstance } from "axios";
 import { Transaction } from "stellar-sdk";
 
