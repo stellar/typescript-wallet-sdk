@@ -1,6 +1,7 @@
 import axios from "axios";
 import { Memo, MemoText } from "stellar-sdk";
 import {
+  walletSdk,
   Anchor,
   SigningKeypair,
   Types,
@@ -11,16 +12,16 @@ const wallet = walletSdk.Wallet.TestNet();
 const stellar = wallet.stellar();
 
 // Create Deposit
-let authToken: string;
+let authTokenDeposit: string;
 export const runDeposit = async (anchor: Anchor, kp: SigningKeypair) => {
   console.log("\ncreating deposit ...");
   const auth = await anchor.sep10();
-  authToken = await auth.authenticate({ accountKp: kp });
+  authTokenDeposit = await auth.authenticate({ accountKp: kp });
 
   const assetCode = "USDC";
   const resp = await anchor.sep24().deposit({
     assetCode,
-    authToken,
+    authToken: authTokenDeposit,
     lang: "en-US",
     destinationMemo: new Memo(MemoText, "test-memo"),
     extraFields: {
@@ -53,7 +54,7 @@ export const runDepositWatcher = (anchor: Anchor) => {
 
   const watcher = anchor.sep24().watcher();
   const resp = watcher.watchAllTransactions({
-    authToken,
+    authToken: authTokenDeposit,
     assetCode: "USDC",
     onMessage,
     onError,
@@ -65,16 +66,16 @@ export const runDepositWatcher = (anchor: Anchor) => {
 };
 
 // Create Withdrawal
-let authToken;
+let authTokenWithdraw;
 export const runWithdraw = async (anchor, kp) => {
   console.log("\ncreating withdrawal ...");
   const auth = await anchor.sep10();
-  authToken = await auth.authenticate({ accountKp: kp });
+  authTokenWithdraw = await auth.authenticate({ accountKp: kp });
 
   const assetCode = "USDC";
   const resp = await anchor.sep24().withdraw({
     assetCode,
-    authToken,
+    authToken: authTokenWithdraw,
     lang: "en-US",
     extraFields: {
       wallet_name: "Test Wallet",
@@ -130,7 +131,7 @@ export const runWithdrawWatcher = (anchor, kp) => {
 
   const watcher = anchor.sep24().watcher();
   const resp = watcher.watchAllTransactions({
-    authToken,
+    authToken: authTokenWithdraw,
     assetCode: "USDC",
     onMessage,
     onError,
