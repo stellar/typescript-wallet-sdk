@@ -17,32 +17,12 @@ const account = stellar.account();
 
 let kp: SigningKeypair;
 
+const asset = new IssuedAssetId(
+  "USDC",
+  "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+);
+
 const runSep24 = async () => {
-  const asset = new IssuedAssetId(
-    "USDC",
-    "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
-  );
-
-  // Create Account
-
-  const createAccount = async () => {
-    console.log("creating account ...");
-    kp = account.createKeypair();
-    console.log(`kp: \n${kp.publicKey}\n${kp.secretKey}`);
-    await axios.get("https://friendbot.stellar.org/?addr=" + kp.publicKey);
-
-    const txBuilder = await stellar.transaction({
-      sourceAddress: kp,
-      baseFee: 1000,
-    });
-    const tx = txBuilder.addAssetSupport(asset).build();
-    kp.sign(tx);
-    const success = await stellar.submitTransaction(tx);
-    if (!success) {
-      throw new Error("adding trustline failed");
-    }
-  };
-
   await createAccount();
   await runDeposit(anchor, kp);
   await runDepositWatcher(anchor);
@@ -59,25 +39,37 @@ const runSep24 = async () => {
   await runWithdraw(anchor, kp);
   await runWithdrawWatcher(anchor, kp);
 };
-runSep24();
+
+// Create Account
+const createAccount = async () => {
+  console.log("creating account ...");
+  kp = account.createKeypair();
+  console.log(`kp: \n${kp.publicKey}\n${kp.secretKey}`);
+
+  // funding new account
+  await axios.get("https://friendbot.stellar.org/?addr=" + kp.publicKey);
+
+  const txBuilder = await stellar.transaction({
+    sourceAddress: kp,
+    baseFee: 1000,
+  });
+  const tx = txBuilder.addAssetSupport(asset).build();
+  kp.sign(tx);
+  await stellar.submitTransaction(tx);
+};
 
 // Create Deposit
-let authTokenDeposit: string;
+let authToken: string;
 export const runDeposit = async (anchor: Anchor, kp: SigningKeypair) => {
   console.log("\ncreating deposit ...");
   const auth = await anchor.sep10();
-  authTokenDeposit = await auth.authenticate({ accountKp: kp });
+  authToken = await auth.authenticate({ accountKp: kp });
 
-  const assetCode = "USDC";
   const resp = await anchor.sep24().deposit({
-    assetCode,
-    authToken: authTokenDeposit,
+    assetCode: asset.code,
+    authToken: authToken,
     lang: "en-US",
     destinationMemo: new Memo(MemoText, "test-memo"),
-    extraFields: {
-      wallet_name: "Test Wallet",
-      wallet_url: "https://stellar.org/",
-    },
   });
 
   console.log("Open url:\n", resp.url);
@@ -91,7 +83,7 @@ export const runDepositWatcher = (anchor: Anchor) => {
   let stop: Types.WatcherStopFunction;
   const onMessage = (m: Types.AnchorTransaction) => {
     console.log({ m });
-    if (m.status === "completed") {
+    if (m.status === Types.TransactionStatus.completed) {
       console.log("status completed, stopping watcher");
       stop();
       depositDone = true;
@@ -99,13 +91,13 @@ export const runDepositWatcher = (anchor: Anchor) => {
   };
 
   const onError = (error: Types.AnchorTransaction | Error) => {
-    console.log({ error });
+    console.error({ error });
   };
 
   const watcher = anchor.sep24().watcher();
   const resp = watcher.watchAllTransactions({
-    authToken: authTokenDeposit,
-    assetCode: "USDC",
+    authToken: authToken,
+    assetCode: asset.code,
     onMessage,
     onError,
     timeout: 5000,
@@ -116,21 +108,13 @@ export const runDepositWatcher = (anchor: Anchor) => {
 };
 
 // Create Withdrawal
-let authTokenWithdraw;
 export const runWithdraw = async (anchor, kp) => {
   console.log("\ncreating withdrawal ...");
-  const auth = await anchor.sep10();
-  authTokenWithdraw = await auth.authenticate({ accountKp: kp });
 
-  const assetCode = "USDC";
   const resp = await anchor.sep24().withdraw({
-    assetCode,
-    authToken: authTokenWithdraw,
+    assetCode: asset.code,
+    authToken: authToken,
     lang: "en-US",
-    extraFields: {
-      wallet_name: "Test Wallet",
-      wallet_url: "https://stellar.org/",
-    },
   });
   console.log("Open url:\n", resp.url);
 };
@@ -149,10 +133,7 @@ const sendWithdrawalTransaction = async (withdrawalTxn, kp) => {
     .transferWithdrawalTransaction(withdrawalTxn, asset)
     .build();
   kp.sign(tx);
-  const success = await stellar.submitTransaction(tx);
-  if (!success) {
-    throw new Error("adding trustline failed");
-  }
+  await stellar.submitTransaction(tx);
 };
 
 // Watch Withdrawal
@@ -163,26 +144,25 @@ export const runWithdrawWatcher = (anchor, kp) => {
   const onMessage = (m) => {
     console.log({ m });
 
-    if (m.status === "pending_user_transfer_start") {
+    if (m.status === Types.TransactionStatus.pending_user_transfer_start) {
       sendWithdrawalTransaction(m, kp);
     }
 
-    if (m.status === "completed") {
+    if (m.status === Types.TransactionStatus.completed) {
       console.log("status completed, stopping watcher");
 
       stop();
-      process.exit(0);
     }
   };
 
   const onError = (e) => {
-    console.log({ e });
+    console.error({ e });
   };
 
   const watcher = anchor.sep24().watcher();
   const resp = watcher.watchAllTransactions({
-    authToken: authTokenWithdraw,
-    assetCode: "USDC",
+    authToken: authToken,
+    assetCode: asset.code,
     onMessage,
     onError,
     timeout: 5000,
@@ -205,3 +185,5 @@ export const askQuestion = (query) => {
     }),
   );
 };
+
+runSep24();
