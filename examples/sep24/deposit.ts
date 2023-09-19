@@ -8,7 +8,7 @@ export const runDeposit = async (anchor: Anchor, kp: SigningKeypair) => {
   const auth = await anchor.sep10();
   authToken = await auth.authenticate({ accountKp: kp });
 
-  const assetCode = "SRT";
+  const assetCode = "USDC";
   const resp = await anchor.sep24().deposit({
     assetCode,
     authToken,
@@ -45,7 +45,7 @@ export const runDepositWatcher = (anchor: Anchor) => {
   const watcher = anchor.sep24().watcher();
   const resp = watcher.watchAllTransactions({
     authToken,
-    assetCode: "SRT",
+    assetCode: "USDC",
     onMessage,
     onError,
     timeout: 5000,

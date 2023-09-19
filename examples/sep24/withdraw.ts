@@ -11,7 +11,7 @@ export const runWithdraw = async (anchor, kp) => {
   const auth = await anchor.sep10();
   authToken = await auth.authenticate({ accountKp: kp });
 
-  const assetCode = "SRT";
+  const assetCode = "USDC";
   const resp = await anchor.sep24().withdraw({
     assetCode,
     authToken,
@@ -26,8 +26,8 @@ export const runWithdraw = async (anchor, kp) => {
 
 const sendWithdrawalTransaction = async (withdrawalTxn, kp) => {
   const asset = new IssuedAssetId(
-    "SRT",
-    "GCDNJUBQSX7AJWLJACMJ7I4BC3Z47BQUTMHEICZLE6MU4KQBRYG5JY6B",
+    "USDC",
+    "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
   );
 
   const txBuilder = await stellar.transaction({
@@ -71,7 +71,7 @@ export const runWithdrawWatcher = (anchor, kp) => {
   const watcher = anchor.sep24().watcher();
   const resp = watcher.watchAllTransactions({
     authToken,
-    assetCode: "SRT",
+    assetCode: "USDC",
     onMessage,
     onError,
     timeout: 5000,

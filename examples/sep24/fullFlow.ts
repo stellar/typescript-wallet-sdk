@@ -20,8 +20,8 @@ let kp: SigningKeypair;
 
 const runFullFlow = async () => {
   const asset = new IssuedAssetId(
-    "SRT",
-    "GCDNJUBQSX7AJWLJACMJ7I4BC3Z47BQUTMHEICZLE6MU4KQBRYG5JY6B",
+    "USDC",
+    "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
   );
 
   // Create Account

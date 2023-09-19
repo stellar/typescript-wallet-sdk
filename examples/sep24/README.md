@@ -14,7 +14,8 @@ $ yarn start
 ```
 
 This will run the deposit flow and watch for it to finish. At the end it will
-ask if you'd like to run the withdraw flow.
+ask if you'd like to run the withdraw flow. Use USDC as the asset for the
+example.
 
 Progress will be logged in the terminal.
 
