@@ -7,10 +7,10 @@ look at `sep24.ts`.
 
 ## Running deposit and withdrawals
 
-To see them in action you can run below:
+To see them in action you can run below from the project root:
 
 ```
-$ yarn start
+$ yarn example:sep24
 ```
 
 This will run the deposit flow and watch for it to finish. At the end it will
