@@ -7,7 +7,7 @@ import {
   SigningKeypair,
   Types,
   IssuedAssetId,
-} from "@stellar/typescript-wallet-sdk";
+} from "../../src";
 import { Memo, MemoText } from "stellar-sdk";
 
 const wallet = walletSdk.Wallet.TestNet();
