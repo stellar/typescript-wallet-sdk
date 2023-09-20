@@ -153,3 +153,9 @@ export class PathPayOnlyOneAmountError extends Error {
     Object.setPrototypeOf(this, PathPayOnlyOneAmountError.prototype);
   }
 }
+export class WithdrawalTxMemoError extends Error {
+  constructor() {
+    super(`Error parsing withdrawal transaction memo`);
+    Object.setPrototypeOf(this, WithdrawalTxMemoError.prototype);
+  }
+}
