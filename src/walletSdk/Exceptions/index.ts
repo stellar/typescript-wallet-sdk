@@ -146,3 +146,10 @@ export class WithdrawalTxMissingMemoError extends Error {
     Object.setPrototypeOf(this, WithdrawalTxMissingMemoError.prototype);
   }
 }
+
+export class WithdrawalTxMemoError extends Error {
+  constructor() {
+    super(`Error parsing withdrawal transaction memo`);
+    Object.setPrototypeOf(this, WithdrawalTxMemoError.prototype);
+  }
+}
