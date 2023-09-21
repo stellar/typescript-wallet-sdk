@@ -70,6 +70,11 @@ export const runDeposit = async (anchor: Anchor, kp: SigningKeypair) => {
     authToken: authToken,
     lang: "en-US",
     destinationMemo: new Memo(MemoText, "test-memo"),
+    // Optional field. Same result would be achieved with omitting this field.
+    // Replace with a different account if you want to change destination
+    destinationAccount: kp.publicKey,
+    // If not specified, amount will be collected in the interactive flow. You can also pass extra SEP-9 fields.
+    extraFields: { amount: "10" },
   });
 
   console.log("Open url:\n", resp.url);
@@ -115,6 +120,11 @@ export const runWithdraw = async (anchor, kp) => {
     assetCode: asset.code,
     authToken: authToken,
     lang: "en-US",
+    // Optional field. Same result would be achieved with omitting this field.
+    // Replace with a different account if you want to change destination
+    withdrawalAccount: kp.publicKey,
+    // If not specified, amount will be collected in the interactive flow. You can also pass extra SEP-9 fields.
+    extraFields: { amount: "10" },
   });
   console.log("Open url:\n", resp.url);
 };
