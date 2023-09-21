@@ -1,6 +1,7 @@
 import { Memo, Server, xdr, Transaction } from "stellar-sdk";
 import { AccountKeypair } from "../Horizon/Account";
 import { TransactionBuilder } from "../Horizon/Transaction/TransactionBuilder";
+import { StellarAssetId } from "../Asset";
 
 export enum NETWORK_URLS {
   PUBLIC = "https://horizon.stellar.org",
@@ -9,7 +10,7 @@ export enum NETWORK_URLS {
 
 export type TransactionParams = {
   sourceAddress: AccountKeypair;
-  baseFee: number;
+  baseFee?: number;
   memo?: Memo;
   timebounds?: Server.Timebounds | number;
 };
@@ -38,3 +39,13 @@ export enum HORIZON_ORDER {
   ASC = "asc",
   DESC = "desc",
 }
+
+export type PathPayParams = {
+  destinationAddress: string;
+  sendAsset: StellarAssetId;
+  destAsset: StellarAssetId;
+  sendAmount?: string;
+  destAmount?: string;
+  destMin?: string;
+  sendMax?: string;
+};

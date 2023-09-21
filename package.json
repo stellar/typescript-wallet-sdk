@@ -29,6 +29,7 @@
     "stream-browserify": "^3.0.0",
     "ts-jest": "^29.0.5",
     "ts-loader": "^9.4.2",
+    "ts-node": "^10.9.1",
     "tslib": "^2.5.0",
     "typescript": "^5.0.4",
     "webpack": "^5.83.1",
@@ -47,10 +48,11 @@
     "utility-types": "^3.10.0"
   },
   "scripts": {
-    "prepare": "yarn build",
+    "prepare": "husky install",
     "test": "jest --watchAll",
     "build:web": "webpack --config webpack.config.js",
     "build:node": "webpack --env NODE=true --config webpack.config.js",
-    "build": "run-p build:web build:node"
+    "build": "run-p build:web build:node",
+    "example:sep24": "ts-node examples/sep24/sep24.ts"
   }
 }

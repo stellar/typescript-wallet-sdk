@@ -41,3 +41,7 @@ export type SignWithDomainAccountParams = {
   networkPassphrase: NetworkPassphrase;
   accountKp: AccountKeypair;
 };
+
+export type HttpHeaders = {
+  [key: string]: string;
+};

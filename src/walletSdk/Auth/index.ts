@@ -55,7 +55,7 @@ export class Sep10 {
     const challengeResponse = await this.challenge({
       accountKp,
       memoId,
-      clientDomain,
+      clientDomain: clientDomain || this.cfg.app.defaultClientDomain,
     });
     const signedTransaction = await this.sign({
       accountKp,
