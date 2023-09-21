@@ -147,6 +147,13 @@ export class WithdrawalTxMissingMemoError extends Error {
   }
 }
 
+export class WithdrawalTxMemoError extends Error {
+  constructor() {
+    super(`Error parsing withdrawal transaction memo`);
+    Object.setPrototypeOf(this, WithdrawalTxMemoError.prototype);
+  }
+}
+
 export class PathPayOnlyOneAmountError extends Error {
   constructor() {
     super("Must give sendAmount or destAmount value, but not both");
