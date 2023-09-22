@@ -131,9 +131,15 @@ export const DefaultClient = axios.create({
 export class ApplicationConfiguration {
   defaultSigner: WalletSigner;
   defaultClient: AxiosInstance;
+  defaultClientDomain?: string;
 
-  constructor(defaultSigner?: WalletSigner, defaultClient?: AxiosInstance) {
+  constructor(
+    defaultSigner?: WalletSigner,
+    defaultClient?: AxiosInstance,
+    defaultClientDomain?: string,
+  ) {
     this.defaultSigner = defaultSigner || DefaultSigner;
     this.defaultClient = defaultClient || DefaultClient;
+    this.defaultClientDomain = defaultClientDomain;
   }
 }

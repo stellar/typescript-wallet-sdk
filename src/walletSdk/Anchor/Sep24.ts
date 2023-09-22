@@ -43,7 +43,9 @@ export class Sep24 {
 
   async deposit({
     assetCode,
+
     authToken,
+
     lang,
     extraFields,
     destinationMemo,
