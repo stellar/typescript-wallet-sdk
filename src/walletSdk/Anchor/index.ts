@@ -17,6 +17,10 @@ type AnchorParams = {
   language: string;
 };
 
+export type Interactive = Sep24;
+
+export type Auth = Sep10;
+
 // Do not create this object directly, use the Wallet class.
 export class Anchor {
   public language: string;
@@ -35,6 +39,12 @@ export class Anchor {
     this.language = language;
   }
 
+  /**
+   * Get anchor information from a TOML file.
+   * If `shouldRefresh` is set to `true`, it fetches fresh TOML values; otherwise, it returns cached values if available.
+   * @param {boolean} [shouldRefresh=false] - Flag to force a refresh of TOML values.
+   * @returns {Promise<TomlInfo>} - A Promise that resolves to the TOML information.
+   */
   async sep1(shouldRefresh?: boolean): Promise<TomlInfo> {
     // return cached TOML values by default
     if (this.toml && !shouldRefresh) {
@@ -48,6 +58,19 @@ export class Anchor {
     return parsedToml;
   }
 
+  /**
+   * Retrieves and returns TOML information using the `sep1` method.
+   * @param {boolean} [shouldRefresh=false] - Flag to force a refresh of TOML values.
+   * @returns {Promise<TomlInfo>} - A Promise that resolves to the TOML information.
+   */
+  async getInfo(shouldRefresh?: boolean): Promise<TomlInfo> {
+    return this.sep1(shouldRefresh);
+  }
+
+  /**
+   * Create new auth object to authenticate account with the anchor using SEP-10.
+   * @returns {Promise<Sep10>} - A Promise that resolves to the authentication manager.
+   */
   async sep10(): Promise<Sep10> {
     const tomlInfo = await this.sep1();
     return new Sep10({
@@ -58,8 +81,28 @@ export class Anchor {
     });
   }
 
+  /**
+   * Create new auth object to authenticate with using the `sep10` method.
+   * @returns {Promise<Auth>} - A Promise that resolves to the authentication manager.
+   */
+  async auth(): Promise<Auth> {
+    return this.sep10();
+  }
+
+  /**
+   * Creates new interactive flow for given anchor. It can be used for withdrawal or deposit.
+   * @returns {Sep24} - interactive flow service.
+   */
   sep24(): Sep24 {
     return new Sep24({ anchor: this, httpClient: this.httpClient });
+  }
+
+  /**
+   * Creates new interactive flow using the `sep24` method.
+   * @returns {Interactive} - interactive flow service
+   */
+  interactive(): Interactive {
+    return this.sep24();
   }
 
   async getServicesInfo(
