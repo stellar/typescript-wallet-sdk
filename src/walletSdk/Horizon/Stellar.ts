@@ -19,6 +19,7 @@ import {
   TransactionSubmitFailedError,
   TransactionSubmitWithFeeIncreaseFailedError,
   SignerRequiredError,
+  ServerRequestFailedError,
 } from "../Exceptions";
 import { getResultCode } from "../Utils/getResultCode";
 import { SigningKeypair } from "./Account";
@@ -100,7 +101,7 @@ export class Stellar {
         // https://developers.stellar.org/docs/encyclopedia/error-handling#timeouts
         return await this.submitTransaction(signedTransaction);
       }
-      throw e;
+      throw new ServerRequestFailedError(e);
     }
   }
 
@@ -154,7 +155,7 @@ export class Stellar {
           memo,
         });
       }
-      throw e;
+      throw new ServerRequestFailedError(e);
     }
   }
 
