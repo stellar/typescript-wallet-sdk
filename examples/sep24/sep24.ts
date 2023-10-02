@@ -1,5 +1,6 @@
 import axios from "axios";
 import readline from "readline";
+import path from "path";
 
 import {
   walletSdk,
@@ -7,20 +8,43 @@ import {
   SigningKeypair,
   Types,
   IssuedAssetId,
+  DefaultSigner,
 } from "../../src";
-import { Memo, MemoText } from "stellar-sdk";
+import { Memo, MemoText, Transaction, TransactionBuilder } from "stellar-sdk";
 
-const wallet = walletSdk.Wallet.TestNet();
+import * as dotenv from "dotenv";
+dotenv.config({ path: path.resolve(__dirname, ".env") });
+
+// Grabbing environment variables
+
+const anchorDomain = process.env.ANCHOR_DOMAIN || "testanchor.stellar.org";
+const assetCode = process.env.ASSET_CODE || "USDC";
+const assetIssuer =
+  process.env.ASSET_ISSUER ||
+  "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5";
+const runMainnet = process.env.RUN_MAINNET || false;
+const sourceAccountSecret = process.env.SOURCE_ACCOUNT_SECRET;
+const clientDomain = process.env.CLIENT_DOMAIN;
+const clientSecret = process.env.CLIENT_SECRET;
+
+// Running example
+
+let wallet;
+if (runMainnet === "true") {
+  console.log("Warning: you are running this script on the public network.");
+  wallet = walletSdk.Wallet.MainNet();
+} else {
+  wallet = walletSdk.Wallet.TestNet();
+}
 const stellar = wallet.stellar();
-const anchor = wallet.anchor({ homeDomain: "testanchor.stellar.org" });
+const anchor = wallet.anchor({
+  homeDomain: anchorDomain,
+});
 const account = stellar.account();
 
 let kp: SigningKeypair;
 
-const asset = new IssuedAssetId(
-  "USDC",
-  "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
-);
+const asset = new IssuedAssetId(assetCode, assetIssuer);
 
 const runSep24 = async () => {
   await createAccount();
@@ -42,6 +66,11 @@ const runSep24 = async () => {
 
 // Create Account
 const createAccount = async () => {
+  if (sourceAccountSecret) {
+    kp = SigningKeypair.fromSecret(sourceAccountSecret);
+    return;
+  }
+
   console.log("creating account ...");
   kp = account.createKeypair();
   console.log(`kp: \n${kp.publicKey}\n${kp.secretKey}`);
@@ -63,7 +92,11 @@ let authToken: string;
 export const runDeposit = async (anchor: Anchor, kp: SigningKeypair) => {
   console.log("\ncreating deposit ...");
   const auth = await anchor.sep10();
-  authToken = await auth.authenticate({ accountKp: kp });
+  authToken = await auth.authenticate({
+    accountKp: kp,
+    clientDomain,
+    walletSigner,
+  });
 
   const resp = await anchor.sep24().deposit({
     assetCode: asset.code,
@@ -180,6 +213,27 @@ export const runWithdrawWatcher = (anchor, kp) => {
   });
 
   stop = resp.stop;
+};
+
+const walletSigner = DefaultSigner;
+walletSigner.signWithDomainAccount = async ({
+  transactionXDR,
+  networkPassphrase,
+  accountKp,
+}: Types.SignWithDomainAccountParams): Promise<Transaction> => {
+  if (!clientSecret) {
+    throw new Error("Client Secret missing from .env file");
+  }
+
+  const signer = SigningKeypair.fromSecret(clientSecret);
+
+  const transaction = TransactionBuilder.fromXDR(
+    transactionXDR,
+    networkPassphrase,
+  ) as Transaction;
+  signer.sign(transaction);
+
+  return Promise.resolve(transaction);
 };
 
 export const askQuestion = (query) => {
