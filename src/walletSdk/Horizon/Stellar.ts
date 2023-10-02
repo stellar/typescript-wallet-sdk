@@ -101,7 +101,7 @@ export class Stellar {
         // https://developers.stellar.org/docs/encyclopedia/error-handling#timeouts
         return await this.submitTransaction(signedTransaction);
       }
-      throw new ServerRequestFailedError(e);
+      throw e;
     }
   }
 
@@ -155,7 +155,7 @@ export class Stellar {
           memo,
         });
       }
-      throw new ServerRequestFailedError(e);
+      throw e;
     }
   }
 
