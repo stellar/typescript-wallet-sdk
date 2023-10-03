@@ -24,7 +24,7 @@ import {
   Stellar,
 } from "../Horizon";
 
-export class AccountRecover {
+export abstract class AccountRecover {
   protected stellar: Stellar;
   protected httpClient: AxiosInstance;
   protected servers: RecoveryServerMap;
