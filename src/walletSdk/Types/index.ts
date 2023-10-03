@@ -15,7 +15,7 @@ export type WalletAnchor = {
   language?: string;
 };
 
-export type WalletRecovery = {
+export type WalletRecoveryServers = {
   servers: RecoveryServerMap;
 };
 
