@@ -54,57 +54,6 @@ export class Recovery extends AccountRecover {
   }
 
   /**
-   * Register account with recovery servers using
-   * [SEP-30](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0030.md).
-   */
-  private async enrollWithRecoveryServer(
-    account: AccountKeypair,
-    identityMap: RecoveryIdentityMap,
-  ): Promise<string[]> {
-    return Promise.all(
-      Object.keys(this.servers).map(async (key) => {
-        const server = this.servers[key];
-
-        const accountIdentity = identityMap[key];
-
-        if (!accountIdentity) {
-          throw new RecoveryIdentityNotFoundError(key);
-        }
-
-        const authToken = this.sep10Auth(key).authenticate({
-          accountKp: account,
-          walletSigner: server.walletSigner,
-          clientDomain: server.clientDomain,
-        });
-
-        const requestUrl = `${server.endpoint}/accounts/${account.publicKey}`;
-
-        let recoveryAccount: RecoveryAccount;
-        try {
-          const resp = await this.httpClient.post(
-            requestUrl,
-            {
-              identities: accountIdentity,
-            },
-            {
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${authToken}`,
-              },
-            },
-          );
-
-          recoveryAccount = resp.data;
-        } catch (e) {
-          throw new ServerRequestFailedError(e);
-        }
-
-        return this.getLatestRecoverySigner(recoveryAccount.signers);
-      }),
-    );
-  }
-
-  /**
    * Create new auth object to authenticate account with the recovery server using SEP-10.
    *
    * @return auth object
@@ -117,14 +66,6 @@ export class Recovery extends AccountRecover {
       homeDomain: server.homeDomain,
       httpClient: this.httpClient,
     });
-  }
-
-  private getLatestRecoverySigner(signers: RecoveryAccountSigner[]): string {
-    if (signers.length === 0) {
-      throw new NoAccountSignersError();
-    }
-
-    return signers[0].key;
   }
 
   /**
@@ -287,6 +228,65 @@ export class Recovery extends AccountRecover {
     }
 
     return builder.build();
+  }
+
+  /**
+   * Register account with recovery servers using
+   * [SEP-30](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0030.md).
+   */
+  private async enrollWithRecoveryServer(
+    account: AccountKeypair,
+    identityMap: RecoveryIdentityMap,
+  ): Promise<string[]> {
+    return Promise.all(
+      Object.keys(this.servers).map(async (key) => {
+        const server = this.servers[key];
+
+        const accountIdentity = identityMap[key];
+
+        if (!accountIdentity) {
+          throw new RecoveryIdentityNotFoundError(key);
+        }
+
+        const authToken = this.sep10Auth(key).authenticate({
+          accountKp: account,
+          walletSigner: server.walletSigner,
+          clientDomain: server.clientDomain,
+        });
+
+        const requestUrl = `${server.endpoint}/accounts/${account.publicKey}`;
+
+        let recoveryAccount: RecoveryAccount;
+        try {
+          const resp = await this.httpClient.post(
+            requestUrl,
+            {
+              identities: accountIdentity,
+            },
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${authToken}`,
+              },
+            },
+          );
+
+          recoveryAccount = resp.data;
+        } catch (e) {
+          throw new ServerRequestFailedError(e);
+        }
+
+        return this.getLatestRecoverySigner(recoveryAccount.signers);
+      }),
+    );
+  }
+
+  private getLatestRecoverySigner(signers: RecoveryAccountSigner[]): string {
+    if (signers.length === 0) {
+      throw new NoAccountSignersError();
+    }
+
+    return signers[0].key;
   }
 
   private register(

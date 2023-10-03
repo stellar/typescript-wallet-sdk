@@ -131,6 +131,16 @@ export class AccountRecover {
     return this.signWithRecoveryServers(transaction, account, serverAuth);
   }
 
+  protected getServer = (serverKey: RecoveryServerKey): RecoveryServer => {
+    const server = this.servers[serverKey];
+
+    if (!server) {
+      throw new RecoveryServerNotFoundError(serverKey);
+    }
+
+    return server;
+  };
+
   /**
    * Try to deduce lost key. If any of these criteria matches, one of the signers
    * from the account will be recognized as the lost device key:
@@ -235,14 +245,4 @@ export class AccountRecover {
 
     transaction.addSignature(auth.signerAddress, signature);
   }
-
-  protected getServer = (serverKey: RecoveryServerKey): RecoveryServer => {
-    const server = this.servers[serverKey];
-
-    if (!server) {
-      throw new RecoveryServerNotFoundError(serverKey);
-    }
-
-    return server;
-  };
 }
