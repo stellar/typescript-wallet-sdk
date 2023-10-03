@@ -81,14 +81,23 @@ describe("Anchor", () => {
     );
   });
   it("should give TOML info", async () => {
-    const resp = await anchor.sep1();
+    let resp = await anchor.sep1();
+    expect(resp.webAuthEndpoint).toBe("https://testanchor.stellar.org/auth");
+    expect(resp.currencies.length).toBe(2);
 
+    // alias
+    resp = await anchor.getInfo();
     expect(resp.webAuthEndpoint).toBe("https://testanchor.stellar.org/auth");
     expect(resp.currencies.length).toBe(2);
   });
   it("should be able to authenticate", async () => {
-    const auth = await anchor.sep10();
+    let auth = await anchor.sep10();
+    authToken = await auth.authenticate({ accountKp });
+    expect(authToken).toBeTruthy();
+    expect(typeof authToken).toBe("string");
 
+    // alias
+    auth = await anchor.auth();
     authToken = await auth.authenticate({ accountKp });
     expect(authToken).toBeTruthy();
     expect(typeof authToken).toBe("string");
@@ -138,8 +147,12 @@ describe("Anchor", () => {
     expect(signedByDomain).toBe(true);
   });
   it("should get anchor services info", async () => {
-    const serviceInfo = await anchor.sep24().getServicesInfo();
+    let serviceInfo = await anchor.sep24().getServicesInfo();
+    expect(serviceInfo.deposit).toBeTruthy();
+    expect(serviceInfo.withdraw).toBeTruthy();
 
+    // alias
+    serviceInfo = await anchor.interactive().getServicesInfo();
     expect(serviceInfo.deposit).toBeTruthy();
     expect(serviceInfo.withdraw).toBeTruthy();
   });
