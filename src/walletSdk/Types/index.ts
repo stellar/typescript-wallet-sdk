@@ -1,4 +1,4 @@
-import { AxiosRequestConfig } from "axios";
+import { RawAxiosRequestHeaders } from "axios";
 import { Server, Networks } from "stellar-sdk";
 import { ApplicationConfiguration, StellarConfiguration } from "walletSdk";
 
@@ -28,6 +28,13 @@ export type StellarConfigurationParams = {
   horizonUrl: string;
   baseFee?: number;
   defaultTimeout?: number;
+};
+
+export type AxiosErrorData = {
+  status?: number;
+  statusText?: string;
+  responseData?: any;
+  headers?: RawAxiosRequestHeaders;
 };
 
 // Export all other types from walletSdk/Types.ts
