@@ -195,6 +195,25 @@ describe("Anchor", () => {
     expect(resp.id).toBeTruthy();
   });
 
+  it("should throw ServerRequestFailedError", async () => {
+    const assetCode = "SRT";
+    let didError = false;
+    try {
+      const resp = await anchor.sep24().withdraw({
+        withdrawalAccount: accountKp.publicKey,
+        assetCode,
+        authToken: "bad auth token",
+      });
+    } catch (e) {
+      didError = true;
+      expect(e.data.status).toBe(403);
+      expect(e.data.statusText).toBe("Forbidden");
+      expect(e.data.responseData.error).toBeTruthy();
+      expect(e.data.headers).toBeTruthy();
+    }
+    expect(didError).toBe(true);
+  });
+
   it("should fetch new transaction by id", async () => {
     const assetCode = "SRT";
 
