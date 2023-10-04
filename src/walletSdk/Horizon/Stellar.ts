@@ -19,6 +19,7 @@ import {
   TransactionSubmitFailedError,
   TransactionSubmitWithFeeIncreaseFailedError,
   SignerRequiredError,
+  ServerRequestFailedError,
 } from "../Exceptions";
 import { getResultCode } from "../Utils/getResultCode";
 import { SigningKeypair } from "./Account";
