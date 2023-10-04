@@ -10,7 +10,7 @@ import {
   StellarConfigurationParams,
   WalletAnchor,
   WalletParams,
-  WalletRecovery,
+  WalletRecoveryServers,
   NETWORK_URLS,
 } from "./Types";
 import { getUrlDomain } from "./Utils";
@@ -64,7 +64,7 @@ export class Wallet {
     return new Stellar(this.cfg);
   }
 
-  recovery({ servers }: WalletRecovery): Recovery {
+  recovery({ servers }: WalletRecoveryServers): Recovery {
     return new Recovery({
       cfg: this.cfg,
       stellar: this.stellar(),

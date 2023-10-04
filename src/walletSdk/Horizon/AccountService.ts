@@ -65,7 +65,7 @@ export class AccountService {
    * @param cursor optional cursor to specify a starting point
    * @param includeFailed optional flag to include failed operations, defaults to false
    * @return a list of operations
-   * @throws [OperationsLimitExceededException] when maximum limit of 200 is exceeded
+   * @throws [OperationsLimitExceededError] when maximum limit of 200 is exceeded
    */
   async getHistory({
     accountAddress,

@@ -5,7 +5,6 @@ import StellarSdk, {
   Server,
   Memo,
   xdr,
-  Networks,
 } from "stellar-sdk";
 
 import { Config } from "walletSdk";
@@ -16,7 +15,7 @@ import {
   WithdrawalTxNotPendingUserTransferStartError,
   WithdrawalTxMemoError,
 } from "../../Exceptions";
-import { IssuedAssetId, StellarAssetId } from "../../Asset";
+import { StellarAssetId } from "../../Asset";
 import {
   WithdrawTransaction,
   TransactionStatus,
@@ -51,7 +50,7 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
 
   sponsoring(
     sponsorAccount: AccountKeypair,
-    buildingFunction: (SponsoringBuilder) => SponsoringBuilder,
+    buildingFunction: (builder: SponsoringBuilder) => SponsoringBuilder,
     sponsoredAccount?: AccountKeypair,
   ): TransactionBuilder {
     new SponsoringBuilder(

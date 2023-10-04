@@ -1,7 +1,6 @@
 import {
   Transaction,
   TransactionBuilder as StellarTransactionBuilder,
-  FeeBumpTransaction,
 } from "stellar-sdk";
 import { AxiosInstance } from "axios";
 
@@ -10,7 +9,6 @@ import {
   SignWithDomainAccountParams,
   HttpHeaders,
 } from "../Types";
-import { AccountKeypair } from "../Horizon/Account";
 import { DefaultClient } from "../";
 
 export interface WalletSigner {
