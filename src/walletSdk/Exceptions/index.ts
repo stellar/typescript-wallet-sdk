@@ -8,8 +8,13 @@ export class ServerRequestFailedError extends Error {
 
   constructor(e: Error) {
     if (axios.isAxiosError(e)) {
-      super(`Server request failed with error`);
-      this.data = extractAxiosErrorData(e);
+      const errorData = extractAxiosErrorData(e);
+      const message =
+        errorData.responseData && Object.keys(errorData.responseData).length > 0
+          ? JSON.stringify(errorData.responseData)
+          : errorData.statusText;
+      super(`Server request failed with error: ${errorData.status} ${message}`);
+      this.data = errorData;
     } else {
       super(`Server request failed with error: ${e}`);
     }
