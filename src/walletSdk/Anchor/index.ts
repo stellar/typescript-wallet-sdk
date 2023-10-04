@@ -3,6 +3,7 @@ import { StellarTomlResolver } from "stellar-sdk";
 
 import { Config } from "walletSdk";
 import { Sep10 } from "../Auth";
+import { Sep12 } from "../Customer";
 import { ServerRequestFailedError } from "../Exceptions";
 import { Sep24 } from "./Sep24";
 import { AnchorServiceInfo, TomlInfo } from "../Types";
@@ -20,6 +21,8 @@ type AnchorParams = {
 export type Interactive = Sep24;
 
 export type Auth = Sep10;
+
+export type Customer = Sep12;
 
 // Do not create this object directly, use the Wallet class.
 export class Anchor {
@@ -87,6 +90,24 @@ export class Anchor {
    */
   async auth(): Promise<Auth> {
     return this.sep10();
+  }
+
+  // ALEC TODO - jscomment
+  // ALEC TODO - authtoken type?
+  async sep12(authToken: string): Promise<Sep12> {
+    const tomlInfo = await this.sep1();
+    const kycServer = tomlInfo?.kycServer;
+    console.log({ kycServer }); // ALEC TODO - remove
+    if (!kycServer) {
+      // ALEC TODO -
+      throw new Error("Missing kyc server value from toml info");
+    }
+    return new Sep12(authToken, kycServer, this.httpClient);
+  }
+
+  // ALEC TODO - auth authToken type?
+  async customer(authToken: string): Promise<Customer> {
+    return this.sep12(authToken);
   }
 
   /**
