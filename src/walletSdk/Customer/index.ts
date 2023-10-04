@@ -6,6 +6,49 @@ type Sep9Info = {
   [key: string]: string;
 };
 
+// ALEC TODO - move
+enum Sep12Status {
+  ACCEPTED = "ACCEPTED",
+  PROCESSING = "PROCESSING",
+  NEEDS_INFO = "NEEDS_INFO",
+  REJECTED = "REJECTED",
+  VERIFICATION_REQUIRED = "VERIFICATION_REQUIRED",
+}
+
+enum Sep12Type {
+  string = "string",
+  binary = "binary",
+  number = "number",
+  date = "date",
+}
+type Field = {
+  type: Sep12Type;
+  description: string;
+  choices?: Array<string>;
+  optional?: boolean;
+};
+
+type ProvidedField = {
+  type: Sep12Type;
+  description: string;
+  choices?: Array<string>;
+  optional?: boolean;
+  status?: Sep12Status;
+  error?: string;
+};
+
+type GetCustomerResponse = {
+  id?: string;
+  status: Sep12Status;
+  fields?: { [key: string]: Field };
+  provided_fields?: { [key: string]: ProvidedField };
+  message?: string;
+};
+
+type AddCustomerResponse = {
+  id: string;
+};
+
 export class Sep12 {
   private token;
   private baseUrl;
@@ -18,10 +61,7 @@ export class Sep12 {
     this.httpClient = httpClient;
   }
 
-  // ALEC TODO - add these:
-  // GetCustomerResponse
-
-  async getByIdAndType(id: string, type: string): Promise<any> {
+  async getByIdAndType(id: string, type: string): Promise<GetCustomerResponse> {
     // ALEC TODO - should use some sort of URL builder?
     const url = `${this.baseUrl}/customer?id=${id}&type=${type}`;
 
@@ -42,7 +82,7 @@ export class Sep12 {
 
   // ALEC TODO - AddCustomerResponse
   // ALEC TODO - make custom type for sep9info
-  async add(sep9Info: Sep9Info, type?: string): Promise<any> {
+  async add(sep9Info: Sep9Info, type?: string): Promise<AddCustomerResponse> {
     // ALEC TODO - type
     let customerMap: { [key: string]: string } = {};
     if (type) {
@@ -58,25 +98,25 @@ export class Sep12 {
     // ALEC TODO - url builder?
     const url = `${this.baseUrl}/customer`;
 
-    const axiosInstance = axios.create();
-
     // ALEC TODO - remove
-    axiosInstance.interceptors.response.use(
-      function (response) {
-        // Any status code that lie within the range of 2xx cause this function to trigger
-        // Do something with response data
-        return response;
-      },
-      function (error) {
-        console.log(error.response?.data); // ALEC TODO - remove
-        // Any status codes that falls outside the range of 2xx cause this function to trigger
-        // Do something with response error
-        return Promise.reject(error.response);
-      },
-    );
+    // const axiosInstance = axios.create();
 
-    // alec todo - use this.httpclient
-    const resp = await axiosInstance.put(
+    // // ALEC TODO - remove
+    // axiosInstance.interceptors.response.use(
+    //   function (response) {
+    //     // Any status code that lie within the range of 2xx cause this function to trigger
+    //     // Do something with response data
+    //     return response;
+    //   },
+    //   function (error) {
+    //     console.log(error.response?.data); // ALEC TODO - remove
+    //     // Any status codes that falls outside the range of 2xx cause this function to trigger
+    //     // Do something with response error
+    //     return Promise.reject(error.response);
+    //   },
+    // );
+
+    const resp = await this.httpClient.put(
       url,
       customerMap,
       // ALEC TODO - we should probably standardize this
@@ -95,8 +135,7 @@ export class Sep12 {
     sep9Info: { [key: string]: string },
     id: string,
     type?: string,
-    // ALEC TODO - any
-  ): Promise<any> {
+  ): Promise<AddCustomerResponse> {
     // ALEC TODO - type
     let customerMap: { [key: string]: string } = {};
 
