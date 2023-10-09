@@ -9,6 +9,7 @@ module.exports = {
   extends: [
     "plugin:@typescript-eslint/recommended-requiring-type-checking",
     "plugin:@typescript-eslint/recommended",
+    "prettier",
   ],
   rules: {
     // Off
