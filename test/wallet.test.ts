@@ -34,21 +34,21 @@ describe("Wallet", () => {
     Wallet.TestNet();
     Wallet.MainNet();
   });
-  it("should be able return a client", async () => {
-    let appConfig = new ApplicationConfiguration();
-    let wal = new Wallet({
+  it("should be able customize config", () => {
+    const appConfig = new ApplicationConfiguration();
+    new Wallet({
       stellarConfiguration: StellarConfiguration.TestNet(),
       applicationConfiguration: appConfig,
     });
   });
-  it("should be able to customize a client", async () => {
+  it("should be able to customize a client", () => {
     const customClient: AxiosInstance = axios.create({
       baseURL: "https://some-url.com/api",
       timeout: 1000,
       headers: { "X-Custom-Header": "foobar" },
     });
-    let appConfig = new ApplicationConfiguration(DefaultSigner, customClient);
-    let wal = new Wallet({
+    const appConfig = new ApplicationConfiguration(DefaultSigner, customClient);
+    new Wallet({
       stellarConfiguration: StellarConfiguration.TestNet(),
       applicationConfiguration: appConfig,
     });
@@ -120,7 +120,9 @@ describe("Anchor", () => {
       signWithDomainAccount: async ({
         transactionXDR,
         networkPassphrase,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         accountKp,
+        // eslint-disable-next-line @typescript-eslint/require-await
       }) => {
         // dummy secret key for signing
         const clientDomainKp = Keypair.fromSecret(
@@ -226,12 +228,12 @@ describe("Anchor", () => {
     const { id, kind, status, amount_in, amount_out } = transaction;
 
     expect(transaction).toBeTruthy();
-    expect(id === transactionId).toBeTruthy;
-    expect(kind === "deposit").toBeTruthy;
-    expect(status === "incomplete").toBeTruthy;
+    expect(id === transactionId).toBeTruthy();
+    expect(kind === "deposit").toBeTruthy();
+    expect(status === TransactionStatus.incomplete).toBeTruthy();
     // we expect fresh 'incomplete' transactions to not have amounts set yet
-    expect(amount_in).toBeFalsy;
-    expect(amount_out).toBeFalsy;
+    expect(amount_in).toBeFalsy();
+    expect(amount_out).toBeFalsy();
   });
 
   it("should error fetching non-existing transaction by id", async () => {
@@ -307,7 +309,7 @@ describe("Anchor", () => {
     let clock: sinon.SinonFakeTimers;
     let watcher: Watcher;
 
-    beforeEach(async () => {
+    beforeEach(() => {
       clock = sinon.useFakeTimers(0);
       watcher = anchor.sep24().watcher();
     });
@@ -889,7 +891,7 @@ describe("Anchor", () => {
     let clock: sinon.SinonFakeTimers;
     let watcher: Watcher;
 
-    beforeEach(async () => {
+    beforeEach(() => {
       clock = sinon.useFakeTimers(0);
       watcher = anchor.sep24().watcher();
       jest.resetAllMocks();
@@ -1184,7 +1186,7 @@ describe("Anchor", () => {
     });
 
     test("Several pending transactions, one completed, no more after that", async () => {
-      const onMessage = sinon.spy((m) => {
+      const onMessage = sinon.spy(() => {
         expect(onMessage.callCount).toBeLessThanOrEqual(8);
       });
 
@@ -1457,7 +1459,7 @@ describe("Anchor", () => {
     });
 
     test("One pending, one refunded, no more after that", async () => {
-      const onMessage = sinon.spy((e) => {
+      const onMessage = sinon.spy(() => {
         expect(onMessage.callCount).toBeLessThanOrEqual(1);
       });
 

@@ -60,6 +60,7 @@ export interface WithdrawTransaction extends ProcessingAnchorTransaction {
   withdraw_anchor_account: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface ErrorTransaction
   extends Optional<DepositTransaction & WithdrawTransaction> {}
 

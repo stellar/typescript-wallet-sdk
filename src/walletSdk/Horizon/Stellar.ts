@@ -133,7 +133,7 @@ export class Stellar {
     }
 
     try {
-      const success = await this.submitTransaction(transaction);
+      await this.submitTransaction(transaction);
       return transaction;
     } catch (e) {
       const resultCode = getResultCode(e);

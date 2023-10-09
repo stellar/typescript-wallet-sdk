@@ -19,10 +19,10 @@ describe("Muxed Transactions", () => {
     accountService = stellar.account();
 
     // Keys for accounts to issue and receive the new TSWT asset
-    var issuingKeys = SigningKeypair.fromSecret(
+    const issuingKeys = SigningKeypair.fromSecret(
       "SAJMJSEC44DWU22TJF6RWYLRPPXLY4G3L5PVGC7D2QDUCPJIFCOISNQE",
     );
-    var receivingKeys = SigningKeypair.fromSecret(
+    const receivingKeys = SigningKeypair.fromSecret(
       "SAOQQ76UQFEYN4QAAAOIO45KNZZNQKSXAUB5GXKI6YOFLEDCWPWTCDM3",
     );
 

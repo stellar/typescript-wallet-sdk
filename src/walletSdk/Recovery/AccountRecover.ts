@@ -146,7 +146,7 @@ export abstract class AccountRecover {
    * from the account will be recognized as the lost device key:
    * 1. Only signer that's not in [serverAuth]
    * 2. All signers in [serverAuth] have the same weight, and potential signer is
-   *    the only one with a different weight.
+   * the only one with a different weight.
    *
    * @param stellarAccount stellar account to lookup existing signers on account
    * @param serverAuth sap of recovery servers to use
