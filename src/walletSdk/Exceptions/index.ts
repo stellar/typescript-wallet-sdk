@@ -181,3 +181,66 @@ export class KYCServerNotFoundError extends Error {
     Object.setPrototypeOf(this, KYCServerNotFoundError.prototype);
   }
 }
+
+export class RecoveryServerNotFoundError extends Error {
+  constructor(serverKey: string) {
+    super(`Server with key ${serverKey} was not found`);
+    Object.setPrototypeOf(this, RecoveryServerNotFoundError.prototype);
+  }
+}
+
+export class RecoveryIdentityNotFoundError extends Error {
+  constructor(serverKey: string) {
+    super(`Account identity for server ${serverKey} was not specified`);
+    Object.setPrototypeOf(this, RecoveryIdentityNotFoundError.prototype);
+  }
+}
+
+export class NotAllSignaturesFetchedError extends Error {
+  constructor() {
+    super(`Didn't get all recovery server signatures`);
+    Object.setPrototypeOf(this, NotAllSignaturesFetchedError.prototype);
+  }
+}
+
+export class LostSignerKeyNotFound extends Error {
+  constructor() {
+    super(`Lost key doesn't belong to the account`);
+    Object.setPrototypeOf(this, LostSignerKeyNotFound.prototype);
+  }
+}
+
+export class NoDeviceKeyForAccountError extends Error {
+  constructor() {
+    super(`No device key is setup for this account`);
+    Object.setPrototypeOf(this, NoDeviceKeyForAccountError.prototype);
+  }
+}
+
+export class UnableToDeduceKeyError extends Error {
+  constructor() {
+    super(`Couldn't deduce lost key. Please provide lost key explicitly`);
+    Object.setPrototypeOf(this, UnableToDeduceKeyError.prototype);
+  }
+}
+
+export class NoAccountSignersError extends Error {
+  constructor() {
+    super(`There are no signers on this recovery server`);
+    Object.setPrototypeOf(this, NoAccountSignersError.prototype);
+  }
+}
+
+export class DeviceKeyEqualsMasterKeyError extends Error {
+  constructor() {
+    super(`Device key must be different from master (account) key`);
+    Object.setPrototypeOf(this, DeviceKeyEqualsMasterKeyError.prototype);
+  }
+}
+
+export class NoAccountAndNoSponsorError extends Error {
+  constructor() {
+    super(`Account does not exist and is not sponsored`);
+    Object.setPrototypeOf(this, NoAccountAndNoSponsorError.prototype);
+  }
+}
