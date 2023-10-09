@@ -5,56 +5,28 @@ import axios from "axios";
 import { getRandomString } from "./utils";
 
 let wallet;
-let account;
 let accountKp;
-// ALEC TODO - move?
-describe("ALEC - TODO", () => {
+
+describe("Customer", () => {
   beforeAll(async () => {
-    const wallet = Wallet.TestNet();
+    wallet = Wallet.TestNet();
     const stellar = wallet.stellar();
     const account = stellar.account();
     accountKp = account.createKeypair();
-    console.log("creating account"); // ALEC TODO - remove
-    console.log("kp:", accountKp.publicKey, accountKp.secretKey); // ALEC TODO - remove
     await axios.get(
       "https://friendbot.stellar.org/?addr=" + accountKp.publicKey,
     );
   }, 10000);
-  beforeEach(() => {
-    // ALEC TODO - remove
-    const axiosInstance = axios.create();
-    axiosInstance.interceptors.response.use(
-      function (response) {
-        // Any status code that lie within the range of 2xx cause this function to trigger
-        // Do something with response data
-        return response;
-      },
-      function (error) {
-        console.log("error.response:", error.response); // ALEC TODO - remove
-        // Any status codes that falls outside the range of 2xx cause this function to trigger
-        // Do something with response error
-        return Promise.reject(error.response);
-      },
-    );
-    let appConfig = new ApplicationConfiguration(DefaultSigner, axiosInstance);
 
-    wallet = new Wallet({
-      stellarConfiguration: StellarConfiguration.TestNet(),
-      applicationConfiguration: appConfig,
-    });
-    account = wallet.stellar().account();
-  });
-  test("it works", async () => {
+  test("Sep-12 methods work", async () => {
     const anchor = wallet.anchor({ homeDomain: "testanchor.stellar.org" });
 
     const auth = await anchor.sep10();
     const authToken = await auth.authenticate({ accountKp });
-    console.log({ authToken }); // ALEC TODO - remove
 
     const sep12 = await anchor.sep12(authToken);
     const customerType = "sep31-receiver";
     const customerEmail = `${getRandomString(6)}@gmail.com`;
-    console.log({ customerEmail }); // ALEC TODO - remove
 
     // Update
     let resp = await sep12.add({
@@ -65,8 +37,6 @@ describe("ALEC - TODO", () => {
     });
     expect(resp.data.id).toBeTruthy();
     const { id } = resp.data;
-
-    console.log({ id }); // ALEC TODO - remove
 
     // Get
     resp = await sep12.getByIdAndType(id, customerType);

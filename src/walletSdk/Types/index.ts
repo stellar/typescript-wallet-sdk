@@ -34,6 +34,7 @@ export type StellarConfigurationParams = {
 export * from "./anchor";
 export * from "./auth";
 export * from "./horizon";
+export * from "./sep12";
 export * from "./sep24";
 export * from "./utils";
 export * from "./watcher";

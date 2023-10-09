@@ -153,9 +153,31 @@ export class PathPayOnlyOneAmountError extends Error {
     Object.setPrototypeOf(this, PathPayOnlyOneAmountError.prototype);
   }
 }
+
 export class WithdrawalTxMemoError extends Error {
   constructor() {
     super(`Error parsing withdrawal transaction memo`);
     Object.setPrototypeOf(this, WithdrawalTxMemoError.prototype);
+  }
+}
+
+export class Sep9InfoRequiredError extends Error {
+  constructor() {
+    super(`Sep-9 info required`);
+    Object.setPrototypeOf(this, Sep9InfoRequiredError.prototype);
+  }
+}
+
+export class CustomerNotFoundError extends Error {
+  constructor(id: string) {
+    super(`Customer not found for id ${id}`);
+    Object.setPrototypeOf(this, CustomerNotFoundError.prototype);
+  }
+}
+
+export class KYCServerNotFoundError extends Error {
+  constructor() {
+    super(`Required KYC server URL not found`);
+    Object.setPrototypeOf(this, KYCServerNotFoundError.prototype);
   }
 }

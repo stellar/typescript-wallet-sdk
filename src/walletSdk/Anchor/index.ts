@@ -4,7 +4,10 @@ import { StellarTomlResolver } from "stellar-sdk";
 import { Config } from "walletSdk";
 import { Sep10 } from "../Auth";
 import { Sep12 } from "../Customer";
-import { ServerRequestFailedError } from "../Exceptions";
+import {
+  ServerRequestFailedError,
+  KYCServerNotFoundError,
+} from "../Exceptions";
 import { Sep24 } from "./Sep24";
 import { AnchorServiceInfo, TomlInfo } from "../Types";
 import { parseToml } from "../Utils";
@@ -92,20 +95,26 @@ export class Anchor {
     return this.sep10();
   }
 
-  // ALEC TODO - jscomment
-  // ALEC TODO - authtoken type?
+  /**
+   * Create new customer object to handle customer records with the anchor using SEP-12.
+   * @param {string} authToken - The authentication token.
+   * @returns {Promise<Sep12>} - A Promise that resolves to a Sep12 instance.
+   * @throws {KYCServerNotFoundError} - If the KYC server information is not available.
+   */
   async sep12(authToken: string): Promise<Sep12> {
     const tomlInfo = await this.sep1();
     const kycServer = tomlInfo?.kycServer;
-    console.log({ kycServer }); // ALEC TODO - remove
     if (!kycServer) {
-      // ALEC TODO -
-      throw new Error("Missing kyc server value from toml info");
+      throw new KYCServerNotFoundError();
     }
     return new Sep12(authToken, kycServer, this.httpClient);
   }
 
-  // ALEC TODO - auth authToken type?
+  /**
+   * Create new customer object to handle customer records using the `sep12` method.
+   * @param {string} authToken - The authentication token.
+   * @returns {Promise<Customer>} - A Promise that resolves to a Customer instance.
+   */
   async customer(authToken: string): Promise<Customer> {
     return this.sep12(authToken);
   }
