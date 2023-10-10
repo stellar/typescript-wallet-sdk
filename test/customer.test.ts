@@ -28,7 +28,7 @@ describe("Customer", () => {
     const customerType = "sep31-receiver";
     const customerEmail = `${getRandomString(6)}@gmail.com`;
 
-    // Update
+    // Add
     let resp = await sep12.add({
       first_name: "john",
       last_name: "smith",
