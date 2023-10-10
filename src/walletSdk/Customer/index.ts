@@ -1,9 +1,6 @@
 import { AxiosInstance } from "axios";
-import {
-  Sep9InfoRequiredError,
-  CustomerNotFoundError,
-  NoGetCustomerParamError,
-} from "../Exceptions";
+import queryString from "query-string";
+import { Sep9InfoRequiredError, CustomerNotFoundError } from "../Exceptions";
 import {
   CustomerInfoMap,
   Sep12Status,
@@ -58,38 +55,13 @@ export class Sep12 {
    * @throws {NoGetCustomerParamError} If none of the parameters are provided.
    * @throws {CustomerNotFoundError} If the customer is not found.
    */
-  async getCustomer({
-    id,
-    type,
-    memo,
-    lang,
-  }: GetCustomerParams): Promise<GetCustomerResponse> {
-    if (!id && !type && !memo) {
-      throw new NoGetCustomerParamError();
-    }
-    const queryParams: string[] = [];
-    if (type) {
-      queryParams.push(`type=${type}`);
-    }
-    if (id) {
-      queryParams.push(`id=${id}`);
-    }
-    if (memo) {
-      queryParams.push(`memo=${memo}`);
-    }
-    if (lang) {
-      queryParams.push(`lang=${lang}`);
-    }
-    const queryString = queryParams.join("&");
-
-    const resp = await this.httpClient.get(
-      `${this.baseUrl}/customer?${queryString}`,
-      {
-        headers: this.headers,
-      },
-    );
+  async getCustomer(params: GetCustomerParams): Promise<GetCustomerResponse> {
+    const qs = queryString.stringify(params);
+    const resp = await this.httpClient.get(`${this.baseUrl}/customer?${qs}`, {
+      headers: this.headers,
+    });
     if (!resp.data.id) {
-      throw new CustomerNotFoundError(id);
+      throw new CustomerNotFoundError(params);
     }
     return resp;
   }
