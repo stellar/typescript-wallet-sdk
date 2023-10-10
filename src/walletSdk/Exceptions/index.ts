@@ -161,6 +161,27 @@ export class WithdrawalTxMemoError extends Error {
   }
 }
 
+export class Sep9InfoRequiredError extends Error {
+  constructor() {
+    super(`Sep-9 info required`);
+    Object.setPrototypeOf(this, Sep9InfoRequiredError.prototype);
+  }
+}
+
+export class CustomerNotFoundError extends Error {
+  constructor(id: string) {
+    super(`Customer not found for id ${id}`);
+    Object.setPrototypeOf(this, CustomerNotFoundError.prototype);
+  }
+}
+
+export class KYCServerNotFoundError extends Error {
+  constructor() {
+    super(`Required KYC server URL not found`);
+    Object.setPrototypeOf(this, KYCServerNotFoundError.prototype);
+  }
+}
+
 export class RecoveryServerNotFoundError extends Error {
   constructor(serverKey: string) {
     super(`Server with key ${serverKey} was not found`);
