@@ -31,6 +31,20 @@ export class Sep12 {
     };
   }
 
+  /**
+   * Retrieve customer information. All arguments are optional, but at least one
+   * must be given. For more information:
+   * @see {@link https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0012.md#request}
+   * @param {object} params - The parameters for retrieving customer information.
+   * @param {string} [params.id] - The id of the customer .
+   * @param {string} [params.type] - The type of action the customer is being KYCd for.
+   * @see {@link https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0012.md#type-specification}
+   * @param {string} [params.memo] - A memo associated with the customer.
+   * @param {string} [params.lang] - The desired language. Defaults to "en".
+   * @return {Promise<GetCustomerResponse>} The customer information.
+   * @throws {NoGetCustomerParamError} If none of the parameters are provided.
+   * @throws {CustomerNotFoundError} If the customer is not found.
+   */
   async getCustomer({
     id,
     type,
