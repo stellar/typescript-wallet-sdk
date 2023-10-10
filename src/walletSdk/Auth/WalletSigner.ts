@@ -11,12 +11,29 @@ import {
 } from "../Types";
 import { DefaultClient } from "../";
 
+/**
+ * A Wallet Signer for signing Stellar transactions.
+ */
 export interface WalletSigner {
+  /**
+   * Sign a transaction with a client keypair.
+   * @param {Transaction} params.transaction - The transaction to sign.
+   * @param {AccountKeypair} params.accountKp - The keypair to sign with.
+   * @returns {Transaction} The signed transaction.
+   */
   signWithClientAccount({
     transaction,
     accountKp,
   }: SignWithClientAccountParams): Transaction;
 
+  /**
+   * Sign a transaction using the domain account's keypair. This method is async in the
+   * case of signing with a different server.
+   * @param {XdrEncodedTransaction} params.transactionXDR - The XDR representation of the transaction to sign.
+   * @param {NetworkPassphrase} params.networkPassphrase - The network passphrase for the Stellar network.
+   * @param {AccountKeypair} params.accountKp - The keypair of the domain account.
+   * @returns {Promise<Transaction>} The signed transaction.
+   */
   signWithDomainAccount({
     transactionXDR,
     networkPassphrase,
@@ -24,6 +41,9 @@ export interface WalletSigner {
   }: SignWithDomainAccountParams): Promise<Transaction>;
 }
 
+/**
+ * A Default signer used if no signer is given.
+ */
 export const DefaultSigner: WalletSigner = {
   signWithClientAccount: ({ transaction, accountKp }) => {
     transaction.sign(accountKp.keypair);
@@ -38,8 +58,7 @@ export const DefaultSigner: WalletSigner = {
 };
 
 /**
- * Represents a Domain Signer used for signing Stellar transactions with a domain server.
- *
+ * A Domain Signer used for signing Stellar transactions with a domain server.
  * @class
  * @implements {WalletSigner}
  */
@@ -50,7 +69,6 @@ export class DomainSigner implements WalletSigner {
 
   /**
    * Create a new instance of the DomainSigner class.
-   *
    * @constructor
    * @param {string} url - The URL of the domain server.
    * @param {HttpHeaders} headers - The HTTP headers for requests to the domain server.

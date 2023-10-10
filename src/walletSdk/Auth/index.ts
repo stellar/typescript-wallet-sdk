@@ -63,7 +63,7 @@ export class Sep10 {
    * @param {WalletSigner} [params.walletSigner] - Signer for signing transactions (defaults to the configuration default signer).
    * @param {string} [params.memoId] - Memo ID to distinguish the account.
    * @param {string} [params.clientDomain] - Domain hosting stellar.toml file containing `SIGNING_KEY`.
-   * @returns {Promise<AuthToken>} A Promise that resolves to the authentication token.
+   * @returns {Promise<AuthToken>} The authentication token.
    */
   async authenticate({
     accountKp,

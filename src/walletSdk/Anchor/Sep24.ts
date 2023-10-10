@@ -58,7 +58,7 @@ export class Sep24 {
    * @param {ExtraFields} [params.extraFields] - Additional fields for the request.
    * @param {Memo} [params.destinationMemo] - Memo information for the destination account.
    * @param {string} [params.destinationAccount] - The destination account for the deposit.
-   * @returns {Promise<Sep24PostResponse>} A Promise that resolves to the Sep24 response.
+   * @returns {Promise<Sep24PostResponse>} The Sep24 response.
    * @throws {AssetNotSupportedError} If the asset is not supported for deposit.
    */
   async deposit({
@@ -88,7 +88,7 @@ export class Sep24 {
    * @param {string} [params.lang] - The language for the request (defaults to the Anchor's language).
    * @param {ExtraFields} [params.extraFields] - Additional fields for the request.
    * @param {string} [params.withdrawalAccount] - The withdrawal account.
-   * @returns {Promise<Sep24PostResponse>} A Promise that resolves to the Sep24 response.
+   * @returns {Promise<Sep24PostResponse>} The Sep24 response.
    * @throws {AssetNotSupportedError} If the asset is not supported for withdrawal.
    */
   async withdraw({
@@ -169,7 +169,7 @@ export class Sep24 {
 
   /**
    * Retrieves information about the Anchor.
-   * @returns {Promise<AnchorServiceInfo>} A Promise that resolves to an object containing information about the Anchor.
+   * @returns {Promise<AnchorServiceInfo>} An object containing information about the Anchor.
    * @throws {ServerRequestFailedError} If the server request to fetch information fails.
    */
   async getServicesInfo(): Promise<AnchorServiceInfo> {

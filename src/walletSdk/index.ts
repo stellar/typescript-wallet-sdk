@@ -22,22 +22,41 @@ const walletHeaders = {
   "X-Client-Version": version,
 };
 
+/**
+ * The Wallet SDK main entry point class. From these class methods you can create a
+ * wallet on the Stellar network.
+ * @class
+ */
 export class Wallet {
   private cfg: Config;
   private language: string;
 
+  /**
+   * Creates a Wallet instance configured to the test network.
+   * @returns {Wallet} A Wallet instance configured to the test network.
+   */
   static TestNet = (): Wallet => {
     return new Wallet({
       stellarConfiguration: StellarConfiguration.TestNet(),
     });
   };
 
+  /**
+   * Creates a Wallet instance configured to the public network.
+   * @returns {Wallet} A Wallet instance configured to the public network.
+   */
   static MainNet = (): Wallet => {
     return new Wallet({
       stellarConfiguration: StellarConfiguration.MainNet(),
     });
   };
 
+  /**
+   * Creates a new Wallet instance.
+   * @param {StellarConfiguration} params.stellarConfiguration - The Stellar configuration.
+   * @param {ApplicationConfiguration} params.applicationConfiguration - The Application configuration.
+   * @param {string} [params.language] - The default langauge to use.
+   */
   constructor({
     stellarConfiguration,
     applicationConfiguration = new ApplicationConfiguration(),
@@ -48,6 +67,13 @@ export class Wallet {
     this.language = language;
   }
 
+  /**
+   * Create an Anchor instance for interacting with an Anchor.
+   * @param {string} params.homeDomain - The home domain of the anchor. This domain will be used for
+   * things like getting the toml info.
+   * @param {string} [params.language=this.language] - The language setting for the Anchor.
+   * @returns {Anchor} An Anchor instance.
+   */
   anchor({ homeDomain, language = this.language }: WalletAnchor): Anchor {
     const url =
       homeDomain.indexOf("://") !== -1 ? homeDomain : `https://${homeDomain}`;
@@ -60,10 +86,19 @@ export class Wallet {
     });
   }
 
-  stellar() {
+  /**
+   * Create a Stellar instance for interacting with the Stellar network.
+   * @returns {Stellar} A Stellar instance.
+   */
+  stellar(): Stellar {
     return new Stellar(this.cfg);
   }
 
+  /**
+   * Create a Recovery instance for account recovery using SEP-30.
+   * @param {WalletRecoveryServers} servers - A map of recovery servers.
+   * @returns {Recovery} A Recovery instance.
+   */
   recovery({ servers }: WalletRecoveryServers): Recovery {
     return new Recovery({
       cfg: this.cfg,
