@@ -52,7 +52,6 @@ export class Sep12 {
    * @param {string} [params.memo] - A memo associated with the customer.
    * @param {string} [params.lang] - The desired language. Defaults to "en".
    * @return {Promise<GetCustomerResponse>} The customer information.
-   * @throws {NoGetCustomerParamError} If none of the parameters are provided.
    * @throws {CustomerNotFoundError} If the customer is not found.
    */
   async getCustomer(params: GetCustomerParams): Promise<GetCustomerResponse> {
