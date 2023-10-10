@@ -2,10 +2,6 @@ import { AxiosInstance } from "axios";
 import { Sep9InfoRequiredError, CustomerNotFoundError } from "../Exceptions";
 import {
   CustomerInfoMap,
-  Sep12Status,
-  Sep12Type,
-  Field,
-  ProvidedField,
   GetCustomerResponse,
   AddCustomerResponse,
 } from "../Types";
