@@ -15,6 +15,19 @@ import {
   AddCustomerResponse,
 } from "../Types";
 
+// Used for identifying binary fields.
+// https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0009.md
+const Sep9BinaryFields = [
+  "photo_id_front",
+  "photo_id_back",
+  "notary_approval_of_photo_id",
+  "photo_proof_residence",
+  "proof_of_income",
+  "proof_of_liveness",
+  "organization.photo_incorporation_doc",
+  "organization.photo_proof_address",
+];
+
 export class Sep12 {
   private token;
   private baseUrl;
@@ -93,11 +106,21 @@ export class Sep12 {
       customerMap = { ...customerMap, ...sep9Info };
     }
 
+    // Check if binary data given so can adjust headers
+    let includesBinary = false;
+    for (const key of Object.keys(customerMap)) {
+      if (Sep9BinaryFields.includes(key)) {
+        includesBinary = true;
+      }
+    }
+
     const resp = await this.httpClient.put(
       `${this.baseUrl}/customer`,
       customerMap,
       {
-        headers: this.headers,
+        headers: includesBinary
+          ? { ...this.headers, "Content-Type": "multipart/form-data" }
+          : this.headers,
       },
     );
     return resp;
@@ -118,11 +141,21 @@ export class Sep12 {
     }
     customerMap = { ...customerMap, ...sep9Info };
 
+    // Check if binary data given so can adjust headers
+    let includesBinary = false;
+    for (const key of Object.keys(customerMap)) {
+      if (Sep9BinaryFields.includes(key)) {
+        includesBinary = true;
+      }
+    }
+
     const resp = await this.httpClient.put(
       `${this.baseUrl}/customer`,
       customerMap,
       {
-        headers: this.headers,
+        headers: includesBinary
+          ? { ...this.headers, "Content-Type": "multipart/form-data" }
+          : this.headers,
       },
     );
     return resp;
