@@ -37,7 +37,7 @@ if (runMainnet === "true") {
   wallet = walletSdk.Wallet.TestNet();
 }
 const stellar = wallet.stellar();
-const anchor: Anchor = wallet.anchor({
+const anchor = wallet.anchor({
   homeDomain: anchorDomain,
 });
 const account = stellar.account();
