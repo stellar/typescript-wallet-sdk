@@ -10,10 +10,21 @@ import {
 import { OperationsLimitExceededError } from "../Exceptions";
 
 // Do not create this object directly, use the Wallet class.
+/**
+ * KYC management with Sep-12.
+ * @see {@link https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0012.md}
+ * Do not create this object directly, use the Stellar class.
+ * @class
+ */
 export class AccountService {
   private server: Server;
   private network: Networks;
 
+  /**
+   * Creates a new instance of the AccountService class.
+   * @constructor
+   * @param {Config} cfg - Configuration for the service.
+   */
   constructor(cfg: Config) {
     this.server = cfg.stellar.server;
     this.network = cfg.stellar.network;
@@ -22,8 +33,7 @@ export class AccountService {
   /**
    * Generate new account keypair (public and secret key). This key pair can be
    * used to create a Stellar account.
-   *
-   * @return public key and secret key
+   * @return {SigningKeypair} Keypair capable of signing.
    */
   createKeypair(): SigningKeypair {
     return new SigningKeypair(Keypair.random());
@@ -32,8 +42,7 @@ export class AccountService {
   /**
    * Generate new account keypair (public and secret key) from random bytes. This key pair can be
    * used to create a Stellar account.
-   *
-   * @return public key and secret key
+   * @return {SigningKeypair} Keypair capable of signing.
    */
   createKeypairFromRandom(randomBytes: Buffer): SigningKeypair {
     return new SigningKeypair(Keypair.fromRawEd25519Seed(randomBytes));
@@ -41,7 +50,6 @@ export class AccountService {
 
   /**
    * Get account information from the Stellar network.
-   *
    * @param accountAddress Stellar address of the account
    * @param serverInstance optional Horizon server instance when default doesn't work
    * @return account information

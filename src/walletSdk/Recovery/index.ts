@@ -43,10 +43,20 @@ type RecoveryParams = {
   servers: RecoveryServerMap;
 };
 
-// Do not create this object directly, use the Wallet class.
+/**
+ * Used for Account Recovery using Sep-30.
+ * @see {@link https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0030.md}
+ * Do not create this object directly, use the Wallet class.
+ * @class
+ */
 export class Recovery extends AccountRecover {
   private cfg: Config;
 
+  /**
+   * Creates a new instance of the Recovery class.
+   * @constructor
+   * @param {RecoveryParams} params - The params used for the Recovery instance.
+   */
   constructor(params: RecoveryParams) {
     const { cfg, stellar, httpClient, servers } = params;
     super(stellar, httpClient, servers);
@@ -55,8 +65,8 @@ export class Recovery extends AccountRecover {
 
   /**
    * Create new auth object to authenticate account with the recovery server using SEP-10.
-   *
-   * @return auth object
+   * @param {RecoveryServerKey} key - The key mapping to a recovery server.
+   * @return {Sep10} - The Sep-10 auth object.
    */
   sep10Auth(key: RecoveryServerKey): Sep10 {
     const server = this.getServer(key);
@@ -78,8 +88,7 @@ export class Recovery extends AccountRecover {
    * specified [RecoverableWalletConfig.deviceAddress]
    *
    * This transaction can be sponsored.
-   *
-   * @param config: [RecoverableWalletConfig]
+   * @param {RecoverableWalletConfig} config - The configuration for recoverable wallet.
    * @return transaction
    */
   async createRecoverableWallet(
@@ -118,6 +127,13 @@ export class Recovery extends AccountRecover {
     };
   }
 
+  /**
+   * Retrieves account information from multiple recovery servers for a specified account address.
+   * @param {AccountKeypair} accountAddress - The account address for which to retrieve information.
+   * @param {RecoveryAuthMap} auth - A map of recovery server keys to their respective authentication tokens.
+   * @throws {ServerRequestFailedError} If any of the requests to recovery servers fail.
+   * @returns {Promise<RecoveryAccountInfoMap>} A map of recovery server keys to their respective account information.
+   */
   async getAccountInfo(
     accountAddress: AccountKeypair,
     auth: RecoveryAuthMap,
@@ -162,7 +178,6 @@ export class Recovery extends AccountRecover {
    * on the account.
    *
    * This transaction can be sponsored.
-   *
    * @param account Stellar address of the account that is receiving new signers
    * @param accountSigners A list of account signers and their weights
    * @param accountThreshold Low, medium, and high thresholds to set on the account

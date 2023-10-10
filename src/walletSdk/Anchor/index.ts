@@ -27,7 +27,11 @@ export type Auth = Sep10;
 
 export type Customer = Sep12;
 
-// Do not create this object directly, use the Wallet class.
+/**
+ * Build on/off ramps with anchors.
+ * Do not create this object directly, use the Wallet class.
+ * @class
+ */
 export class Anchor {
   public language: string;
 
@@ -36,6 +40,11 @@ export class Anchor {
   private httpClient: AxiosInstance;
   private toml: TomlInfo;
 
+  /**
+   * Creates a new Anchor instance.
+   * @constructor
+   * @param {AnchorParams} params - The parameters to initialize the Anchor.
+   */
   constructor(params: AnchorParams) {
     const { cfg, homeDomain, httpClient, language } = params;
 
@@ -135,6 +144,12 @@ export class Anchor {
     return this.sep24();
   }
 
+  /**
+   * Get information about an Anchor.
+   * @param {string} [lang=this.language] - The language in which to retrieve information.
+   * @returns {Promise<AnchorServiceInfo>} A Promise that resolves to an object containing information about the Anchor.
+   * @throws {ServerRequestFailedError} If the http request fails.
+   */
   async getServicesInfo(
     lang: string = this.language,
   ): Promise<AnchorServiceInfo> {

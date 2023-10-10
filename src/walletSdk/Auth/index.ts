@@ -30,13 +30,24 @@ type Sep10Params = {
   httpClient: AxiosInstance;
 };
 
-// Do not create this object directly, use the Wallet class.
+/**
+ * Sep-10 used for authentication to an external server.
+ * @see {@link https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0010.md}
+ * Do not create this object directly, use the Anchor class.
+ * @class
+ */
 export class Sep10 {
   private cfg: Config;
   private webAuthEndpoint: string;
   private homeDomain: string;
   private httpClient: AxiosInstance;
 
+  /**
+   * Creates a new instance of the Sep10 class.
+   *
+   * @constructor
+   * @param {Sep10Params} params - Parameters to initialize the Sep10 instance.
+   */
   constructor(params: Sep10Params) {
     const { cfg, webAuthEndpoint, homeDomain, httpClient } = params;
 
@@ -46,6 +57,14 @@ export class Sep10 {
     this.httpClient = httpClient;
   }
 
+  /**
+   * Initiates the authentication process using SEP-10.
+   * @param {AccountKeypair} params.accountKp - Keypair for the Stellar account being authenticated.
+   * @param {WalletSigner} [params.walletSigner] - Signer for signing transactions (defaults to the configuration default signer).
+   * @param {string} [params.memoId] - Memo ID to distinguish the account.
+   * @param {string} [params.clientDomain] - Domain hosting stellar.toml file containing `SIGNING_KEY`.
+   * @returns {Promise<AuthToken>} A Promise that resolves to the authentication token.
+   */
   async authenticate({
     accountKp,
     walletSigner,

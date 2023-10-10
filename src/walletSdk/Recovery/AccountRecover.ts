@@ -24,11 +24,23 @@ import {
   Stellar,
 } from "../Horizon";
 
+/**
+ * Used for Account Recovery using Sep-30.
+ * @see {@link https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0030.md}
+ * @class
+ */
 export abstract class AccountRecover {
   protected stellar: Stellar;
   protected httpClient: AxiosInstance;
   protected servers: RecoveryServerMap;
 
+  /**
+   * Creates a new instance of the AccountRecover class.
+   * @constructor
+   * @param {Stellar} stellar - The stellar instance used to interact with Horizon server.
+   * @param {AxiosInstance} httpClient - The client used to make http calls.
+   * @param {RecoveryServerMap} servers - The recovery servers to use.
+   */
   constructor(
     stellar: Stellar,
     httpClient: AxiosInstance,
@@ -42,12 +54,11 @@ export abstract class AccountRecover {
   /**
    * Sign transaction with recovery servers. It is used to recover an account using
    * [SEP-30](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0030.md).
-   *
-   * @param transaction transaction with new signer to be signed by recovery servers
-   * @param account keypair of the account that is recovered
-   * @param serverAuth map of recovery servers to use
-   * @return transaction with recovery server signatures
-   * @throws [NotAllSignaturesFetchedError] when all recovery servers don't return signatures
+   * @param {Transaction} transaction - The transaction with new signer to be signed by recovery servers.
+   * @param {AccountKeypair} account - The keypair of the account that will be recovered.
+   * @param {RecoveryServerSigningMap} - The map of recovery servers to use.
+   * @return {Transaction} - The transaction with recovery server signatures
+   * @throws {NotAllSignaturesFetchedError} when all recovery servers don't return signatures
    */
   async signWithRecoveryServers(
     transaction: Transaction,
@@ -66,16 +77,13 @@ export abstract class AccountRecover {
   }
 
   /**
-   * Replace lost device key with a new key
-   *
-   * @param account target account
-   * @param newKey a key to replace the lost key with
-   * @param serverAuth map of recovery servers to use
-   * @param lostKey (optional) lost device key. If not specified, try to deduce key from account
-   * signers list
-   * @param sponsorAddress (optional) sponsor address of the transaction. Please note that not all
-   * SEP-30 servers support signing sponsored transactions.
-   * @return transaction with operations for replacing the device key
+   * Replace a lost device key with a new key.
+   * @param {AccountKeypair} account - The target account.
+   * @param {AccountKeypair} newKey - The key to replace the lost key with.
+   * @param {RecoveryServerSigningMap} serverAuth - A map of recovery servers to use.
+   * @param {AccountKeypair} [lostKey] - The lost device key. If not specified, try to deduce the key from the account signers list.
+   * @param {AccountKeypair} [sponsorAddress] - The sponsor address of the transaction. Please note that not all SEP-30 servers support signing sponsored transactions.
+   * @returns {Promise<Transaction>} The transaction with operations for replacing the device key.
    */
   async replaceDeviceKey(
     account: AccountKeypair,
@@ -142,17 +150,17 @@ export abstract class AccountRecover {
   };
 
   /**
-   * Try to deduce lost key. If any of these criteria matches, one of the signers
+   * Try to deduce the lost key. If any of these criteria match, one of the signers
    * from the account will be recognized as the lost device key:
    * 1. Only signer that's not in [serverAuth]
-   * 2. All signers in [serverAuth] have the same weight, and potential signer is
+   * 2. All signers in [serverAuth] have the same weight, and the potential signer is
    * the only one with a different weight.
-   *
-   * @param stellarAccount stellar account to lookup existing signers on account
-   * @param serverAuth sap of recovery servers to use
-   * @return deduced account signer
-   * @throws [NoDeviceKeyForAccountError] when no existing("lost") device key is found
-   * @throws [UnableToDeduceKeyError] when no criteria matches
+   * @private
+   * @param {ServerApi.AccountRecord} stellarAccount - The Stellar account to lookup existing signers on account.
+   * @param {RecoveryServerSigningMap} serverAuth - A map of recovery servers to use.
+   * @returns {AccountRecordSigners} The deduced account signer.
+   * @throws {NoDeviceKeyForAccountError} When no existing ("lost") device key is found.
+   * @throws {UnableToDeduceKeyError} When no criteria match.
    */
   private deduceKey(
     stellarAccount: ServerApi.AccountRecord,
