@@ -178,11 +178,12 @@ export class Recovery extends AccountRecover {
    * on the account.
    *
    * This transaction can be sponsored.
-   * @param account Stellar address of the account that is receiving new signers
-   * @param accountSigners A list of account signers and their weights
-   * @param accountThreshold Low, medium, and high thresholds to set on the account
-   * @param sponsorAddress optional Stellar address of the account sponsoring this transaction
-   * @returns transaction
+   * @param {AccountKeypair} account - Stellar address of the account that is receiving new signers.
+   * @param {AccountSigner[]} accountSigners - A list of account signers and their weights.
+   * @param {AccountThreshold} accountThreshold - Low, medium, and high thresholds to set on the account.
+   * @param {AccountKeypair} [sponsorAddress] - Stellar address of the account sponsoring this transaction.
+   * @param {(builder: CommonBuilder) => CommonBuilder} [builderExtra] - Stellar address of the account sponsoring this transaction.
+   * @returns {Promise<Transaction>}  The built transaction.
    */
   async registerRecoveryServerSigners(
     account: AccountKeypair,
@@ -248,6 +249,9 @@ export class Recovery extends AccountRecover {
   /**
    * Register account with recovery servers using
    * [SEP-30](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0030.md).
+   * @param {AccountKeypair} account - Account being registerd.
+   * @param {RecoveryIdentityMap} identityMap - map of identities to recovery keys.
+   * @returns {Promise<string[]>}  List of recovery signer public keys.
    */
   private async enrollWithRecoveryServer(
     account: AccountKeypair,

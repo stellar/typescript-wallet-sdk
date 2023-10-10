@@ -76,8 +76,8 @@ export class Watcher {
    * @param {WatchTransactionsParams} params - The Watch Transactions params.
    * @param {string} params.authToken - The authentication token used for authenticating with the anchor.
    * @param {string} params.assetCode - The asset code to filter transactions by.
-   * @param {function} params.onMessage - A callback function to handle incoming transaction messages.
-   * @param {function} params.onError - A callback function to handle errors during transaction streaming.
+   * @param {Function} params.onMessage - A callback function to handle incoming transaction messages.
+   * @param {Function} params.onError - A callback function to handle errors during transaction streaming.
    * @param {Array<string>} [params.watchlist=[]] - An optional array of specific transaction IDs to watch.
    * @param {number} [params.timeout=5000] - The timeout duration for the streaming connection (in milliseconds).
    * @param {boolean} [params.isRetry=false] - Indicates whether this is a retry attempt (optional).
@@ -265,9 +265,9 @@ export class Watcher {
    * @param {string} params.authToken - The authentication token used for authenticating with th anchor.
    * @param {string} params.assetCode - The asset code to filter transactions by.
    * @param {string} params.id - The id of the transaction to watch.
-   * @param {function} params.onMessage - A callback function to handle incoming transaction messages.
-   * @param {function} params.onSuccess - If a transaction status is in a end state (eg. completed, refunded, expired) then this callback is called.
-   * @param {function} params.onError - A callback function to handle errors during transaction streaming.
+   * @param {Function} params.onMessage - A callback function to handle incoming transaction messages.
+   * @param {Function} params.onSuccess - If a transaction status is in a end state (eg. completed, refunded, expired) then this callback is called.
+   * @param {Function} params.onError - A callback function to handle errors during transaction streaming.
    * @param {number} [params.timeout=5000] - The timeout duration for the streaming connection (in milliseconds).
    * @param {boolean} [params.isRetry=false] - Indicates whether this is a retry attempt (optional).
    * @param {string} [params.lang=this.anchor.language] - The desired language (localization) for transaction messages.
