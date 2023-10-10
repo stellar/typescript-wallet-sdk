@@ -134,18 +134,19 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
 
   /**
    * Creates and adds a path payment operation to the transaction builder.
-   * @param {string} destinationAddress - The destination Stellar address to which the payment is sent.
-   * @param {StellarAssetId} sendAsset - The asset to be sent.
-   * @param {StellarAssetId} destAsset - The asset the destination will receive.
-   * @param {string} [sendAmount] - The amount to be sent. Must specify either sendAmount or destAmount,
+   * @param {PathPayParams} params - The path payment parameters.
+   * @param {string} params.destinationAddress - The destination Stellar address to which the payment is sent.
+   * @param {StellarAssetId} params.sendAsset - The asset to be sent.
+   * @param {StellarAssetId} params.destAsset - The asset the destination will receive.
+   * @param {string} [params.sendAmount] - The amount to be sent. Must specify either sendAmount or destAmount,
    * but not both.
-   * @param {string} [destAmount] - The amount to be received by the destination. Must specify either sendAmount or destAmount,
+   * @param {string} [params.destAmount] - The amount to be received by the destination. Must specify either sendAmount or destAmount,
    * but not both.
-   * @param {string} [destMin] - The minimum amount of the destination asset to be receive. This is a
+   * @param {string} [params.destMin] - The minimum amount of the destination asset to be receive. This is a
    * protective measure, it allows you to specify a lower bound for an acceptable conversion. Only used
    * if using sendAmount.
    * (optional, default is ".0000001").
-   * @param {string} [sendMax] - The maximum amount of the destination asset to be sent. This is a
+   * @param {string} [params.sendMax] - The maximum amount of the destination asset to be sent. This is a
    * protective measure, it allows you to specify an upper bound for an acceptable conversion. Only used
    * if using destAmount.
    * (optional, default is int64 max).

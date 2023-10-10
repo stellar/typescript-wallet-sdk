@@ -53,6 +53,7 @@ export class Wallet {
 
   /**
    * Creates a new Wallet instance.
+   * @param {WalletParams} params - The Wallet params.
    * @param {StellarConfiguration} params.stellarConfiguration - The Stellar configuration.
    * @param {ApplicationConfiguration} params.applicationConfiguration - The Application configuration.
    * @param {string} [params.language] - The default langauge to use.
@@ -69,6 +70,7 @@ export class Wallet {
 
   /**
    * Create an Anchor instance for interacting with an Anchor.
+   * @param {WalletAnchor} params - The anchor params.
    * @param {string} params.homeDomain - The home domain of the anchor. This domain will be used for
    * things like getting the toml info.
    * @param {string} [params.language=this.language] - The language setting for the Anchor.

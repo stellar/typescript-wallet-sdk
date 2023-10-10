@@ -73,7 +73,8 @@ export class Watcher {
    *
    * You may also provide an array of transaction ids, `watchlist`, and this
    * watcher will always react to transactions whose ids are in the watchlist.
-   * @param {string} params.authToken - The authentication token used for authenticating with th anchor.
+   * @param {WatchTransactionsParams} params - The Watch Transactions params.
+   * @param {string} params.authToken - The authentication token used for authenticating with the anchor.
    * @param {string} params.assetCode - The asset code to filter transactions by.
    * @param {function} params.onMessage - A callback function to handle incoming transaction messages.
    * @param {function} params.onError - A callback function to handle errors during transaction streaming.
@@ -260,6 +261,7 @@ export class Watcher {
    * * onSuccess - When the transaction comes back as completed / refunded / expired.
    * * onError - When there's a runtime error, or the transaction comes back as
    * no_market / too_small / too_large / error.
+   * @param {WatchTransactionParams} params - The Watch Transaction params.
    * @param {string} params.authToken - The authentication token used for authenticating with th anchor.
    * @param {string} params.assetCode - The asset code to filter transactions by.
    * @param {string} params.id - The id of the transaction to watch.

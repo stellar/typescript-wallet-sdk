@@ -56,8 +56,8 @@ export abstract class AccountRecover {
    * [SEP-30](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0030.md).
    * @param {Transaction} transaction - The transaction with new signer to be signed by recovery servers.
    * @param {AccountKeypair} account - The keypair of the account that will be recovered.
-   * @param {RecoveryServerSigningMap} - The map of recovery servers to use.
-   * @return {Transaction} - The transaction with recovery server signatures
+   * @param {RecoveryServerSigningMap} serverAuth - The map of recovery servers to use.
+   * @returns {Transaction} - The transaction with recovery server signatures
    * @throws {NotAllSignaturesFetchedError} when all recovery servers don't return signatures
    */
   async signWithRecoveryServers(

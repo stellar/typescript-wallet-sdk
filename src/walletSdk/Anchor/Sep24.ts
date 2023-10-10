@@ -52,6 +52,7 @@ export class Sep24 {
 
   /**
    * Initiates a deposit request.
+   * @param {Sep24PostParams} params - The SEP-24 Post params.
    * @param {string} params.assetCode - The asset to deposit.
    * @param {AuthToken} params.authToken - Authentication token for the request.
    * @param {string} [params.lang] - The language for the request (defaults to the Anchor's language).
@@ -82,7 +83,7 @@ export class Sep24 {
 
   /**
    * Initiates a withdrawal request.
-   * @async
+   * @param {Sep24PostParams} params - The SEP-24 Post params.
    * @param {string} params.assetCode - The asset to withdraw.
    * @param {string} params.authToken - Authentication token for the request.
    * @param {string} [params.lang] - The language for the request (defaults to the Anchor's language).
@@ -186,10 +187,12 @@ export class Sep24 {
 
   /**
    * Get single transaction's current status and details from the anchor.
-   * @param {AuthToken} authToken - The authentication token for the account authenticated with the anchor.
-   * @param {string} [id] - The transaction ID.
-   * @param {string} [stellarTransactionId] - The Stellar transaction ID.
-   * @param {string} [externalTransactionId] - The external transaction ID.
+   * @param {GetTransactionParams} params - The Get Transactions params.
+   * @param {AuthToken} params.authToken - The authentication token for the account authenticated with the anchor.
+   * @param {string} [params.id] - The transaction ID.
+   * @param {string} [params.stellarTransactionId] - The Stellar transaction ID.
+   * @param {string} [params.externalTransactionId] - The external transaction ID.
+   * @param {string} [params.lang] - The language setting.
    * @returns {Promise<AnchorTransaction>} The transaction object.
    * @throws {MissingTransactionIdError} If none of the ID parameters is provided.
    * @throws {InvalidTransactionResponseError} If the anchor returns an invalid transaction response.
@@ -245,14 +248,15 @@ export class Sep24 {
 
   /**
    * Get account's transactions specified by asset and other params.
-   * @param {AuthToken} authToken - The authentication token for the account authenticated with the anchor.
-   * @param {string} assetCode - The target asset to query for.
-   * @param {string} [noOlderThan] - The response should contain transactions starting on or after this date & time.
-   * @param {string} [limit] - The response should contain at most 'limit' transactions.
-   * @param {string} [kind] - The kind of transaction that is desired. E.g.: 'deposit', 'withdrawal'.
-   * @param {string} [pagingId] - The response should contain transactions starting prior to this ID (exclusive).
-   * @param {string} [lang] - The desired language (localization), it can also accept locale in the format 'en-US'.
-   * @return {Promise<AnchorTransaction[]>} A list of transactions as requested by the client, sorted in time-descending order.
+   * @param {GetTransactionParams} params - The Get Transactions params.
+   * @param {AuthToken} params.authToken - The authentication token for the account authenticated with the anchor.
+   * @param {string} params.assetCode - The target asset to query for.
+   * @param {string} [params.noOlderThan] - The response should contain transactions starting on or after this date & time.
+   * @param {string} [params.limit] - The response should contain at most 'limit' transactions.
+   * @param {string} [params.kind] - The kind of transaction that is desired. E.g.: 'deposit', 'withdrawal'.
+   * @param {string} [params.pagingId] - The response should contain transactions starting prior to this ID (exclusive).
+   * @param {string} [params.lang] - The desired language (localization), it can also accept locale in the format 'en-US'.
+   * @returns {Promise<AnchorTransaction[]>} A list of transactions as requested by the client, sorted in time-descending order.
    * @throws {InvalidTransactionsResponseError} Anchor returns an invalid response.
    * @throws {ServerRequestFailedError} If server request fails.
    */

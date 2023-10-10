@@ -66,7 +66,7 @@ export class Recovery extends AccountRecover {
   /**
    * Create new auth object to authenticate account with the recovery server using SEP-10.
    * @param {RecoveryServerKey} key - The key mapping to a recovery server.
-   * @return {Sep10} - The Sep-10 auth object.
+   * @returns {Sep10} - The Sep-10 auth object.
    */
   sep10Auth(key: RecoveryServerKey): Sep10 {
     const server = this.getServer(key);
@@ -89,7 +89,7 @@ export class Recovery extends AccountRecover {
    *
    * This transaction can be sponsored.
    * @param {RecoverableWalletConfig} config - The configuration for recoverable wallet.
-   * @return transaction
+   * @returns {Promise<RecoverableWallet>} The wallet.
    */
   async createRecoverableWallet(
     config: RecoverableWalletConfig,
@@ -182,7 +182,7 @@ export class Recovery extends AccountRecover {
    * @param accountSigners A list of account signers and their weights
    * @param accountThreshold Low, medium, and high thresholds to set on the account
    * @param sponsorAddress optional Stellar address of the account sponsoring this transaction
-   * @return transaction
+   * @returns transaction
    */
   async registerRecoveryServerSigners(
     account: AccountKeypair,

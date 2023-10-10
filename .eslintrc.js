@@ -25,6 +25,34 @@ module.exports = {
     "@typescript-eslint/no-misused-promises": "off",
     "@typescript-eslint/no-base-to-string": "off",
 
+    // ALEC TODO - uncomment
+    // // Warn
+    // "jsdoc/check-param-names": "warn",
+    // "jsdoc/require-returns": "warn",
+    // "jsdoc/require-param": "warn",
+    // "jsdoc/check-types": "warn", // Recommended
+    // "jsdoc/require-param-description": 1, // Recommended
+    // "jsdoc/require-param-name": 1, // Recommended
+    // "jsdoc/require-param-type": 1, // Recommended
+    // "jsdoc/require-property-description": 1, // Recommended
+    // "jsdoc/require-property-name": 1, // Recommended
+    // "jsdoc/require-property-type": 1, // Recommended
+
+    // // ALEC TODO - these?
+    // "jsdoc/check-property-names": 1, // Recommended
+
+    // "jsdoc/check-values": 1, // Recommended
+    // "jsdoc/empty-tags": 1, // Recommended
+    // "jsdoc/implements-on-classes": 1, // Recommended
+    // "jsdoc/multiline-blocks": 1, // Recommended
+    // "jsdoc/require-jsdoc": 1, // Recommended
+
+    // "jsdoc/require-property": 1, // Recommended
+
+    // "jsdoc/require-returns-check": 1, // Recommended
+    // "jsdoc/require-returns-description": 1, // Recommended
+    // "jsdoc/require-returns-type": 1, // Recommended
+
     // Error
     "@typescript-eslint/no-shadow": "error",
     "@typescript-eslint/no-unused-expressions": "error",

@@ -86,9 +86,10 @@ export abstract class CommonTransactionBuilder<T> {
   /**
    * Set thesholds for an account.
    * @see {@link https://developers.stellar.org/docs/encyclopedia/signatures-multisig#thresholds}
-   * @param {number} [low] - The low theshold level.
-   * @param {number} [medium] - The medium theshold level.
-   * @param {number} [high] - The high theshold level.
+   * @param {object} options - The threshold options.
+   * @param {number} [options.low] - The low theshold level.
+   * @param {number} [options.medium] - The medium theshold level.
+   * @param {number} [options.high] - The high theshold level.
    * @returns {T} The builder class instance called with.
    */
   setThreshold({

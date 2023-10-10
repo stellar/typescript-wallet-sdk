@@ -59,6 +59,7 @@ export class Sep10 {
 
   /**
    * Initiates the authentication process using SEP-10.
+   * @param {AuthenticateParams} params - The Authentication params.
    * @param {AccountKeypair} params.accountKp - Keypair for the Stellar account being authenticated.
    * @param {WalletSigner} [params.walletSigner] - Signer for signing transactions (defaults to the configuration default signer).
    * @param {string} [params.memoId] - Memo ID to distinguish the account.

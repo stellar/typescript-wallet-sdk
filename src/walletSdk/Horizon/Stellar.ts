@@ -52,6 +52,7 @@ export class Stellar {
 
   /**
    * Construct a Stellar transaction.
+   * @param {TransactionParams} params - The Transaction params.
    * @param {AccountKeypair} params.sourceAddress - The source account keypair.
    * @param {Server.Timebounds | number} [params.timebounds] - The timebounds for the transaction.
    * If a number is given, then timebounds constructed from now to now + number in seconds.
@@ -96,6 +97,7 @@ export class Stellar {
 
   /**
    * Creates a FeeBumpTransaction instance for increasing the fee of an existing transaction.
+   * @param {FeeBumpTransactionParams} params - The Fee Bump Transaction params.
    * @param {AccountKeypair} params.feeAddress - The account that will pay for the transaction's fee.
    * @param {Transaction} params.transaction - The transaction to be fee bumped.
    * @param {number} [params.baseFee] - The base fee (stroops) for the fee bump transaction. Defaults to the config base fee.
@@ -146,6 +148,7 @@ export class Stellar {
    * then resubmit with an increased base fee.
    * @see {@link https://developers.stellar.org/docs/encyclopedia/error-handling#retrying-until-success-strategy}
    * for more info on this strategy.
+   * @param {SubmitWithFeeIncreaseParams} params - The SubmitWithFeeIncrease params.
    * @param {AccountKeypair} params.sourceAddress - The source account keypair.
    * @param {number} params.timeout - The number of seconds from now the transaction is allowed to be submitted.
    * @param {number} params.baseFeeIncrease - The amount to increase base fee (in stroops) if submission fails.
