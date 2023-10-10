@@ -33,6 +33,13 @@ export type ProvidedField = {
   error?: string;
 };
 
+export type GetCustomerParams = {
+  id?: string;
+  type?: string;
+  memo?: string;
+  lang?: string;
+};
+
 export type GetCustomerResponse = {
   id?: string;
   status: Sep12Status;

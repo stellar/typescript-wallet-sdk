@@ -244,3 +244,10 @@ export class NoAccountAndNoSponsorError extends Error {
     Object.setPrototypeOf(this, NoAccountAndNoSponsorError.prototype);
   }
 }
+
+export class NoGetCustomerParamError extends Error {
+  constructor() {
+    super(`Need to give an id, type, or memo value`);
+    Object.setPrototypeOf(this, NoGetCustomerParamError.prototype);
+  }
+}

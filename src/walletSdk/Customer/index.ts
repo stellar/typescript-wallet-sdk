@@ -1,11 +1,16 @@
 import { AxiosInstance } from "axios";
-import { Sep9InfoRequiredError, CustomerNotFoundError } from "../Exceptions";
+import {
+  Sep9InfoRequiredError,
+  CustomerNotFoundError,
+  NoGetCustomerParamError,
+} from "../Exceptions";
 import {
   CustomerInfoMap,
   Sep12Status,
   Sep12Type,
   Field,
   ProvidedField,
+  GetCustomerParams,
   GetCustomerResponse,
   AddCustomerResponse,
 } from "../Types";
@@ -26,14 +31,36 @@ export class Sep12 {
     };
   }
 
-  async getByIdAndType(id: string, type: string): Promise<GetCustomerResponse> {
+  async getCustomer({
+    id,
+    type,
+    memo,
+    lang,
+  }: GetCustomerParams): Promise<GetCustomerResponse> {
+    if (!id && !type && !memo) {
+      throw new NoGetCustomerParamError();
+    }
+    const queryParams: string[] = [];
+    if (type) {
+      queryParams.push(`type=${type}`);
+    }
+    if (id) {
+      queryParams.push(`id=${id}`);
+    }
+    if (memo) {
+      queryParams.push(`memo=${memo}`);
+    }
+    if (lang) {
+      queryParams.push(`lang=${lang}`);
+    }
+    const queryString = queryParams.join("&");
+
     const resp = await this.httpClient.get(
-      `${this.baseUrl}/customer?id=${id}&type=${type}`,
+      `${this.baseUrl}/customer?${queryString}`,
       {
         headers: this.headers,
       },
     );
-
     if (!resp.data.id) {
       throw new CustomerNotFoundError(id);
     }

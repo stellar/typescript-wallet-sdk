@@ -39,7 +39,7 @@ describe("Customer", () => {
     const { id } = resp.data;
 
     // Get
-    resp = await sep12.getByIdAndType(id, customerType);
+    resp = await sep12.getCustomer({ id, type: customerType });
     expect(Object.keys(resp.data).sort()).toEqual(
       ["id", "provided_fields", "fields", "status"].sort(),
     );
@@ -71,7 +71,7 @@ describe("Customer", () => {
     expect(resp.data.id).toBeTruthy();
 
     // Get again, check that the provided fields updated
-    resp = await sep12.getByIdAndType(id, customerType);
+    resp = await sep12.getCustomer({ id, type: customerType });
     expect(Object.keys(resp.data.fields).length).toBe(0);
 
     // Delete
