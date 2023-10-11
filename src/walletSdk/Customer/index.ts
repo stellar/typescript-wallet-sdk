@@ -71,12 +71,9 @@ export class Sep12 {
     type,
     memo,
   }: AddCustomerParams): Promise<AddCustomerResponse> {
-    let customerMap: CustomerInfoMap = {};
+    let customerMap: CustomerInfoMap = { ...sep9Info, ...sep9BinaryInfo };
     if (type) {
-      customerMap["type"] = type;
-    }
-    if (Object.keys({ ...sep9Info, ...sep9BinaryInfo }).length) {
-      customerMap = { ...customerMap, ...sep9Info, ...sep9BinaryInfo };
+      customerMap = { type, ...customerMap };
     }
 
     // Check if binary data given so can adjust headers
@@ -105,6 +102,7 @@ export class Sep12 {
    * @param {string} [params.type] - The type of the customer.
    * @param {string} [params.memo] - A memo associated with the customer.
    * @return {Promise<AddCustomerResponse>} Add customer response.
+   * @throws {Sep9InfoRequiredError} If no SEP-9 info is given.
    */
   async update({
     sep9Info,
