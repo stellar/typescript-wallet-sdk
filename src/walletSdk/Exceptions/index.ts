@@ -1,5 +1,5 @@
 import { Networks, Horizon } from "stellar-sdk";
-import { AnchorTransaction, FLOW_TYPE } from "../Types";
+import { AnchorTransaction, FLOW_TYPE, GetCustomerParams } from "../Types";
 
 export class ServerRequestFailedError extends Error {
   constructor(e: Error) {
@@ -158,6 +158,27 @@ export class WithdrawalTxMemoError extends Error {
   constructor() {
     super(`Error parsing withdrawal transaction memo`);
     Object.setPrototypeOf(this, WithdrawalTxMemoError.prototype);
+  }
+}
+
+export class Sep9InfoRequiredError extends Error {
+  constructor() {
+    super(`Sep-9 info required`);
+    Object.setPrototypeOf(this, Sep9InfoRequiredError.prototype);
+  }
+}
+
+export class CustomerNotFoundError extends Error {
+  constructor(params: GetCustomerParams) {
+    super(`Customer not found using params ${JSON.stringify(params)}`);
+    Object.setPrototypeOf(this, CustomerNotFoundError.prototype);
+  }
+}
+
+export class KYCServerNotFoundError extends Error {
+  constructor() {
+    super(`Required KYC server URL not found`);
+    Object.setPrototypeOf(this, KYCServerNotFoundError.prototype);
   }
 }
 
