@@ -10,20 +10,8 @@ import {
   GetCustomerParams,
   GetCustomerResponse,
   AddCustomerResponse,
+  AddCustomerParams,
 } from "../Types";
-
-// Used for identifying binary fields.
-// https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0009.md
-const Sep9BinaryFields = [
-  "photo_id_front",
-  "photo_id_back",
-  "notary_approval_of_photo_id",
-  "photo_proof_residence",
-  "proof_of_income",
-  "proof_of_liveness",
-  "organization.photo_incorporation_doc",
-  "organization.photo_proof_address",
-];
 
 export class Sep12 {
   private token;
@@ -65,26 +53,34 @@ export class Sep12 {
     return resp;
   }
 
-  async add(
-    sep9Info: CustomerInfoMap,
-    type?: string,
-  ): Promise<AddCustomerResponse> {
+  /**
+   * Add a new customer. Customer info is given in sep9Info param. If it
+   * is binary type (eg. Buffer of an image) include it in sep9BinaryInfo.
+   * @param {AddCustomerParams} params - The parameters for adding a customer.
+   * @param {CustomerInfoMap} params.sep9Info - Customer information. What fields you should
+   * give is indicated by the anchor.
+   * @param {CustomerInfoMap} params.sep9BinaryInfo - Customer information that is in binary
+   * format (eg. Buffer of an image).
+   * @param {string} [params.type] - The type of the customer.
+   * @param {string} [params.memo] - A memo associated with the customer.
+   * @return {Promise<AddCustomerResponse>} Add customer response.
+   */
+  async add({
+    sep9Info,
+    sep9BinaryInfo,
+    type,
+    memo,
+  }: AddCustomerParams): Promise<AddCustomerResponse> {
     let customerMap: CustomerInfoMap = {};
     if (type) {
       customerMap["type"] = type;
     }
-    if (Object.keys(sep9Info).length) {
-      customerMap = { ...customerMap, ...sep9Info };
+    if (Object.keys({ ...sep9Info, ...sep9BinaryInfo }).length) {
+      customerMap = { ...customerMap, ...sep9Info, ...sep9BinaryInfo };
     }
 
     // Check if binary data given so can adjust headers
-    let includesBinary = false;
-    for (const key of Object.keys(customerMap)) {
-      if (Sep9BinaryFields.includes(key)) {
-        includesBinary = true;
-      }
-    }
-
+    let includesBinary = sep9BinaryInfo && Object.keys(sep9BinaryInfo).length;
     const resp = await this.httpClient.put(
       `${this.baseUrl}/customer`,
       customerMap,
@@ -97,29 +93,43 @@ export class Sep12 {
     return resp;
   }
 
-  async update(
-    sep9Info: CustomerInfoMap,
-    id: string,
-    type?: string,
-  ): Promise<AddCustomerResponse> {
+  /**
+   * Updates an existing customer. Customer info is given in sep9Info param. If it
+   * is binary type (eg. Buffer of an image) include it in sep9BinaryInfo.
+   * @param {AddCustomerParams} params - The parameters for adding a customer.
+   * @param {CustomerInfoMap} params.sep9Info - Customer information. What fields you should
+   * give is indicated by the anchor.
+   * @param {CustomerInfoMap} params.sep9BinaryInfo - Customer information that is in binary
+   * format (eg. Buffer of an image).
+   * @param {string} [params.id] - The id of the customer.
+   * @param {string} [params.type] - The type of the customer.
+   * @param {string} [params.memo] - A memo associated with the customer.
+   * @return {Promise<AddCustomerResponse>} Add customer response.
+   */
+  async update({
+    sep9Info,
+    sep9BinaryInfo,
+    id,
+    type,
+    memo,
+  }: AddCustomerParams): Promise<AddCustomerResponse> {
     let customerMap: CustomerInfoMap = {};
-    customerMap["id"] = id;
+    if (id) {
+      customerMap["id"] = id;
+    }
     if (type) {
       customerMap["type"] = type;
     }
-    if (!Object.keys(sep9Info).length) {
+    if (memo) {
+      customerMap["memo"] = memo;
+    }
+    if (!Object.keys({ ...sep9Info, ...sep9BinaryInfo }).length) {
       throw new Sep9InfoRequiredError();
     }
-    customerMap = { ...customerMap, ...sep9Info };
+    customerMap = { ...customerMap, ...sep9Info, ...sep9BinaryInfo };
 
     // Check if binary data given so can adjust headers
-    let includesBinary = false;
-    for (const key of Object.keys(customerMap)) {
-      if (Sep9BinaryFields.includes(key)) {
-        includesBinary = true;
-      }
-    }
-
+    let includesBinary = sep9BinaryInfo && Object.keys(sep9BinaryInfo).length;
     const resp = await this.httpClient.put(
       `${this.baseUrl}/customer`,
       customerMap,

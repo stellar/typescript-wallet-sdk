@@ -48,6 +48,14 @@ export type GetCustomerResponse = {
   message?: string;
 };
 
+export type AddCustomerParams = {
+  sep9Info?: CustomerInfoMap;
+  sep9BinaryInfo?: CustomerInfoMap;
+  id?: string;
+  memo?: string;
+  type?: string;
+};
+
 export type AddCustomerResponse = {
   id: string;
 };
