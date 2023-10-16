@@ -26,18 +26,20 @@ describe("Customer", () => {
     const customerType = "sep31-receiver";
     const customerEmail = `${getRandomString(6)}@gmail.com`;
 
-    // Update
+    // Add
     let resp = await sep12.add({
-      first_name: "john",
-      last_name: "smith",
-      email_address: customerEmail,
-      type: customerType,
+      sep9Info: {
+        first_name: "john",
+        last_name: "smith",
+        email_address: customerEmail,
+        type: customerType,
+      },
     });
     expect(resp.data.id).toBeTruthy();
     const { id } = resp.data;
 
     // Get
-    resp = await sep12.getByIdAndType(id, customerType);
+    resp = await sep12.getCustomer({ id, type: customerType });
     expect(Object.keys(resp.data).sort()).toEqual(
       ["id", "provided_fields", "fields", "status"].sort(),
     );
@@ -54,22 +56,24 @@ describe("Customer", () => {
     );
 
     // Update
-    resp = await sep12.update(
-      {
+    resp = await sep12.update({
+      sep9Info: {
         first_name: "j",
         last_name: "s",
         email_address: "1" + customerEmail,
         bank_account_number: "12345",
         bank_number: "54321",
+      },
+      sep9BinaryInfo: {
         photo_id_front: Buffer.from("test-front-image"),
         photo_id_back: Buffer.from("test-back-image"),
       },
       id,
-    );
+    });
     expect(resp.data.id).toBeTruthy();
 
     // Get again, check that the provided fields updated
-    resp = await sep12.getByIdAndType(id, customerType);
+    resp = await sep12.getCustomer({ id, type: customerType });
     expect(Object.keys(resp.data.fields).length).toBe(0);
 
     // Delete
