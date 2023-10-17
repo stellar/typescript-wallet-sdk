@@ -33,12 +33,27 @@ export type ProvidedField = {
   error?: string;
 };
 
+export type GetCustomerParams = {
+  id?: string;
+  type?: string;
+  memo?: string;
+  lang?: string;
+};
+
 export type GetCustomerResponse = {
   id?: string;
   status: Sep12Status;
   fields?: { [key: string]: Field };
   provided_fields?: { [key: string]: ProvidedField };
   message?: string;
+};
+
+export type AddCustomerParams = {
+  sep9Info?: CustomerInfoMap;
+  sep9BinaryInfo?: CustomerInfoMap;
+  id?: string;
+  memo?: string;
+  type?: string;
 };
 
 export type AddCustomerResponse = {

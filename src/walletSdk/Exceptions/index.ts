@@ -1,5 +1,5 @@
 import { Networks, Horizon } from "stellar-sdk";
-import { AnchorTransaction, FLOW_TYPE } from "../Types";
+import { AnchorTransaction, FLOW_TYPE, GetCustomerParams } from "../Types";
 
 export class ServerRequestFailedError extends Error {
   constructor(e: Error) {
@@ -169,8 +169,8 @@ export class Sep9InfoRequiredError extends Error {
 }
 
 export class CustomerNotFoundError extends Error {
-  constructor(id: string) {
-    super(`Customer not found for id ${id}`);
+  constructor(params: GetCustomerParams) {
+    super(`Customer not found using params ${JSON.stringify(params)}`);
     Object.setPrototypeOf(this, CustomerNotFoundError.prototype);
   }
 }

@@ -1,9 +1,12 @@
 import { AxiosInstance } from "axios";
+import queryString from "query-string";
 import { Sep9InfoRequiredError, CustomerNotFoundError } from "../Exceptions";
 import {
   CustomerInfoMap,
+  GetCustomerParams,
   GetCustomerResponse,
   AddCustomerResponse,
+  AddCustomerParams,
 } from "../Types";
 
 /**
@@ -36,84 +39,114 @@ export class Sep12 {
   }
 
   /**
-   * Retrieves customer information by ID and type.
-   * @param {string} id - The customer ID to retrieve.
-   * @param {string} type - The customer type.
+   * Retrieve customer information. All arguments are optional, but at least one
+   * must be given. For more information:
+   * @see {@link https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0012.md#request}
+   * @param {object} params - The parameters for retrieving customer information.
+   * @param {string} [params.id] - The id of the customer .
+   * @param {string} [params.type] - The type of action the customer is being KYCd for.
+   * @see {@link https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0012.md#type-specification}
+   * @param {string} [params.memo] - A memo associated with the customer.
+   * @param {string} [params.lang] - The desired language. Defaults to "en".
    * @returns {Promise<GetCustomerResponse>} The customer information.
-   * @throws {CustomerNotFoundError} If the customer with the specified ID is not found.
+   * @throws {CustomerNotFoundError} If the customer is not found.
    */
-  async getByIdAndType(id: string, type: string): Promise<GetCustomerResponse> {
-    const resp = await this.httpClient.get(
-      `${this.baseUrl}/customer?id=${id}&type=${type}`,
-      {
-        headers: this.headers,
-      },
-    );
-
+  async getCustomer(params: GetCustomerParams): Promise<GetCustomerResponse> {
+    const qs = queryString.stringify(params);
+    const resp = await this.httpClient.get(`${this.baseUrl}/customer?${qs}`, {
+      headers: this.headers,
+    });
     if (!resp.data.id) {
-      throw new CustomerNotFoundError(id);
+      throw new CustomerNotFoundError(params);
     }
     return resp;
   }
 
   /**
-   * Adds a new customer.
-   * @param {CustomerInfoMap} sep9Info - Customer information to add, described in sep-9.
-   * @see {@link https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0009.md}
-   * @param {string} [type] - The type of the customer. See the Type Specification on SEP-12 definition.
-   * @returns {Promise<AddCustomerResponse>} Returned data on the added customer.
+   * Add a new customer. Customer info is given in sep9Info param. If it
+   * is binary type (eg. Buffer of an image) include it in sep9BinaryInfo.
+   * @param {AddCustomerParams} params - The parameters for adding a customer.
+   * @param {CustomerInfoMap} params.sep9Info - Customer information. What fields you should
+   * give is indicated by the anchor.
+   * @param {CustomerInfoMap} params.sep9BinaryInfo - Customer information that is in binary
+   * format (eg. Buffer of an image).
+   * @param {string} [params.type] - The type of the customer.
+   * @param {string} [params.memo] - A memo associated with the customer.
+   * @returns {Promise<AddCustomerResponse>} Add customer response.
    */
-  async add(
-    sep9Info: CustomerInfoMap,
-    type?: string,
-  ): Promise<AddCustomerResponse> {
-    let customerMap: CustomerInfoMap = {};
+  async add({
+    sep9Info,
+    sep9BinaryInfo,
+    type,
+    memo,
+  }: AddCustomerParams): Promise<AddCustomerResponse> {
+    let customerMap: CustomerInfoMap = { ...sep9Info, ...sep9BinaryInfo };
     if (type) {
-      customerMap["type"] = type;
+      customerMap = { type, ...customerMap };
     }
-    if (Object.keys(sep9Info).length) {
-      customerMap = { ...customerMap, ...sep9Info };
+    if (memo) {
+      customerMap["memo"] = memo;
     }
 
+    // Check if binary data given so can adjust headers
+    const includesBinary = sep9BinaryInfo && Object.keys(sep9BinaryInfo).length;
     const resp = await this.httpClient.put(
       `${this.baseUrl}/customer`,
       customerMap,
       {
-        headers: this.headers,
+        headers: includesBinary
+          ? { ...this.headers, "Content-Type": "multipart/form-data" }
+          : this.headers,
       },
     );
     return resp;
   }
 
   /**
-   * Update existing customer information.
-   * @param {CustomerInfoMap} sep9Info - Customer information to update, described in sep-9.
-   * @see {@link https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0009.md}
-   * @param {string} id - The ID of the customer to update.
-   * @param {string} [type] - The type of the customer. See the Type Specification on SEP-12 definition.
-   * @returns {Promise<AddCustomerResponse>} Returned data on the updated customer.
-   * @throws {Sep9InfoRequiredError} If no customer information is provided for the update.
+   * Updates an existing customer. Customer info is given in sep9Info param. If it
+   * is binary type (eg. Buffer of an image) include it in sep9BinaryInfo.
+   * @param {AddCustomerParams} params - The parameters for adding a customer.
+   * @param {CustomerInfoMap} params.sep9Info - Customer information. What fields you should
+   * give is indicated by the anchor.
+   * @param {CustomerInfoMap} params.sep9BinaryInfo - Customer information that is in binary
+   * format (eg. Buffer of an image).
+   * @param {string} [params.id] - The id of the customer.
+   * @param {string} [params.type] - The type of the customer.
+   * @param {string} [params.memo] - A memo associated with the customer.
+   * @returns {Promise<AddCustomerResponse>} Add customer response.
+   * @throws {Sep9InfoRequiredError} If no SEP-9 info is given.
    */
-  async update(
-    sep9Info: CustomerInfoMap,
-    id: string,
-    type?: string,
-  ): Promise<AddCustomerResponse> {
+  async update({
+    sep9Info,
+    sep9BinaryInfo,
+    id,
+    type,
+    memo,
+  }: AddCustomerParams): Promise<AddCustomerResponse> {
     let customerMap: CustomerInfoMap = {};
-    customerMap["id"] = id;
+    if (id) {
+      customerMap["id"] = id;
+    }
     if (type) {
       customerMap["type"] = type;
     }
-    if (!Object.keys(sep9Info).length) {
+    if (memo) {
+      customerMap["memo"] = memo;
+    }
+    if (!Object.keys({ ...sep9Info, ...sep9BinaryInfo }).length) {
       throw new Sep9InfoRequiredError();
     }
-    customerMap = { ...customerMap, ...sep9Info };
+    customerMap = { ...customerMap, ...sep9Info, ...sep9BinaryInfo };
 
+    // Check if binary data given so can adjust headers
+    const includesBinary = sep9BinaryInfo && Object.keys(sep9BinaryInfo).length;
     const resp = await this.httpClient.put(
       `${this.baseUrl}/customer`,
       customerMap,
       {
-        headers: this.headers,
+        headers: includesBinary
+          ? { ...this.headers, "Content-Type": "multipart/form-data" }
+          : this.headers,
       },
     );
     return resp;
