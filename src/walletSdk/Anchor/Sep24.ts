@@ -16,7 +16,6 @@ import {
   AnchorTransaction,
   GetTransactionParams,
   GetTransactionsParams,
-  TransactionStatus,
   AnchorServiceInfo,
 } from "../Types";
 import { Watcher } from "../Watcher";
@@ -106,7 +105,7 @@ export class Sep24 {
     if (!assets.includes(assetCode)) {
       throw new AssetNotSupportedError(type, assetCode);
     }
-    let memoMap = {};
+    const memoMap = {};
     if (destinationMemo) {
       memoMap["memo_type"] = destinationMemo.type;
       memoMap["memo"] = destinationMemo.value;

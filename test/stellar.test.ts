@@ -1,11 +1,4 @@
-import {
-  Keypair,
-  Memo,
-  MemoText,
-  Operation,
-  Asset,
-  Horizon,
-} from "stellar-sdk";
+import { Keypair, Memo, MemoText, Horizon } from "stellar-sdk";
 import axios from "axios";
 
 import { Stellar, Wallet } from "../src";
@@ -189,7 +182,7 @@ describe("Stellar", () => {
     expect(balance).toBeFalsy();
   }, 20000);
 
-  it("should import and sign a transaction from xdr", async () => {
+  it("should import and sign a transaction from xdr", () => {
     const txnXdr =
       "AAAAAgAAAACHw+LvUYx5O3Ot8A1SUChfTVk4qxFFJZ5QZ/ktaEUKPwAAAGQACEjuAAABDAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAQAAAACHw+LvUYx5O3Ot8A1SUChfTVk4qxFFJZ5QZ/ktaEUKPwAAAAAAAAAAATEtAAAAAAAAAAAA";
 

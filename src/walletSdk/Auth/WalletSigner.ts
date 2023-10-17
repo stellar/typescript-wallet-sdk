@@ -29,6 +29,7 @@ export const DefaultSigner: WalletSigner = {
     transaction.sign(accountKp.keypair);
     return transaction;
   },
+  // eslint-disable-next-line @typescript-eslint/require-await
   signWithDomainAccount: async () => {
     throw new Error(
       "The DefaultSigner can't sign transactions with domain account",
@@ -72,6 +73,7 @@ export class DomainSigner implements WalletSigner {
   async signWithDomainAccount({
     transactionXDR,
     networkPassphrase,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     accountKp,
   }: SignWithDomainAccountParams): Promise<Transaction> {
     const response = await this.client.post(

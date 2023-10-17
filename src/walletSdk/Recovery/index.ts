@@ -201,9 +201,9 @@ export class Recovery extends AccountRecover {
 
     if (sponsorAddress) {
       if (accountInfo) {
-        const buildingFunction = (builder: SponsoringBuilder) =>
+        const buildingFunction = (_builder: SponsoringBuilder) =>
           this.register(
-            builder,
+            _builder,
             accountSigners,
             accountThreshold,
             builderExtra,
@@ -211,10 +211,10 @@ export class Recovery extends AccountRecover {
 
         builder.sponsoring(sponsorAddress, buildingFunction);
       } else {
-        const buildingFunction = (builder: SponsoringBuilder) => {
-          builder.createAccount(account);
+        const buildingFunction = (_builder: SponsoringBuilder) => {
+          _builder.createAccount(account);
           return this.register(
-            builder,
+            _builder,
             accountSigners,
             accountThreshold,
             builderExtra,

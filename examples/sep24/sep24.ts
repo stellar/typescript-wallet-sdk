@@ -49,7 +49,7 @@ const asset = new IssuedAssetId(assetCode, assetIssuer);
 const runSep24 = async () => {
   await createAccount();
   await runDeposit(anchor, kp);
-  await runDepositWatcher(anchor);
+  runDepositWatcher(anchor);
 
   while (!depositDone) {
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -61,7 +61,7 @@ const runSep24 = async () => {
   }
 
   await runWithdraw(anchor, kp);
-  await runWithdrawWatcher(anchor, kp);
+  runWithdrawWatcher(anchor, kp);
 };
 
 // Create Account
@@ -118,7 +118,7 @@ export let depositDone = false;
 export const runDepositWatcher = (anchor: Anchor) => {
   console.log("\nstarting watcher ...");
 
-  let stop: Types.WatcherStopFunction;
+  const stop: Types.WatcherStopFunction;
   const onMessage = (m: Types.AnchorTransaction) => {
     console.log({ m });
     if (m.status === Types.TransactionStatus.completed) {
@@ -183,7 +183,7 @@ const sendWithdrawalTransaction = async (withdrawalTxn, kp) => {
 export const runWithdrawWatcher = (anchor, kp) => {
   console.log("\nstarting watcher ...");
 
-  let stop;
+  const stop;
   const onMessage = (m) => {
     console.log({ m });
 
@@ -219,6 +219,7 @@ const walletSigner = DefaultSigner;
 walletSigner.signWithDomainAccount = async ({
   transactionXDR,
   networkPassphrase,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   accountKp,
 }: Types.SignWithDomainAccountParams): Promise<Transaction> => {
   if (!clientSecret) {

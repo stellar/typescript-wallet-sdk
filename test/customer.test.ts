@@ -1,6 +1,4 @@
-import { Wallet, ApplicationConfiguration, StellarConfiguration } from "../src";
-import { DefaultSigner } from "../src/walletSdk/Auth/WalletSigner";
-import { SigningKeypair } from "../src/walletSdk/Horizon/Account";
+import { Wallet } from "../src";
 import axios from "axios";
 import { getRandomString } from "./utils";
 

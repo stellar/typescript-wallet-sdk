@@ -4,6 +4,7 @@ export const camelToSnakeCaseKey = (key: string): string =>
     (upperCaseLetter) => `_${upperCaseLetter.toLowerCase()}`,
   );
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const camelToSnakeCaseObject = (obj: any): any => {
   const snakeCasedObj = {};
   for (const key in obj) {

@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
+import axios, { AxiosInstance } from "axios";
 import { Networks, Server } from "stellar-sdk";
 
 import { Anchor } from "./Anchor";
@@ -15,7 +15,7 @@ import {
 } from "./Types";
 import { getUrlDomain } from "./Utils";
 
-/* tslint:disable-next-line:no-var-requires */
+/* eslint-disable-next-line @typescript-eslint/no-var-requires */
 const version = require("../../package.json").version;
 const walletHeaders = {
   "X-Client-Name": "typescript-wallet-sdk",

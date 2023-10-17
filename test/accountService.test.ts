@@ -111,10 +111,14 @@ describe("Horizon", () => {
     expect(response.records[0]).toHaveProperty("type");
     expect(response.records[0]).toHaveProperty("created_at");
     expect(
-      response.records.some(({ type }) => type === "create_account"),
+      response.records.some(
+        ({ type }) => type === Horizon.OperationResponseType.createAccount,
+      ),
     ).toBeTruthy();
     expect(
-      response.records.some(({ type }) => type === "change_trust"),
+      response.records.some(
+        ({ type }) => type === Horizon.OperationResponseType.changeTrust,
+      ),
     ).toBeTruthy();
   });
 });

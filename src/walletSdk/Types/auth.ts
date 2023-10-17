@@ -1,4 +1,4 @@
-import { Keypair, Transaction } from "stellar-sdk";
+import { Transaction } from "stellar-sdk";
 import { WalletSigner } from "../Auth/WalletSigner";
 import { AccountKeypair } from "../Horizon/Account";
 

@@ -3,10 +3,6 @@ import queryString from "query-string";
 import { Sep9InfoRequiredError, CustomerNotFoundError } from "../Exceptions";
 import {
   CustomerInfoMap,
-  Sep12Status,
-  Sep12Type,
-  Field,
-  ProvidedField,
   GetCustomerParams,
   GetCustomerResponse,
   AddCustomerResponse,
@@ -75,9 +71,12 @@ export class Sep12 {
     if (type) {
       customerMap = { type, ...customerMap };
     }
+    if (memo) {
+      customerMap["memo"] = memo;
+    }
 
     // Check if binary data given so can adjust headers
-    let includesBinary = sep9BinaryInfo && Object.keys(sep9BinaryInfo).length;
+    const includesBinary = sep9BinaryInfo && Object.keys(sep9BinaryInfo).length;
     const resp = await this.httpClient.put(
       `${this.baseUrl}/customer`,
       customerMap,
@@ -127,7 +126,7 @@ export class Sep12 {
     customerMap = { ...customerMap, ...sep9Info, ...sep9BinaryInfo };
 
     // Check if binary data given so can adjust headers
-    let includesBinary = sep9BinaryInfo && Object.keys(sep9BinaryInfo).length;
+    const includesBinary = sep9BinaryInfo && Object.keys(sep9BinaryInfo).length;
     const resp = await this.httpClient.put(
       `${this.baseUrl}/customer`,
       customerMap,

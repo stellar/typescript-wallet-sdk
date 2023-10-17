@@ -19,7 +19,7 @@ export abstract class CommonTransactionBuilder<T> {
         source: this.sourceAddress,
       }),
     );
-    return this as any as T;
+    return this as unknown as T;
   }
 
   removeAssetSupport(asset: IssuedAssetId): T {
@@ -36,7 +36,7 @@ export abstract class CommonTransactionBuilder<T> {
         },
       }),
     );
-    return this as any as T;
+    return this as unknown as T;
   }
 
   removeAccountSigner(signerAddress: AccountKeypair): T {
@@ -50,7 +50,7 @@ export abstract class CommonTransactionBuilder<T> {
         masterWeight: 0,
       }),
     );
-    return this as any as T;
+    return this as unknown as T;
   }
 
   setThreshold({
@@ -70,6 +70,6 @@ export abstract class CommonTransactionBuilder<T> {
         highThreshold: high,
       }),
     );
-    return this as any as T;
+    return this as unknown as T;
   }
 }

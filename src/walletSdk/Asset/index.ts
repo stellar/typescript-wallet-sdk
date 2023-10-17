@@ -1,4 +1,4 @@
-import StellarSdk from "stellar-sdk";
+import { Asset as StellarAsset } from "stellar-sdk";
 
 const STELLAR_SCHEME = "stellar";
 
@@ -18,11 +18,11 @@ export class StellarAssetId extends AssetId {
   issuer: string;
   scheme = STELLAR_SCHEME;
 
-  toAsset() {
+  toAsset(): StellarAsset {
     if (this.id === "native") {
-      return new StellarSdk.Asset("XLM");
+      return new StellarAsset("XLM");
     }
-    return new StellarSdk.Asset(this.code, this.issuer);
+    return new StellarAsset(this.code, this.issuer);
   }
 }
 
