@@ -42,7 +42,6 @@
   },
   "dependencies": {
     "axios": "^1.4.0",
-    "eslint-plugin-jsdoc": "^46.8.2",
     "https-browserify": "^1.0.0",
     "jws": "^4.0.0",
     "lodash": "^4.17.21",
