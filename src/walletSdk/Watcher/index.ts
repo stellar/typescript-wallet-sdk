@@ -27,7 +27,11 @@ interface TransactionsRegistry {
   [assetCode: string]: TransactionsRegistryAsset;
 }
 
-// Do not create this object directly, use the Anchor class.
+/**
+ * Used for watching transaction from an Anchor as part of sep-24.
+ * Do not create this object directly, use the Anchor class.
+ * @class
+ */
 export class Watcher {
   private anchor: Anchor;
 
@@ -42,6 +46,11 @@ export class Watcher {
   private _transactionsRegistry: TransactionsRegistry;
   private _transactionsIgnoredRegistry: TransactionsRegistry;
 
+  /**
+   * Creates a new instance of the Watcher class.
+   *
+   * @param {Anchor} anchor - The Anchor to watch from.
+   */
   constructor(anchor: Anchor) {
     this.anchor = anchor;
 
@@ -64,6 +73,18 @@ export class Watcher {
    *
    * You may also provide an array of transaction ids, `watchlist`, and this
    * watcher will always react to transactions whose ids are in the watchlist.
+   * @param {WatchTransactionsParams} params - The Watch Transactions params.
+   * @param {string} params.authToken - The authentication token used for authenticating with the anchor.
+   * @param {string} params.assetCode - The asset code to filter transactions by.
+   * @param {Function} params.onMessage - A callback function to handle incoming transaction messages.
+   * @param {Function} params.onError - A callback function to handle errors during transaction streaming.
+   * @param {Array<string>} [params.watchlist=[]] - An optional array of specific transaction IDs to watch.
+   * @param {number} [params.timeout=5000] - The timeout duration for the streaming connection (in milliseconds).
+   * @param {boolean} [params.isRetry=false] - Indicates whether this is a retry attempt (optional).
+   * @param {string} [params.lang=this.anchor.language] - The desired language (localization) for transaction messages.
+   * @param {string} params.kind - The kind of transaction to filter by.
+   * @param {string} [params.noOlderThan] - A date and time specifying that transactions older than this value should not be included.
+   * @returns {WatcherResponse} An object holding the refresh and stop functions for the watcher.
    */
   watchAllTransactions({
     authToken,
@@ -240,6 +261,17 @@ export class Watcher {
    * * onSuccess - When the transaction comes back as completed / refunded / expired.
    * * onError - When there's a runtime error, or the transaction comes back as
    * no_market / too_small / too_large / error.
+   * @param {WatchTransactionParams} params - The Watch Transaction params.
+   * @param {string} params.authToken - The authentication token used for authenticating with th anchor.
+   * @param {string} params.assetCode - The asset code to filter transactions by.
+   * @param {string} params.id - The id of the transaction to watch.
+   * @param {Function} params.onMessage - A callback function to handle incoming transaction messages.
+   * @param {Function} params.onSuccess - If a transaction status is in a end state (eg. completed, refunded, expired) then this callback is called.
+   * @param {Function} params.onError - A callback function to handle errors during transaction streaming.
+   * @param {number} [params.timeout=5000] - The timeout duration for the streaming connection (in milliseconds).
+   * @param {boolean} [params.isRetry=false] - Indicates whether this is a retry attempt (optional).
+   * @param {string} [params.lang=this.anchor.language] - The desired language (localization) for transaction messages.
+   * @returns {WatcherResponse} An object holding the refresh and stop functions for the watcher.
    */
   watchOneTransaction({
     authToken,

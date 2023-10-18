@@ -27,7 +27,11 @@ export type Auth = Sep10;
 
 export type Customer = Sep12;
 
-// Do not create this object directly, use the Wallet class.
+/**
+ * Build on/off ramps with anchors.
+ * Do not create this object directly, use the Wallet class.
+ * @class
+ */
 export class Anchor {
   public language: string;
 
@@ -36,6 +40,11 @@ export class Anchor {
   private httpClient: AxiosInstance;
   private toml: TomlInfo;
 
+  /**
+   * Creates a new Anchor instance.
+   * @constructor
+   * @param {AnchorParams} params - The parameters to initialize the Anchor.
+   */
   constructor(params: AnchorParams) {
     const { cfg, homeDomain, httpClient, language } = params;
 
@@ -49,7 +58,7 @@ export class Anchor {
    * Get anchor information from a TOML file.
    * If `shouldRefresh` is set to `true`, it fetches fresh TOML values; otherwise, it returns cached values if available.
    * @param {boolean} [shouldRefresh=false] - Flag to force a refresh of TOML values.
-   * @returns {Promise<TomlInfo>} - A Promise that resolves to the TOML information.
+   * @returns {Promise<TomlInfo>} - TOML information about the anchor.
    */
   async sep1(shouldRefresh?: boolean): Promise<TomlInfo> {
     // return cached TOML values by default
@@ -67,7 +76,7 @@ export class Anchor {
   /**
    * Retrieves and returns TOML information using the `sep1` method.
    * @param {boolean} [shouldRefresh=false] - Flag to force a refresh of TOML values.
-   * @returns {Promise<TomlInfo>} - A Promise that resolves to the TOML information.
+   * @returns {Promise<TomlInfo>} - TOML information.
    */
   async getInfo(shouldRefresh?: boolean): Promise<TomlInfo> {
     return this.sep1(shouldRefresh);
@@ -75,7 +84,7 @@ export class Anchor {
 
   /**
    * Create new auth object to authenticate account with the anchor using SEP-10.
-   * @returns {Promise<Sep10>} - A Promise that resolves to the authentication manager.
+   * @returns {Promise<Sep10>} - The SEP-10 authentication manager.
    */
   async sep10(): Promise<Sep10> {
     const tomlInfo = await this.sep1();
@@ -89,7 +98,7 @@ export class Anchor {
 
   /**
    * Create new auth object to authenticate with using the `sep10` method.
-   * @returns {Promise<Auth>} - A Promise that resolves to the authentication manager.
+   * @returns {Promise<Auth>} - The SEP-10 authentication manager.
    */
   async auth(): Promise<Auth> {
     return this.sep10();
@@ -98,7 +107,7 @@ export class Anchor {
   /**
    * Create new customer object to handle customer records with the anchor using SEP-12.
    * @param {string} authToken - The authentication token.
-   * @returns {Promise<Sep12>} - A Promise that resolves to a Sep12 instance.
+   * @returns {Promise<Sep12>} - A Sep12 customer instance.
    * @throws {KYCServerNotFoundError} - If the KYC server information is not available.
    */
   async sep12(authToken: string): Promise<Sep12> {
@@ -113,7 +122,7 @@ export class Anchor {
   /**
    * Create new customer object to handle customer records using the `sep12` method.
    * @param {string} authToken - The authentication token.
-   * @returns {Promise<Customer>} - A Promise that resolves to a Customer instance.
+   * @returns {Promise<Customer>} - A Customer instance.
    */
   async customer(authToken: string): Promise<Customer> {
     return this.sep12(authToken);
@@ -135,6 +144,12 @@ export class Anchor {
     return this.sep24();
   }
 
+  /**
+   * Get information about an Anchor.
+   * @param {string} [lang=this.language] - The language in which to retrieve information.
+   * @returns {Promise<AnchorServiceInfo>} An object containing information about the Anchor.
+   * @throws {ServerRequestFailedError} If the http request fails.
+   */
   async getServicesInfo(
     lang: string = this.language,
   ): Promise<AnchorServiceInfo> {

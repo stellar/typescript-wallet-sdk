@@ -9,19 +9,32 @@ import {
   AddCustomerParams,
 } from "../Types";
 
+/**
+ * KYC management with Sep-12.
+ * @see {@link https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0012.md}
+ * Do not create this object directly, use the Anchor class.
+ * @class
+ */
 export class Sep12 {
-  private token;
+  private authToken;
   private baseUrl;
   private httpClient;
   private headers;
 
-  constructor(token: string, baseUrl: string, httpClient: AxiosInstance) {
-    this.token = token;
+  /**
+   * Creates a new instance of the Sep12 class.
+   * @constructor
+   * @param {string} authToken - The authentication token for authenticating with the server.
+   * @param {string} baseUrl - The KYC url.
+   * @param {AxiosInstance} httpClient - An Axios instance for making HTTP requests.
+   */
+  constructor(authToken: string, baseUrl: string, httpClient: AxiosInstance) {
+    this.authToken = authToken;
     this.baseUrl = baseUrl;
     this.httpClient = httpClient;
     this.headers = {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${this.token}`,
+      Authorization: `Bearer ${this.authToken}`,
     };
   }
 
@@ -35,7 +48,7 @@ export class Sep12 {
    * @see {@link https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0012.md#type-specification}
    * @param {string} [params.memo] - A memo associated with the customer.
    * @param {string} [params.lang] - The desired language. Defaults to "en".
-   * @return {Promise<GetCustomerResponse>} The customer information.
+   * @returns {Promise<GetCustomerResponse>} The customer information.
    * @throws {CustomerNotFoundError} If the customer is not found.
    */
   async getCustomer(params: GetCustomerParams): Promise<GetCustomerResponse> {
@@ -59,7 +72,7 @@ export class Sep12 {
    * format (eg. Buffer of an image).
    * @param {string} [params.type] - The type of the customer.
    * @param {string} [params.memo] - A memo associated with the customer.
-   * @return {Promise<AddCustomerResponse>} Add customer response.
+   * @returns {Promise<AddCustomerResponse>} Add customer response.
    */
   async add({
     sep9Info,
@@ -100,7 +113,7 @@ export class Sep12 {
    * @param {string} [params.id] - The id of the customer.
    * @param {string} [params.type] - The type of the customer.
    * @param {string} [params.memo] - A memo associated with the customer.
-   * @return {Promise<AddCustomerResponse>} Add customer response.
+   * @returns {Promise<AddCustomerResponse>} Add customer response.
    * @throws {Sep9InfoRequiredError} If no SEP-9 info is given.
    */
   async update({
@@ -139,6 +152,11 @@ export class Sep12 {
     return resp;
   }
 
+  /**
+   * Deletes a customer.
+   * @param {string} accountAddress - The account address of the customer to delete.
+   * @param {string} [memo] - An optional memo for customer identification.
+   */
   async delete(accountAddress: string, memo?: string) {
     await this.httpClient.delete(`${this.baseUrl}/customer/${accountAddress}`, {
       data: { memo },

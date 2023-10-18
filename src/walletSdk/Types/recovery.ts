@@ -7,7 +7,6 @@ import { CommonBuilder } from "./horizon";
 
 /**
  * Configuration for recoverable wallet
- *
  * @param accountAddress Stellar address of the account that is registering
  * @param deviceAddress Stellar address of the device that is added as a primary signer. It will
  * replace the master key of [accountAddress]
@@ -38,7 +37,6 @@ export type AccountSigner = {
 
 /**
  * Account weights threshold
- *
  * @param low Low threshold weight
  * @param medium Medium threshold weight
  * @param high High threshold weight
@@ -56,13 +54,10 @@ export type SignerWeight = {
 
 /**
  * Recovery server configuration
- *
- * @property endpoint main endpoint (root domain) of SEP-30 recovery server. E.g.
- * `https://testanchor.stellar.org`
- * @property authEndpoint SEP-10 auth endpoint to be used. Should be in format
- * `<https://domain/auth>`. E.g. `https://testanchor.stellar.org/auth`)
- * @property homeDomain is a SEP-10 home domain. E.g. `testanchor.stellar.org`
- * @property walletSigner optional [WalletSigner] used to sign authentication
+ * @property {string} endpoint - Main endpoint (root domain) of SEP-30 recovery server. E.g. `https://testanchor.stellar.org`
+ * @property {string} authEndpoint - SEP-10 auth endpoint to be used. Should be in the format `<https://domain/auth>`. E.g. `https://testanchor.stellar.org/auth`
+ * @property {string} homeDomain - SEP-10 home domain. E.g. `testanchor.stellar.org`
+ * @property {WalletSigner} [walletSigner] - WalletSigner used to sign authentication
  */
 export type RecoveryServer = {
   endpoint: string;

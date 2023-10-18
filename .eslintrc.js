@@ -25,6 +25,23 @@ module.exports = {
     "@typescript-eslint/no-misused-promises": "off",
     "@typescript-eslint/no-base-to-string": "off",
 
+    // Warn
+    "jsdoc/check-param-names": "warn",
+    "jsdoc/require-returns": "warn",
+    "jsdoc/require-returns-description": "warn",
+    "jsdoc/require-returns-type": "warn",
+    "jsdoc/require-param": "warn",
+    "jsdoc/check-types": "warn",
+    "jsdoc/require-param-description": "warn",
+    "jsdoc/require-param-name": "warn",
+    "jsdoc/require-param-type": "warn",
+    "jsdoc/require-property": "warn",
+    "jsdoc/require-property-description": "warn",
+    "jsdoc/require-property-name": "warn",
+    "jsdoc/require-property-type": "warn",
+    "jsdoc/check-property-names": "warn",
+    "jsdoc/empty-tags": "warn",
+
     // Error
     "@typescript-eslint/no-shadow": "error",
     "@typescript-eslint/no-unused-expressions": "error",

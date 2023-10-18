@@ -28,11 +28,21 @@ type Sep24Params = {
   httpClient: AxiosInstance;
 };
 
-// Do not create this object directly, use the Wallet class.
+/**
+ * Interactive flow for deposit and withdrawal using SEP-24.
+ * @see {@link https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0024.md}
+ * Do not create this object directly, use the Anchor class.
+ * @class
+ */
 export class Sep24 {
   private anchor: Anchor;
   private httpClient: AxiosInstance;
 
+  /**
+   * Creates a new instance of the Sep24 class.
+   * @constructor
+   * @param {Sep24Params} params - Parameters to initialize the Sep24 instance.
+   */
   constructor(params: Sep24Params) {
     const { anchor, httpClient } = params;
 
@@ -40,11 +50,21 @@ export class Sep24 {
     this.httpClient = httpClient;
   }
 
+  /**
+   * Initiates a deposit request.
+   * @param {Sep24PostParams} params - The SEP-24 Post params.
+   * @param {string} params.assetCode - The asset to deposit.
+   * @param {AuthToken} params.authToken - Authentication token for the request.
+   * @param {string} [params.lang] - The language for the request (defaults to the Anchor's language).
+   * @param {ExtraFields} [params.extraFields] - Additional fields for the request.
+   * @param {Memo} [params.destinationMemo] - Memo information for the destination account.
+   * @param {string} [params.destinationAccount] - The destination account for the deposit.
+   * @returns {Promise<Sep24PostResponse>} The Sep24 response.
+   * @throws {AssetNotSupportedError} If the asset is not supported for deposit.
+   */
   async deposit({
     assetCode,
-
     authToken,
-
     lang,
     extraFields,
     destinationMemo,
@@ -61,6 +81,17 @@ export class Sep24 {
     });
   }
 
+  /**
+   * Initiates a withdrawal request.
+   * @param {Sep24PostParams} params - The SEP-24 Post params.
+   * @param {string} params.assetCode - The asset to withdraw.
+   * @param {string} params.authToken - Authentication token for the request.
+   * @param {string} [params.lang] - The language for the request (defaults to the Anchor's language).
+   * @param {ExtraFields} [params.extraFields] - Additional fields for the request.
+   * @param {string} [params.withdrawalAccount] - The withdrawal account.
+   * @returns {Promise<Sep24PostResponse>} The Sep24 response.
+   * @throws {AssetNotSupportedError} If the asset is not supported for withdrawal.
+   */
   async withdraw({
     assetCode,
     authToken,
@@ -137,26 +168,35 @@ export class Sep24 {
     }
   }
 
+  /**
+   * Retrieves information about the Anchor.
+   * @returns {Promise<AnchorServiceInfo>} An object containing information about the Anchor.
+   * @throws {ServerRequestFailedError} If the server request to fetch information fails.
+   */
   async getServicesInfo(): Promise<AnchorServiceInfo> {
     return this.anchor.getServicesInfo();
   }
 
+  /**
+   * Creates a new instance of the Watcher class, to watch sep24 transactions.
+   * @returns {Watcher} A new Watcher instance.
+   */
   watcher(): Watcher {
     return new Watcher(this.anchor);
   }
 
   /**
-   * Get single transaction's current status and details. One of the [id], [stellarTransactionId],
-   * [externalTransactionId] must be provided.
-   *
-   * @param authToken auth token of the account authenticated with the anchor
-   * @param id transaction ID
-   * @param stellarTransactionId stellar transaction ID
-   * @param externalTransactionId external transaction ID
-   * @return transaction object
-   * @throws [MissingTransactionIdError] if none of the id params is provided
-   * @throws [InvalidTransactionResponseError] if Anchor returns an invalid transaction
-   * @throws [ServerRequestFailedError] if server request fails
+   * Get single transaction's current status and details from the anchor.
+   * @param {GetTransactionParams} params - The Get Transactions params.
+   * @param {AuthToken} params.authToken - The authentication token for the account authenticated with the anchor.
+   * @param {string} [params.id] - The transaction ID.
+   * @param {string} [params.stellarTransactionId] - The Stellar transaction ID.
+   * @param {string} [params.externalTransactionId] - The external transaction ID.
+   * @param {string} [params.lang] - The language setting.
+   * @returns {Promise<AnchorTransaction>} The transaction object.
+   * @throws {MissingTransactionIdError} If none of the ID parameters is provided.
+   * @throws {InvalidTransactionResponseError} If the anchor returns an invalid transaction response.
+   * @throws {ServerRequestFailedError} If the server request fails.
    */
   async getTransactionBy({
     authToken,
@@ -208,17 +248,17 @@ export class Sep24 {
 
   /**
    * Get account's transactions specified by asset and other params.
-   *
-   * @param authToken auth token of the account authenticated with the anchor
-   * @param assetCode target asset to query for
-   * @param noOlderThan response should contain transactions starting on or after this date & time
-   * @param limit response should contain at most 'limit' transactions
-   * @param kind kind of transaction that is desired. E.g.: 'deposit', 'withdrawal'
-   * @param pagingId response should contain transactions starting prior to this ID (exclusive)
-   * @param lang desired language (localization), it can also accept locale in the format 'en-US'
-   * @return list of transactions as requested by the client, sorted in time-descending order
-   * @throws [InvalidTransactionsResponseError] if Anchor returns an invalid response
-   * @throws [ServerRequestFailedError] if server request fails
+   * @param {GetTransactionParams} params - The Get Transactions params.
+   * @param {AuthToken} params.authToken - The authentication token for the account authenticated with the anchor.
+   * @param {string} params.assetCode - The target asset to query for.
+   * @param {string} [params.noOlderThan] - The response should contain transactions starting on or after this date & time.
+   * @param {string} [params.limit] - The response should contain at most 'limit' transactions.
+   * @param {string} [params.kind] - The kind of transaction that is desired. E.g.: 'deposit', 'withdrawal'.
+   * @param {string} [params.pagingId] - The response should contain transactions starting prior to this ID (exclusive).
+   * @param {string} [params.lang] - The desired language (localization), it can also accept locale in the format 'en-US'.
+   * @returns {Promise<AnchorTransaction[]>} A list of transactions as requested by the client, sorted in time-descending order.
+   * @throws {InvalidTransactionsResponseError} Anchor returns an invalid response.
+   * @throws {ServerRequestFailedError} If server request fails.
    */
   async getTransactionsForAsset({
     authToken,
