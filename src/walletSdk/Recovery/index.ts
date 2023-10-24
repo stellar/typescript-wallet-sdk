@@ -33,6 +33,7 @@ import {
   SponsoringBuilder,
   Stellar,
 } from "../Horizon";
+import { camelToSnakeCaseObject } from "../Utils";
 
 // Let's prevent exporting this constructor type as
 // we should not create this Recovery class directly.
@@ -261,13 +262,13 @@ export class Recovery extends AccountRecover {
       Object.keys(this.servers).map(async (key) => {
         const server = this.servers[key];
 
-        const accountIdentity = identityMap[key];
+        const accountIdentities = identityMap[key];
 
-        if (!accountIdentity) {
+        if (!accountIdentities) {
           throw new RecoveryIdentityNotFoundError(key);
         }
 
-        const authToken = this.sep10Auth(key).authenticate({
+        const authToken = await this.sep10Auth(key).authenticate({
           accountKp: account,
           walletSigner: server.walletSigner,
           clientDomain: server.clientDomain,
@@ -280,7 +281,9 @@ export class Recovery extends AccountRecover {
           const resp = await this.httpClient.post(
             requestUrl,
             {
-              identities: accountIdentity,
+              identities: accountIdentities.map((ai) =>
+                camelToSnakeCaseObject(ai),
+              ),
             },
             {
               headers: {
