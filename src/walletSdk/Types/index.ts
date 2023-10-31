@@ -36,6 +36,7 @@ export * from "./anchor";
 export * from "./auth";
 export * from "./horizon";
 export * from "./recovery";
+export * from "./sep6";
 export * from "./sep12";
 export * from "./sep24";
 export * from "./utils";

@@ -22,8 +22,8 @@ type AnchorParams = {
   language: string;
 };
 
-// // ALEC TODO - better alias
-// export type Sep6 = Sep6;
+// TODO - alias
+// export type ... = Sep6;
 
 export type Interactive = Sep24;
 
@@ -86,15 +86,15 @@ export class Anchor {
     return this.sep1(shouldRefresh);
   }
 
+  // TODO - alias method
+
   /**
-   * ALEC TODO - comment. It can be used for withdrawal or deposit.
+   * Creates new flow for given anchor. It can be used for withdrawal or deposit.
    * @returns {Sep6} - interactive flow service.
    */
   sep6(): Sep6 {
     return new Sep6({ anchor: this, httpClient: this.httpClient });
   }
-
-  // ALEC TODO - alias method
 
   /**
    * Create new auth object to authenticate account with the anchor using SEP-10.
