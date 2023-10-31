@@ -22,8 +22,7 @@ type AnchorParams = {
   language: string;
 };
 
-// TODO - alias
-// export type ... = Sep6;
+export type Transfer = Sep6;
 
 export type Interactive = Sep24;
 
@@ -86,14 +85,20 @@ export class Anchor {
     return this.sep1(shouldRefresh);
   }
 
-  // TODO - alias method
-
   /**
-   * Creates new flow for given anchor. It can be used for withdrawal or deposit.
-   * @returns {Sep6} - interactive flow service.
+   * Creates new transfer flow for given anchor. It can be used for withdrawal or deposit.
+   * @returns {Sep6} - flow service.
    */
   sep6(): Sep6 {
     return new Sep6({ anchor: this, httpClient: this.httpClient });
+  }
+
+  /**
+   * Creates new transfer flow using the `sep6` method.
+   * @returns {Transfer} - transfer flow service.
+   */
+  transfer(): Transfer {
+    return this.sep6();
   }
 
   /**
