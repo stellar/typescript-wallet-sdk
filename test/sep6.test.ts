@@ -8,5 +8,9 @@ describe("SEP-6", () => {
     const resp = await sep6.info();
     expect(resp.deposit).toBeTruthy();
     expect(resp.withdraw).toBeTruthy();
+
+    const refreshed = await sep6.info(true);
+    expect(refreshed.deposit).toBeTruthy();
+    expect(refreshed.withdraw).toBeTruthy();
   });
 });
