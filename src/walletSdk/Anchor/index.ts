@@ -8,6 +8,7 @@ import {
   ServerRequestFailedError,
   KYCServerNotFoundError,
 } from "../Exceptions";
+import { Sep6 } from "./Sep6";
 import { Sep24 } from "./Sep24";
 import { AnchorServiceInfo, TomlInfo } from "../Types";
 import { parseToml } from "../Utils";
@@ -20,6 +21,9 @@ type AnchorParams = {
   httpClient: AxiosInstance;
   language: string;
 };
+
+// // ALEC TODO - better alias
+// export type Sep6 = Sep6;
 
 export type Interactive = Sep24;
 
@@ -81,6 +85,16 @@ export class Anchor {
   async getInfo(shouldRefresh?: boolean): Promise<TomlInfo> {
     return this.sep1(shouldRefresh);
   }
+
+  /**
+   * ALEC TODO - comment. It can be used for withdrawal or deposit.
+   * @returns {Sep6} - interactive flow service.
+   */
+  sep6(): Sep6 {
+    return new Sep6({ anchor: this, httpClient: this.httpClient });
+  }
+
+  // ALEC TODO - alias method
 
   /**
    * Create new auth object to authenticate account with the anchor using SEP-10.
