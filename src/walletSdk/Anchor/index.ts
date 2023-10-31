@@ -8,6 +8,7 @@ import {
   ServerRequestFailedError,
   KYCServerNotFoundError,
 } from "../Exceptions";
+import { Sep6 } from "./Sep6";
 import { Sep24 } from "./Sep24";
 import { AnchorServiceInfo, TomlInfo } from "../Types";
 import { parseToml } from "../Utils";
@@ -20,6 +21,8 @@ type AnchorParams = {
   httpClient: AxiosInstance;
   language: string;
 };
+
+export type Transfer = Sep6;
 
 export type Interactive = Sep24;
 
@@ -80,6 +83,22 @@ export class Anchor {
    */
   async getInfo(shouldRefresh?: boolean): Promise<TomlInfo> {
     return this.sep1(shouldRefresh);
+  }
+
+  /**
+   * Creates new transfer flow for given anchor. It can be used for withdrawal or deposit.
+   * @returns {Sep6} - flow service.
+   */
+  sep6(): Sep6 {
+    return new Sep6({ anchor: this, httpClient: this.httpClient });
+  }
+
+  /**
+   * Creates new transfer flow using the `sep6` method.
+   * @returns {Transfer} - transfer flow service.
+   */
+  transfer(): Transfer {
+    return this.sep6();
   }
 
   /**
