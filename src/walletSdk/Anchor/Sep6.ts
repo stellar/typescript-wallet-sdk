@@ -69,8 +69,8 @@ export class Sep6 {
    * @param {string} options.authToken - The authentication token.
    * @param {Sep6DepositParams} options.params - The parameters for the deposit request.
    *
-   * @returns {Promise<Sep6DepositResponse>} Sep6 deposit response, containing next steps to complete
-   * the deposit.
+   * @returns {Promise<Sep6DepositResponse>} Sep6 deposit response, containing next steps if needed
+   * to complete the deposit.
    *
    * @throws {Sep12MissingInfoError} If Sep-12 KYC info is missing for the user.
    * @throws {Sep6DepositDeniedError} If the deposit is still being processed or not accepted.
