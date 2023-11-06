@@ -1,13 +1,20 @@
 import { AxiosInstance } from "axios";
+import queryString from "query-string";
 
 import { Anchor } from "../Anchor";
-import { ServerRequestFailedError } from "../Exceptions";
-import { Sep6Info } from "../Types";
-
-type Sep6Params = {
-  anchor: Anchor;
-  httpClient: AxiosInstance;
-};
+import {
+  ServerRequestFailedError,
+  Sep12MissingInfoError,
+  Sep6DepositDeniedError,
+} from "../Exceptions";
+import {
+  Sep6Info,
+  Sep6Params,
+  Sep6DepositParams,
+  Sep6WithdrawParams,
+  Sep6DepositResponse,
+  Sep6WithdrawResponse,
+} from "../Types";
 
 /**
  * Flow for creating deposits and withdrawals with an anchor using SEP-6.
@@ -52,5 +59,80 @@ export class Sep6 {
     } catch (e) {
       throw new ServerRequestFailedError(e);
     }
+  }
+
+  /**
+   * Deposits funds using the SEP-6 protocol. Next steps by
+   * the anchor are given in the response.
+   *
+   * @param {object} options - The options for the deposit.
+   * @param {string} options.authToken - The authentication token.
+   * @param {Sep6DepositParams} options.params - The parameters for the deposit request.
+   *
+   * @returns {Promise<Sep6DepositResponse>} Sep6 deposit response, containing next steps to complete
+   * the deposit.
+   *
+   * @throws {Sep12MissingInfoError} If Sep-12 KYC info is missing for the user.
+   * @throws {Sep6DepositDeniedError} If the deposit is still being processed or not accepted.
+   * @throws {Error} If an unexpected error occurs during the deposit operation.
+   */
+  async deposit({
+    authToken,
+    params,
+  }: {
+    authToken: string;
+    params: Sep6DepositParams;
+  }): Promise<Sep6DepositResponse> {
+    const { transferServer } = await this.anchor.sep1();
+
+    try {
+      const resp = await this.httpClient.get(
+        `${transferServer}/deposit?${queryString.stringify(params)}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+        },
+      );
+      return resp.data;
+    } catch (e) {
+      if (e.response?.data?.type === "non_interactive_customer_info_needed") {
+        throw new Sep12MissingInfoError(e.response?.data?.fields);
+      } else if (e.response?.data?.type === "customer_info_status") {
+        throw new Sep6DepositDeniedError(e.response?.data);
+      }
+      throw e;
+    }
+  }
+
+  /**
+   * Initiates a withdrawal using SEP-6.
+   *
+   * @param {object} options - The options for the withdrawal operation.
+   * @param {string} options.authToken - The authentication token.
+   * @param {Sep6WithdrawParams} options.params - The parameters for the withdrawal request.
+   *
+   * @returns {Promise<Sep6WithdrawResponse>} Sep6 withdraw response.
+   */
+  async withdraw({
+    authToken,
+    params,
+  }: {
+    authToken: string;
+    params: Sep6WithdrawParams;
+  }): Promise<Sep6WithdrawResponse> {
+    const { transferServer } = await this.anchor.sep1();
+
+    const resp = await this.httpClient.get(
+      `${transferServer}/withdraw?${queryString.stringify(params)}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+      },
+    );
+    return resp.data;
   }
 }
