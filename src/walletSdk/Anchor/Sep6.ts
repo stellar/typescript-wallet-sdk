@@ -2,11 +2,7 @@ import { AxiosInstance } from "axios";
 import queryString from "query-string";
 
 import { Anchor } from "../Anchor";
-import {
-  ServerRequestFailedError,
-  Sep12MissingInfoError,
-  Sep6DepositDeniedError,
-} from "../Exceptions";
+import { ServerRequestFailedError } from "../Exceptions";
 import {
   Sep6Info,
   Sep6Params,
@@ -14,6 +10,7 @@ import {
   Sep6WithdrawParams,
   Sep6DepositResponse,
   Sep6WithdrawResponse,
+  Sep6ResponseType,
 } from "../Types";
 
 /**
@@ -72,8 +69,6 @@ export class Sep6 {
    * @returns {Promise<Sep6DepositResponse>} Sep6 deposit response, containing next steps if needed
    * to complete the deposit.
    *
-   * @throws {Sep12MissingInfoError} If Sep-12 KYC info is missing for the user.
-   * @throws {Sep6DepositDeniedError} If the deposit is still being processed or not accepted.
    * @throws {Error} If an unexpected error occurs during the deposit operation.
    */
   async deposit({
@@ -83,27 +78,7 @@ export class Sep6 {
     authToken: string;
     params: Sep6DepositParams;
   }): Promise<Sep6DepositResponse> {
-    const { transferServer } = await this.anchor.sep1();
-
-    try {
-      const resp = await this.httpClient.get(
-        `${transferServer}/deposit?${queryString.stringify(params)}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
-          },
-        },
-      );
-      return resp.data;
-    } catch (e) {
-      if (e.response?.data?.type === "non_interactive_customer_info_needed") {
-        throw new Sep12MissingInfoError(e.response?.data?.fields);
-      } else if (e.response?.data?.type === "customer_info_status") {
-        throw new Sep6DepositDeniedError(e.response?.data);
-      }
-      throw e;
-    }
+    return this.flow({ type: "deposit", authToken, params });
   }
 
   /**
@@ -122,17 +97,47 @@ export class Sep6 {
     authToken: string;
     params: Sep6WithdrawParams;
   }): Promise<Sep6WithdrawResponse> {
+    return this.flow({ type: "withdraw", authToken, params });
+  }
+
+  private async flow({
+    type,
+    authToken,
+    params,
+  }: {
+    type: "deposit" | "withdraw";
+    authToken: string;
+    params: Sep6DepositParams | Sep6WithdrawParams;
+  }) {
     const { transferServer } = await this.anchor.sep1();
 
-    const resp = await this.httpClient.get(
-      `${transferServer}/withdraw?${queryString.stringify(params)}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
+    try {
+      const resp = await this.httpClient.get(
+        `${transferServer}/${type}?${queryString.stringify(params)}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
         },
-      },
-    );
-    return resp.data;
+      );
+      return {
+        type: Sep6ResponseType.SUCCESS,
+        data: resp.data,
+      };
+    } catch (e) {
+      if (e.response?.data?.type === "non_interactive_customer_info_needed") {
+        return {
+          type: Sep6ResponseType.MISSING_KYC,
+          data: e.response?.data,
+        };
+      } else if (e.response?.data?.type === "customer_info_status") {
+        return {
+          type: Sep6ResponseType.PENDING,
+          data: e.response?.data,
+        };
+      }
+      throw e;
+    }
   }
 }

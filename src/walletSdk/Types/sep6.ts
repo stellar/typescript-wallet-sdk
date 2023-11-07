@@ -97,6 +97,17 @@ export interface Sep6WithdrawParams {
 }
 
 export interface Sep6DepositResponse {
+  type: Sep6ResponseType;
+  data: Sep6DepositSuccess | Sep6MissingKYC | Sep6Pending;
+}
+
+export enum Sep6ResponseType {
+  SUCCESS = "SUCCESS",
+  MISSING_KYC = "MISSING_KYC",
+  PENDING = "PENDING",
+}
+
+export interface Sep6DepositSuccess {
   how?: string;
   instructions?: {
     [key: string]: {
@@ -111,6 +122,23 @@ export interface Sep6DepositResponse {
   fee_fixed?: number;
   fee_percent?: number;
   extra_info?: { message?: string };
+}
+
+export interface Sep6MissingKYC {
+  type: string;
+  fields: Array<string>;
+}
+
+export interface Sep6Pending {
+  type: string;
+  status: string;
+  more_info_url?: string;
+  eta?: number;
+}
+
+export interface Sep6WithdrawResponse {
+  type: Sep6ResponseType;
+  data: Sep6WithdrawResponse | Sep6MissingKYC | Sep6Pending;
 }
 
 export interface Sep6WithdrawResponse {

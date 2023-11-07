@@ -244,21 +244,3 @@ export class NoAccountAndNoSponsorError extends Error {
     Object.setPrototypeOf(this, NoAccountAndNoSponsorError.prototype);
   }
 }
-
-export class Sep12MissingInfoError extends Error {
-  constructor(missingFields) {
-    super(
-      `SEP-12 KYC info missing. Submit to anchor missing fields: ${missingFields}`,
-    );
-    Object.setPrototypeOf(this, Sep12MissingInfoError.prototype);
-  }
-}
-
-export class Sep6DepositDeniedError extends Error {
-  constructor(data) {
-    super(
-      `Sep-6 information is either still being processed or not accepted. ${data}`,
-    );
-    Object.setPrototypeOf(this, Sep6DepositDeniedError.prototype);
-  }
-}
