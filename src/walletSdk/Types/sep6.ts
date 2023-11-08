@@ -1,3 +1,6 @@
+import { AxiosInstance } from "axios";
+import { Anchor } from "../Anchor";
+
 export interface Sep6EndpointInfo {
   enabled: boolean;
   authentication_required?: boolean;
@@ -55,4 +58,92 @@ export interface Sep6Info {
     account_creation: boolean;
     claimable_balances: boolean;
   };
+}
+
+export type Sep6Params = {
+  anchor: Anchor;
+  httpClient: AxiosInstance;
+};
+
+export interface Sep6DepositParams {
+  asset_code: string;
+  account: string;
+  memo_type?: string;
+  memo?: string;
+  email_address?: string;
+  type?: string;
+  lang?: string;
+  on_change_callback?: string;
+  amount?: string;
+  country_code?: string;
+  claimable_balance_supported?: string;
+  customer_id?: string;
+}
+
+export interface Sep6WithdrawParams {
+  asset_code: string;
+  type: string;
+  dest?: string;
+  dest_extra?: string;
+  account?: string;
+  memo?: string;
+  lang?: string;
+  on_change_callback?: string;
+  amount?: string;
+  country_code?: string;
+  refund_memo?: string;
+  refund_memo_type?: string;
+  customer_id?: string;
+}
+
+export type Sep6DepositResponse =
+  | Sep6DepositSuccess
+  | Sep6MissingKYC
+  | Sep6Pending;
+
+export interface Sep6DepositSuccess {
+  how?: string;
+  instructions?: {
+    [key: string]: {
+      value: string;
+      description: string;
+    };
+  };
+  id?: string;
+  eta?: number;
+  min_amoun?: number;
+  max_amount?: number;
+  fee_fixed?: number;
+  fee_percent?: number;
+  extra_info?: { message?: string };
+}
+
+export interface Sep6MissingKYC {
+  type: string;
+  fields: Array<string>;
+}
+
+export interface Sep6Pending {
+  type: string;
+  status: string;
+  more_info_url?: string;
+  eta?: number;
+}
+
+export type Sep6WithdrawResponse =
+  | Sep6WithdrawSuccess
+  | Sep6MissingKYC
+  | Sep6Pending;
+
+export interface Sep6WithdrawSuccess {
+  account_id?: string;
+  memo_type?: string;
+  memo?: string;
+  id?: string;
+  eta?: number;
+  min_amount?: number;
+  max_amount?: number;
+  fee_fixed?: number;
+  fee_percent?: number;
+  extra_info?: { message?: string };
 }
