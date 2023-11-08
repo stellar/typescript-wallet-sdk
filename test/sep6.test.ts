@@ -1,8 +1,6 @@
 import { Wallet } from "../src";
 import axios from "axios";
 
-import { Sep6ResponseType } from "../src/walletSdk/Types";
-
 let wallet;
 let anchor;
 let sep6;
@@ -43,8 +41,7 @@ describe("SEP-6", () => {
         type: "bank_account",
       },
     });
-    expect(resp.type).toBe(Sep6ResponseType.MISSING_KYC);
-    expect(resp.data.type).toBe("non_interactive_customer_info_needed");
+    expect(resp.type).toBe("non_interactive_customer_info_needed");
 
     // Add the missing KYC info
     await sep12.add({
@@ -66,8 +63,7 @@ describe("SEP-6", () => {
         type: "bank_account",
       },
     });
-    expect(resp.type).toBe(Sep6ResponseType.SUCCESS);
-    expect(resp.data.id).toBeTruthy();
+    expect(resp.id).toBeTruthy();
   });
   it("should withdraw", async () => {
     const auth = await anchor.sep10();
@@ -95,7 +91,6 @@ describe("SEP-6", () => {
         dest_extra: "12345",
       },
     });
-    expect(resp.type).toBe(Sep6ResponseType.SUCCESS);
-    expect(resp.data.id).toBeTruthy();
+    expect(resp.id).toBeTruthy();
   });
 });

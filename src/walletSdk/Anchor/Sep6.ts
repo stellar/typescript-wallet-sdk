@@ -10,7 +10,6 @@ import {
   Sep6WithdrawParams,
   Sep6DepositResponse,
   Sep6WithdrawResponse,
-  Sep6ResponseType,
 } from "../Types";
 
 /**
@@ -121,21 +120,12 @@ export class Sep6 {
           },
         },
       );
-      return {
-        type: Sep6ResponseType.SUCCESS,
-        data: resp.data,
-      };
+      return resp.data;
     } catch (e) {
       if (e.response?.data?.type === "non_interactive_customer_info_needed") {
-        return {
-          type: Sep6ResponseType.MISSING_KYC,
-          data: e.response?.data,
-        };
+        return e.response?.data;
       } else if (e.response?.data?.type === "customer_info_status") {
-        return {
-          type: Sep6ResponseType.PENDING,
-          data: e.response?.data,
-        };
+        return e.response?.data;
       }
       throw e;
     }

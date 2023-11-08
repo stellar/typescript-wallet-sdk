@@ -96,16 +96,10 @@ export interface Sep6WithdrawParams {
   customer_id?: string;
 }
 
-export interface Sep6DepositResponse {
-  type: Sep6ResponseType;
-  data: Sep6DepositSuccess | Sep6MissingKYC | Sep6Pending;
-}
-
-export enum Sep6ResponseType {
-  SUCCESS = "SUCCESS",
-  MISSING_KYC = "MISSING_KYC",
-  PENDING = "PENDING",
-}
+export type Sep6DepositResponse =
+  | Sep6DepositSuccess
+  | Sep6MissingKYC
+  | Sep6Pending;
 
 export interface Sep6DepositSuccess {
   how?: string;
@@ -136,12 +130,12 @@ export interface Sep6Pending {
   eta?: number;
 }
 
-export interface Sep6WithdrawResponse {
-  type: Sep6ResponseType;
-  data: Sep6WithdrawResponse | Sep6MissingKYC | Sep6Pending;
-}
+export type Sep6WithdrawResponse =
+  | Sep6WithdrawSuccess
+  | Sep6MissingKYC
+  | Sep6Pending;
 
-export interface Sep6WithdrawResponse {
+export interface Sep6WithdrawSuccess {
   account_id?: string;
   memo_type?: string;
   memo?: string;
