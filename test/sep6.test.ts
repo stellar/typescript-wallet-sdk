@@ -93,4 +93,61 @@ describe("SEP-6", () => {
     });
     expect(resp.id).toBeTruthy();
   });
+
+  it("deposit-exchange should work", async () => {
+    const auth = await anchor.sep10();
+    const authToken = await auth.authenticate({ accountKp });
+
+    const sep12 = await anchor.sep12(authToken);
+    await sep12.add({
+      sep9Info: {
+        first_name: "john",
+        last_name: "smith",
+        email_address: "123@gmail.com",
+        bank_number: "12345",
+        bank_account_number: "12345",
+      },
+    });
+
+    const params = {
+      destination_asset:
+        "stellar:SRT:GCDNJUBQSX7AJWLJACMJ7I4BC3Z47BQUTMHEICZLE6MU4KQBRYG5JY6B",
+      source_asset: "iso4217:USD",
+      amount: "1",
+      account: accountKp.publicKey,
+      type: "bank_account",
+    };
+
+    const resp = await sep6.depositExchange({ authToken, params });
+    expect(resp.id).toBeTruthy();
+  });
+
+  it("withdraw-exchange should work", async () => {
+    const auth = await anchor.sep10();
+    const authToken = await auth.authenticate({ accountKp });
+
+    const sep12 = await anchor.sep12(authToken);
+    await sep12.add({
+      sep9Info: {
+        first_name: "john",
+        last_name: "smith",
+        email_address: "123@gmail.com",
+        bank_number: "12345",
+        bank_account_number: "12345",
+      },
+    });
+
+    const params = {
+      destination_asset: "iso4217:USD",
+      source_asset:
+        "stellar:SRT:GCDNJUBQSX7AJWLJACMJ7I4BC3Z47BQUTMHEICZLE6MU4KQBRYG5JY6B",
+      amount: "1",
+      dest: accountKp.publicKey,
+      dest_extra: "1234",
+      type: "bank_account",
+    };
+
+    const resp = await sep6.withdrawExchange({ authToken, params });
+    expect(resp.id).toBeTruthy();
+  });
 });
