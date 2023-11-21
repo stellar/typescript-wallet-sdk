@@ -3,7 +3,7 @@ services:
   postgres1:
     image: postgres
     environment:
-      POSTGRES_PASSWORD: pg_password1
+      POSTGRES_PASSWORD: pg_password
       POSTGRES_DB: pg_database1
     ports:
       - "5432:5432"
@@ -11,7 +11,7 @@ services:
   postgres2:
     image: postgres
     environment:
-      POSTGRES_PASSWORD: pg_password2
+      POSTGRES_PASSWORD: pg_password
       POSTGRES_DB: pg_database2
     ports:
       - "5433:5432"
@@ -20,21 +20,23 @@ services:
     image: stellar/recoverysigner
     depends_on:
       - postgres1
-    command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; db migrate up'
+    command:
+      /bin/bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; db migrate up'
     # ALEC TODO - remove
     # command: ["db", "migrate", "up"]
     environment:
-      DB_URL: "postgresql://postgres:pg_password1@postgres1:5432/pg_database1?sslmode=disable"
+      DB_URL: "postgresql://postgres:pg_password@postgres1:5432/pg_database1?sslmode=disable"
 
   recovery-signer-migrate2:
     image: stellar/recoverysigner
     depends_on:
       - postgres2
-    command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; db migrate up'
+    command:
+      /bin/bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; db migrate up'
     # ALEC TODO - remove
     # command: ["db", "migrate", "up"]
     environment:
-      DB_URL: "postgresql://postgres:pg_password2@postgres2:5432/pg_database2?sslmode=disable"
+      DB_URL: "postgresql://postgres:pg_password@postgres2:5432/pg_database2?sslmode=disable"
 
   recovery-signer1:
     image: stellar/recoverysigner
@@ -43,7 +45,7 @@ services:
     depends_on:
       - postgres1
     environment:
-      DB_URL: "postgresql://postgres:pg_password1@postgres1:5432/pg_database1?sslmode=disable"
+      DB_URL: "postgresql://postgres:pg_password@postgres1:5432/pg_database1?sslmode=disable"
       SIGNING_KEY: SAQFNCKPZ3ON5TSSEURAF4NPTZONPA37JPHQNHSLSRUNFP43MMT5LNH6
       FIREBASE_PROJECT_ID: "none"
       SEP10_JWKS: '{"keys":[{"kty":"EC","crv":"P-256","alg":"ES256","x":"dzqvhrMYwbmv7kcZK6L1oOATMFXG9wLFlnKfHf3E7FM","y":"Vb_wmcX-Zq2Hg2LFoXCEVWMwdJ01q41pSnxC3psunUY"}]}'
@@ -56,7 +58,7 @@ services:
     depends_on:
       - postgres2
     environment:
-      DB_URL: "postgresql://postgres:pg_password2@postgres2:5432/pg_database2?sslmode=disable"
+      DB_URL: "postgresql://postgres:pg_password@postgres2:5432/pg_database2?sslmode=disable"
       SIGNING_KEY: SA3Y2KQCPN6RAKLUISMY252QABWPQ3A65FBMZO2JJFKJ7O7VJNQ2PRYH # Use a different key for the second recovery signer
       FIREBASE_PROJECT_ID: "none"
       SEP10_JWKS: '{"keys":[{"kty":"EC","crv":"P-256","alg":"ES256","x":"dzqvhrMYwbmv7kcZK6L1oOATMFXG9wLFlnKfHf3E7FM","y":"Vb_wmcX-Zq2Hg2LFoXCEVWMwdJ01q41pSnxC3psunUY"}]}'
