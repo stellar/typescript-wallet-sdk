@@ -20,10 +20,9 @@ services:
     image: stellar/recoverysigner
     depends_on:
       - postgres1
-    command:
-      /bin/bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; db migrate up'
-    # ALEC TODO - remove
-    # command: ["db", "migrate", "up"]
+    entrypoint: ["/bin/bash", "-c"]
+    command: >
+      while !</dev/tcp/postgres1/5432; do sleep 1; done; db migrate up;
     environment:
       DB_URL: "postgresql://postgres:pg_password@postgres1:5432/pg_database1?sslmode=disable"
 
@@ -31,10 +30,9 @@ services:
     image: stellar/recoverysigner
     depends_on:
       - postgres2
-    command:
-      /bin/bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; db migrate up'
-    # ALEC TODO - remove
-    # command: ["db", "migrate", "up"]
+    entrypoint: ["/bin/bash", "-c"]
+    command: >
+      while !</dev/tcp/postgres1/5432; do sleep 1; done; db migrate up;
     environment:
       DB_URL: "postgresql://postgres:pg_password@postgres2:5432/pg_database2?sslmode=disable"
 
