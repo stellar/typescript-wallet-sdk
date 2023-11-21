@@ -20,6 +20,7 @@ services:
     image: stellar/recoverysigner
     depends_on:
       - postgres1
+    restart: on-failure
     command: ["db", "migrate", "up"]
     environment:
       DB_URL: "postgresql://postgres:pg_password1@postgres1:5432/pg_database1?sslmode=disable"
@@ -28,6 +29,7 @@ services:
     image: stellar/recoverysigner
     depends_on:
       - postgres2
+    restart: on-failure
     command: ["db", "migrate", "up"]
     environment:
       DB_URL: "postgresql://postgres:pg_password2@postgres2:5432/pg_database2?sslmode=disable"
