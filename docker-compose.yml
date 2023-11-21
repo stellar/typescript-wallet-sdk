@@ -7,6 +7,11 @@ services:
       POSTGRES_DB: pg_database1
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   postgres2:
     image: postgres
@@ -15,15 +20,21 @@ services:
       POSTGRES_DB: pg_database2
     ports:
       - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   recovery-signer-migrate1:
     image: stellar/recoverysigner
     depends_on:
       - postgres1
-    entrypoint: ["/bin/bash", "-c"]
-    command: >
-      while !</dev/tcp/postgres1/5432; do sleep 1; done; /app/recoverysigner db
-      migrate up
+    command: ["db", "migrate", "up"]
+    # entrypoint: ["/bin/bash", "-c"]
+    # command: >
+    #   while !</dev/tcp/postgres1/5432; do sleep 1; done; /app/recoverysigner db
+    #   migrate up
     environment:
       DB_URL: "postgresql://postgres:pg_password@postgres1:5432/pg_database1?sslmode=disable"
 
@@ -31,10 +42,10 @@ services:
     image: stellar/recoverysigner
     depends_on:
       - postgres2
-    entrypoint: ["/bin/bash", "-c"]
-    command: >
-      while !</dev/tcp/postgres1/5432; do sleep 1; done; /app/recoverysigner db
-      migrate up
+    # entrypoint: ["/bin/bash", "-c"]
+    # command: >
+    #   while !</dev/tcp/postgres1/5432; do sleep 1; done; /app/recoverysigner db
+    #   migrate up
     environment:
       DB_URL: "postgresql://postgres:pg_password@postgres2:5432/pg_database2?sslmode=disable"
 
@@ -44,6 +55,7 @@ services:
       - "8000:8000"
     depends_on:
       - postgres1
+    command: ["db", "migrate", "up"]
     environment:
       DB_URL: "postgresql://postgres:pg_password@postgres1:5432/pg_database1?sslmode=disable"
       SIGNING_KEY: SAQFNCKPZ3ON5TSSEURAF4NPTZONPA37JPHQNHSLSRUNFP43MMT5LNH6
