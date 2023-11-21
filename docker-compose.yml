@@ -22,7 +22,8 @@ services:
       - postgres1
     entrypoint: ["/bin/bash", "-c"]
     command: >
-      while !</dev/tcp/postgres1/5432; do sleep 1; done; db migrate up;
+      while !</dev/tcp/postgres1/5432; do sleep 1; done; /app/recoverysigner db
+      migrate up
     environment:
       DB_URL: "postgresql://postgres:pg_password@postgres1:5432/pg_database1?sslmode=disable"
 
@@ -32,7 +33,8 @@ services:
       - postgres2
     entrypoint: ["/bin/bash", "-c"]
     command: >
-      while !</dev/tcp/postgres1/5432; do sleep 1; done; db migrate up;
+      while !</dev/tcp/postgres1/5432; do sleep 1; done; /app/recoverysigner db
+      migrate up
     environment:
       DB_URL: "postgresql://postgres:pg_password@postgres2:5432/pg_database2?sslmode=disable"
 
