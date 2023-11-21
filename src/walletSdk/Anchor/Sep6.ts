@@ -10,6 +10,7 @@ import {
   Sep6WithdrawParams,
   Sep6DepositResponse,
   Sep6WithdrawResponse,
+  Sep6ExchangeParams,
 } from "../Types";
 
 /**
@@ -99,14 +100,60 @@ export class Sep6 {
     return this.flow({ type: "withdraw", authToken, params });
   }
 
+  /**
+   * Similar to the SEP-6 deposit function, but for non-equivalent assets
+   * that require an exchange.
+   *
+   * @param {object} options - The options for the deposit exchange.
+   * @param {string} options.authToken - The authentication token.
+   * @param {Sep6ExchangeParams} options.params - The parameters for the deposit request.
+   *
+   * @returns {Promise<Sep6DepositResponse>} Sep6 deposit response, containing next steps if needed
+   * to complete the deposit.
+   *
+   * @throws {Error} If an unexpected error occurs during the deposit operation.
+   */
+  async depositExchange({
+    authToken,
+    params,
+  }: {
+    authToken: string;
+    params: Sep6ExchangeParams;
+  }): Promise<Sep6DepositResponse> {
+    return this.flow({ type: "deposit-exchange", authToken, params });
+  }
+
+  /**
+   * Similar to the SEP-6 withdraw function, but for non-equivalent assets
+   * that require an exchange.
+   *
+   * @param {object} options - The options for the deposit exchange.
+   * @param {string} options.authToken - The authentication token.
+   * @param {Sep6ExchangeParams} options.params - The parameters for the deposit request.
+   *
+   * @returns {Promise<Sep6WithdrawResponse>} Sep6 withdraw response, containing next steps if needed
+   * to complete the withdrawal.
+   *
+   * @throws {Error} If an unexpected error occurs during the deposit operation.
+   */
+  async withdrawExchange({
+    authToken,
+    params,
+  }: {
+    authToken: string;
+    params: Sep6ExchangeParams;
+  }): Promise<Sep6WithdrawResponse> {
+    return this.flow({ type: "withdraw-exchange", authToken, params });
+  }
+
   private async flow({
     type,
     authToken,
     params,
   }: {
-    type: "deposit" | "withdraw";
+    type: "deposit" | "withdraw" | "deposit-exchange" | "withdraw-exchange";
     authToken: string;
-    params: Sep6DepositParams | Sep6WithdrawParams;
+    params: Sep6DepositParams | Sep6WithdrawParams | Sep6ExchangeParams;
   }) {
     const { transferServer } = await this.anchor.sep1();
 

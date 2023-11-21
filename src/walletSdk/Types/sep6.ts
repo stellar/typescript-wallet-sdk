@@ -147,3 +147,22 @@ export interface Sep6WithdrawSuccess {
   fee_percent?: number;
   extra_info?: { message?: string };
 }
+
+export interface Sep6ExchangeParams {
+  destination_asset: string;
+  source_asset: string;
+  amount: string;
+  account?: string;
+  quote_id?: string;
+  memo_type?: string;
+  memo?: string;
+  email_address?: string;
+  type?: string;
+  lang?: string;
+  on_change_callback?: string;
+  country_code?: string;
+  claimable_balance_supported?: string;
+  customer_id?: string;
+  refund_memo?: string;
+  refund_memo_type?: string;
+}
