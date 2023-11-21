@@ -1,0 +1,83 @@
+version: "3"
+services:
+  postgres1:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: pg_password1
+      POSTGRES_DB: pg_database1
+    ports:
+      - "5432:5432"
+
+  postgres2:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: pg_password2
+      POSTGRES_DB: pg_database2
+    ports:
+      - "5433:5432"
+
+  recovery-signer-migrate1:
+    image: stellar/recoverysigner
+    depends_on:
+      - postgres1
+    command: ["db", "migrate", "up"]
+    environment:
+      DB_URL: "postgresql://postgres:pg_password1@postgres1:5432/pg_database1?sslmode=disable"
+
+  recovery-signer-migrate2:
+    image: stellar/recoverysigner
+    depends_on:
+      - postgres2
+    command: ["db", "migrate", "up"]
+    environment:
+      DB_URL: "postgresql://postgres:pg_password2@postgres2:5432/pg_database2?sslmode=disable"
+
+  recovery-signer1:
+    image: stellar/recoverysigner
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres1
+    environment:
+      DB_URL: "postgresql://postgres:pg_password1@postgres1:5432/pg_database1?sslmode=disable"
+      SIGNING_KEY: SAQFNCKPZ3ON5TSSEURAF4NPTZONPA37JPHQNHSLSRUNFP43MMT5LNH6
+      FIREBASE_PROJECT_ID: "none"
+      SEP10_JWKS: '{"keys":[{"kty":"EC","crv":"P-256","alg":"ES256","x":"dzqvhrMYwbmv7kcZK6L1oOATMFXG9wLFlnKfHf3E7FM","y":"Vb_wmcX-Zq2Hg2LFoXCEVWMwdJ01q41pSnxC3psunUY"}]}'
+      PORT: 8000
+
+  recovery-signer2:
+    image: stellar/recoverysigner
+    ports:
+      - "8002:8002"
+    depends_on:
+      - postgres2
+    environment:
+      DB_URL: "postgresql://postgres:pg_password2@postgres2:5432/pg_database2?sslmode=disable"
+      SIGNING_KEY: SA3Y2KQCPN6RAKLUISMY252QABWPQ3A65FBMZO2JJFKJ7O7VJNQ2PRYH # Use a different key for the second recovery signer
+      FIREBASE_PROJECT_ID: "none"
+      SEP10_JWKS: '{"keys":[{"kty":"EC","crv":"P-256","alg":"ES256","x":"dzqvhrMYwbmv7kcZK6L1oOATMFXG9wLFlnKfHf3E7FM","y":"Vb_wmcX-Zq2Hg2LFoXCEVWMwdJ01q41pSnxC3psunUY"}]}'
+      PORT: 8002
+
+  web-auth1:
+    image: stellar/webauth
+    ports:
+      - "8001:8001"
+    environment:
+      SIGNING_KEY: SDYHSG4V2JP5H66N2CXBFCOBTAUFWXGJVPKWY6OXSIPMYW743N62QX6U
+      JWK: '{"kty":"EC","crv":"P-256","alg":"ES256","x":"dzqvhrMYwbmv7kcZK6L1oOATMFXG9wLFlnKfHf3E7FM","y":"Vb_wmcX-Zq2Hg2LFoXCEVWMwdJ01q41pSnxC3psunUY","d":"ivOMB4Wscz8ShvhwWDRyd-JJVfSMsjsz1oU3sNc-XJo"}'
+      DOMAIN: test-domain
+      AUTH_HOME_DOMAIN: test-domain
+      JWT_ISSUER: test
+      PORT: 8001
+
+  web-auth2:
+    image: stellar/webauth
+    ports:
+      - "8003:8003"
+    environment:
+      SIGNING_KEY: SCAS7BUKVDL44A2BAP23RVAM6XXHB24YRCANQGDTP24HP7T6LPUFIGGU # Use a different key for the second web auth server
+      JWK: '{"kty":"EC","crv":"P-256","alg":"ES256","x":"dzqvhrMYwbmv7kcZK6L1oOATMFXG9wLFlnKfHf3E7FM","y":"Vb_wmcX-Zq2Hg2LFoXCEVWMwdJ01q41pSnxC3psunUY","d":"ivOMB4Wscz8ShvhwWDRyd-JJVfSMsjsz1oU3sNc-XJo"}'
+      DOMAIN: test-domain
+      AUTH_HOME_DOMAIN: test-domain
+      JWT_ISSUER: test
+      PORT: 8003

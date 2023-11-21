@@ -1,0 +1,16 @@
+name: Recovery Signer Integration Test
+on: [pull_request]
+jobs:
+  test-ci:
+    name: integration test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Start docker
+        run: docker-compose -f docker-compose.yml up
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 18
+      - run: yarn install
+      - run: yarn build
+      - run: yarn test:integration
