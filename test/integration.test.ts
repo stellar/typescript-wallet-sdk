@@ -11,9 +11,7 @@ import {
   RecoveryType,
 } from "../src/walletSdk/Types/recovery";
 
-// ALEC TODO - move these tests? how to automate?
-
-describe("ALEC TODO", () => {
+describe("Recovery Integration Tests", () => {
   it("should work", async () => {
     const wallet = Wallet.TestNet();
     const stellar = wallet.stellar();
@@ -41,16 +39,11 @@ describe("ALEC TODO", () => {
     const recovery = wallet.recovery({ servers });
 
     // Create accounts
+
     const accountKp = accountService.createKeypair();
-    console.log("accountKp:", accountKp.publicKey); // ALEC TODO - remove
-
     const deviceKp = accountService.createKeypair();
-    console.log("deviceKp:", deviceKp.publicKey); // ALEC TODO - remove
-
     const recoveryKp = accountService.createKeypair();
-    console.log("recoveryKp:", recoveryKp.publicKey); // ALEC TODO - remove
 
-    // Make sure exists
     try {
       await stellar.server.loadAccount(accountKp.publicKey);
       await stellar.server.loadAccount(deviceKp.publicKey);
@@ -104,8 +97,6 @@ describe("ALEC TODO", () => {
     };
     const recoverableWallet = await recovery.createRecoverableWallet(config);
 
-    console.log({ recoverableWallet }); // ALEC TODO - remove
-
     // Sign and submit
 
     recoverableWallet.transaction.sign(accountKp.keypair);
@@ -113,8 +104,9 @@ describe("ALEC TODO", () => {
 
     let resp = await stellar.server.loadAccount(accountKp.publicKey);
 
-    // ALEC TODO - uncomment, ignore order of array
-    // expect(resp.signers.map((obj) => obj.weight)).toEqual([5, 5, 10, 0]);
+    expect(resp.signers.map((obj) => obj.weight).sort((a, b) => a - b)).toEqual(
+      [0, 5, 5, 10],
+    );
     expect(
       resp.signers.find((obj) => obj.key === accountKp.publicKey).weight,
     ).toBe(0);
@@ -134,22 +126,6 @@ describe("ALEC TODO", () => {
     expect(accountResp[server1Key].address).toBe(accountKp.publicKey);
     expect(accountResp[server1Key].identities[0].role).toBe("owner");
     expect(accountResp[server1Key].signers.length).toBe(1);
-
-    console.log({ accountResp }); // ALEC TODO - remove
-    console.log(accountResp.server1.identities); // ALEC TODO - remove
-    console.log(accountResp.server1.signers); // ALEC TODO - remove
-
-    // ALEC TODO - remove
-    // const authToken2 = await recovery
-    //   .sep10Auth(server2Key)
-    //   .authenticate({ accountKp: recoveryKp });
-
-    // const authMap2 = { [server2Key]: authToken2 };
-
-    // const accountResp2 = await recovery.getAccountInfo(accountKp, authMap2);
-    // console.log({ accountResp2 }); // ALEC TODO - remove
-    // console.log(accountResp2.server2.identities); // ALEC TODO - remove
-    // console.log(accountResp2.server2.signers); // ALEC TODO - remove
 
     // Recover Wallet
 
@@ -175,8 +151,6 @@ describe("ALEC TODO", () => {
       newKp,
       signerMap,
     );
-
-    console.log(recoverTxn.toXDR()); // ALEC TODO - remove
 
     await stellar.submitTransaction(recoverTxn);
 

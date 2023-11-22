@@ -7,14 +7,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Start docker
-        run: docker-compose -f docker-compose.yml up -d
+        run: docker-compose -f test/docker/docker-compose.yml up -d
       - uses: actions/setup-node@v2
         with:
           node-version: 18
       - run: yarn install
       - run: yarn build
-      - run: yarn test:integration
-      # ALEC TODO - remove below probably
+      - run: yarn test:integration:ci
       - name: Print Docker Logs
         if: always() # This ensures that the logs are printed even if the tests fail
         run: docker-compose logs
