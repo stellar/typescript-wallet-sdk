@@ -49,5 +49,3 @@ const authToken = await sep10.authenticate({ accountKp: authKey });
 Read
 [full wallet guide](https://developers.stellar.org/docs/category/build-a-wallet-with-the-wallet-sdk)
 for more info
-
-<!-- ALEC TODO - add directions for running integration tests locally -->
