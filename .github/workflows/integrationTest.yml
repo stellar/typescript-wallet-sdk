@@ -17,4 +17,4 @@ jobs:
       # ALEC TODO - remove below probably
       - name: Print Docker Logs
         if: always() # This ensures that the logs are printed even if the tests fail
-        run: docker-compose logs all
+        run: docker-compose logs
