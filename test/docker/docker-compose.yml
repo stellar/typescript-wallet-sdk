@@ -1,7 +1,7 @@
 version: "3"
 services:
   recovery-signer-migrate1:
-    image: stellar/recoverysigner
+    image: stellar/recoverysigner:latest
     depends_on:
       postgres1:
         condition: service_healthy
@@ -11,7 +11,7 @@ services:
       DB_URL: "postgresql://postgres:pg_password@postgres1:5432/pg_database1?sslmode=disable"
 
   recovery-signer-migrate2:
-    image: stellar/recoverysigner
+    image: stellar/recoverysigner:latest
     depends_on:
       postgres2:
         condition: service_healthy
@@ -21,7 +21,7 @@ services:
       DB_URL: "postgresql://postgres:pg_password@postgres2:5432/pg_database2?sslmode=disable"
 
   recovery-signer1:
-    image: stellar/recoverysigner
+    image: stellar/recoverysigner:latest
     ports:
       - "8000:8000"
     depends_on:
@@ -34,7 +34,7 @@ services:
       PORT: 8000
 
   recovery-signer2:
-    image: stellar/recoverysigner
+    image: stellar/recoverysigner:latest
     ports:
       - "8002:8002"
     depends_on:
@@ -47,7 +47,7 @@ services:
       PORT: 8002
 
   web-auth1:
-    image: stellar/webauth
+    image: stellar/webauth:latest
     ports:
       - "8001:8001"
     environment:
@@ -59,7 +59,7 @@ services:
       PORT: 8001
 
   web-auth2:
-    image: stellar/webauth
+    image: stellar/webauth:latest
     ports:
       - "8003:8003"
     environment:
@@ -71,7 +71,7 @@ services:
       PORT: 8003
 
   postgres1:
-    image: postgres
+    image: postgres:14
     environment:
       POSTGRES_PASSWORD: pg_password
       POSTGRES_DB: pg_database1
@@ -84,7 +84,7 @@ services:
       retries: 5
 
   postgres2:
-    image: postgres
+    image: postgres:14
     environment:
       POSTGRES_PASSWORD: pg_password
       POSTGRES_DB: pg_database2
