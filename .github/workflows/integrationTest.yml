@@ -16,4 +16,4 @@ jobs:
       - run: yarn test:integration:ci
       - name: Print Docker Logs
         if: always() # This ensures that the logs are printed even if the tests fail
-        run: docker-compose logs
+        run: docker-compose -f test/docker/docker-compose.yml logs
