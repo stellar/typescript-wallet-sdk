@@ -57,6 +57,7 @@
     "prepare": "husky install",
     "test": "jest --watchAll",
     "test:ci": "jest --ci",
+    "test:integration:ci": "jest --config jest.integration.config.js --ci",
     "build:web": "webpack --config webpack.config.js",
     "build:node": "webpack --env NODE=true --config webpack.config.js",
     "build": "run-p build:web build:node",
