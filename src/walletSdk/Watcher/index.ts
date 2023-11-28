@@ -5,6 +5,7 @@ import {
   WatchTransactionParams,
   WatchTransactionsParams,
   WatcherResponse,
+  WatcherSepType,
 } from "../Types";
 
 interface WatchRegistryAsset {
@@ -34,6 +35,7 @@ interface TransactionsRegistry {
  */
 export class Watcher {
   private anchor: Anchor;
+  private sepType: WatcherSepType;
 
   private _oneTransactionWatcher: {
     [assetCode: string]: {
@@ -50,9 +52,12 @@ export class Watcher {
    * Creates a new instance of the Watcher class.
    *
    * @param {Anchor} anchor - The Anchor to watch from.
+   * @param {WatcherSepType} sepType - The Sep type the anchor being polled is using
+   * (ie. Sep-6 or Sep-24).
    */
-  constructor(anchor: Anchor) {
+  constructor(anchor: Anchor, sepType: WatcherSepType) {
     this.anchor = anchor;
+    this.sepType = sepType;
 
     this._oneTransactionWatcher = {};
     this._allTransactionsWatcher = undefined;
@@ -78,6 +83,7 @@ export class Watcher {
    * @param {string} params.assetCode - The asset code to filter transactions by.
    * @param {Function} params.onMessage - A callback function to handle incoming transaction messages.
    * @param {Function} params.onError - A callback function to handle errors during transaction streaming.
+   * @param {string} [params.account] - The stellar account public key involved in the transactions.
    * @param {Array<string>} [params.watchlist=[]] - An optional array of specific transaction IDs to watch.
    * @param {number} [params.timeout=5000] - The timeout duration for the streaming connection (in milliseconds).
    * @param {boolean} [params.isRetry=false] - Indicates whether this is a retry attempt (optional).
@@ -91,6 +97,7 @@ export class Watcher {
     assetCode,
     onMessage,
     onError,
+    account,
     watchlist = [],
     timeout = 5000,
     isRetry = false,
@@ -101,6 +108,7 @@ export class Watcher {
     const allParams = {
       authToken,
       assetCode,
+      account,
       onMessage,
       onError,
       watchlist,
@@ -131,11 +139,23 @@ export class Watcher {
       this._watchAllTransactionsRegistry[assetCode] = true;
     }
 
-    this.anchor
-      .sep24()
+    let sepObj;
+    switch (this.sepType) {
+      case WatcherSepType.SEP6:
+        sepObj = this.anchor.sep6();
+        break;
+      case WatcherSepType.SEP24:
+        sepObj = this.anchor.sep24();
+        break;
+      default:
+        break;
+    }
+
+    sepObj
       .getTransactionsForAsset({
         authToken,
         assetCode,
+        account,
         lang,
         kind,
         noOlderThan,
@@ -313,9 +333,20 @@ export class Watcher {
       };
     }
 
+    let sepObj;
+    switch (this.sepType) {
+      case WatcherSepType.SEP6:
+        sepObj = this.anchor.sep6();
+        break;
+      case WatcherSepType.SEP24:
+        sepObj = this.anchor.sep24();
+        break;
+      default:
+        break;
+    }
+
     // do this all asynchronously (since this func needs to return a cancel fun)
-    this.anchor
-      .sep24()
+    sepObj
       .getTransactionBy({ authToken, id, lang })
       .then((transaction: AnchorTransaction) => {
         // make sure we're still watching
@@ -395,3 +426,5 @@ export class Watcher {
     };
   }
 }
+
+export * from "./getTransactions";

@@ -5,6 +5,7 @@ export type WatchTransactionsParams = {
   assetCode: string;
   onMessage: (transaction: AnchorTransaction) => void;
   onError: (error: AnchorTransaction | Error) => void;
+  account?: string;
   watchlist?: string[];
   timeout?: number;
   isRetry?: boolean;
@@ -31,4 +32,9 @@ export type WatcherStopFunction = () => void;
 export interface WatcherResponse {
   refresh: WatcherRefreshFunction;
   stop: WatcherStopFunction;
+}
+
+export enum WatcherSepType {
+  SEP6 = "SEP6",
+  SEP24 = "SEP24",
 }
