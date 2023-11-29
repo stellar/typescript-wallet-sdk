@@ -150,4 +150,93 @@ describe("SEP-6", () => {
     const resp = await sep6.withdrawExchange({ authToken, params });
     expect(resp.id).toBeTruthy();
   });
+
+  it("should get transactions", async () => {
+    const auth = await anchor.sep10();
+    const authToken = await auth.authenticate({ accountKp });
+
+    let resp = await anchor.sep6().getTransactionsForAsset({
+      authToken,
+      assetCode: "SRT",
+      account: accountKp.publicKey,
+    });
+    expect(resp[0].id).toBeTruthy();
+
+    const id = resp[0].id;
+
+    resp = await anchor.sep6().getTransactionBy({ authToken, id });
+
+    expect(resp.id).toEqual(id);
+  });
+
+  let txId;
+
+  it("should watch all transactions", async () => {
+    const auth = await anchor.sep10();
+    const authToken = await auth.authenticate({ accountKp });
+
+    const watcher = anchor.sep6().watcher();
+
+    let messageCount = 0;
+    let errorCount = 0;
+    const onMessage = (m) => {
+      expect(m.id).toBeTruthy();
+      messageCount += 1;
+      txId = m.id;
+    };
+    const onError = (e) => {
+      expect(e).toBeFalsy();
+      errorCount += 1;
+    };
+
+    const { stop } = watcher.watchAllTransactions({
+      authToken,
+      assetCode: "SRT",
+      account: accountKp.publicKey,
+      onMessage,
+      onError,
+      timeout: 1,
+    });
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    stop();
+    expect(messageCount > 0).toBe(true);
+    expect(errorCount).toBe(0);
+  });
+
+  it("should watch one transaction", async () => {
+    const auth = await anchor.sep10();
+    const authToken = await auth.authenticate({ accountKp });
+
+    const watcher = anchor.sep6().watcher();
+
+    let messageCount = 0;
+    let errorCount = 0;
+    let successCount = 0;
+    const onMessage = (m) => {
+      expect(m.id).toBeTruthy();
+      messageCount += 1;
+    };
+    const onError = (e) => {
+      expect(e).toBeFalsy();
+      errorCount += 1;
+    };
+    const onSuccess = (s) => {
+      expect(s.id).toBeTruthy();
+      successCount += 1;
+    };
+    const { stop } = watcher.watchOneTransaction({
+      authToken,
+      assetCode: "SRT",
+      id: txId,
+      onSuccess,
+      onMessage,
+      onError,
+      timeout: 1,
+    });
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    stop();
+    expect(messageCount > 0).toBe(true);
+    expect(errorCount).toBe(0);
+    expect(successCount).toBe(0);
+  });
 });

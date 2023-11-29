@@ -37,6 +37,7 @@ export interface ProcessingAnchorTransaction extends BaseTransaction {
   amount_out_asset?: string;
   amount_out: string;
   amount_fee_asset?: string;
+  quote_id?: string;
   amount_fee: string;
   completed_at?: string;
   stellar_transaction_id?: string;
@@ -59,6 +60,23 @@ export interface WithdrawTransaction extends ProcessingAnchorTransaction {
   withdraw_memo_type: MemoType;
   withdraw_anchor_account: string;
 }
+
+export type Sep6Transaction = DepositTransaction &
+  WithdrawTransaction & {
+    from?: string;
+    external_extra?: string;
+    external_extra_text?: string;
+    required_info_message?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    required_info_updates?: any;
+    required_customer_info_message?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    required_customer_info_updates?: any;
+    instructions?: {
+      value: string;
+      description: string;
+    };
+  };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface ErrorTransaction

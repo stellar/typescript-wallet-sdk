@@ -2,7 +2,10 @@ import { AxiosInstance } from "axios";
 import queryString from "query-string";
 
 import { Anchor } from "../Anchor";
-import { ServerRequestFailedError } from "../Exceptions";
+import {
+  ServerRequestFailedError,
+  MissingTransactionIdError,
+} from "../Exceptions";
 import {
   Sep6Info,
   Sep6Params,
@@ -11,7 +14,17 @@ import {
   Sep6DepositResponse,
   Sep6WithdrawResponse,
   Sep6ExchangeParams,
+  Sep6Transaction,
+  GetTransactionParams,
+  GetTransactionsParams,
+  WatcherSepType,
 } from "../Types";
+import {
+  Watcher,
+  _getTransactionsForAsset,
+  _getTransactionBy,
+} from "../Watcher";
+import { camelToSnakeCaseObject } from "../Utils";
 
 /**
  * Flow for creating deposits and withdrawals with an anchor using SEP-6.
@@ -176,5 +189,105 @@ export class Sep6 {
       }
       throw e;
     }
+  }
+
+  /**
+   * Creates a new instance of the Watcher class, to watch sep6 transactions.
+   * @returns {Watcher} A new Watcher instance.
+   */
+  watcher(): Watcher {
+    return new Watcher(this.anchor, WatcherSepType.SEP6);
+  }
+
+  /**
+   * Get account's sep6 transactions specified by asset and other params.
+   * @param {GetTransactionsParams} params - The Get Transactions params.
+   * @param {AuthToken} params.authToken - The authentication token for the account authenticated with the anchor.
+   * @param {string} params.assetCode - The target asset to query for.
+   * @param {string} params.account - The stellar account public key involved in the transactions. If the service requires SEP-10
+   * authentication, this parameter must match the authenticated account.
+   * @param {string} [params.noOlderThan] - The response should contain transactions starting on or after this date & time.
+   * @param {string} [params.limit] - The response should contain at most 'limit' transactions.
+   * @param {string} [params.kind] - The kind of transaction that is desired. E.g.: 'deposit', 'withdrawal', 'depo
+   * -exchange', 'withdrawal-exchange'.
+   * @param {string} [params.pagingId] - The response should contain transactions starting prior to this ID (exclusive).
+   * @param {string} [params.lang] - The desired language (localization), it can also accept locale in the format 'en-US'.
+   * @returns {Promise<Sep6Transaction[]>} A list of transactions as requested by the client, sorted in time-descending order.
+   * @throws {InvalidTransactionsResponseError} Anchor returns an invalid response.
+   * @throws {ServerRequestFailedError} If server request fails.
+   */
+  async getTransactionsForAsset({
+    authToken,
+    assetCode,
+    account,
+    noOlderThan,
+    limit,
+    kind,
+    pagingId,
+    lang = this.anchor.language,
+  }: GetTransactionsParams & { account: string }): Promise<Sep6Transaction[]> {
+    const toml = await this.anchor.sep1();
+    const transferServerEndpoint = toml.transferServer;
+
+    // Let's convert all params to snake case for the API call
+    const apiParams = camelToSnakeCaseObject({
+      assetCode,
+      account,
+      noOlderThan,
+      limit,
+      kind,
+      pagingId,
+      lang,
+    });
+
+    return _getTransactionsForAsset<Sep6Transaction>(
+      authToken,
+      apiParams,
+      transferServerEndpoint,
+      this.httpClient,
+    );
+  }
+
+  /**
+   * Get single sep6 transaction's current status and details from the anchor.
+   * @param {GetTransactionParams} params - The Get Transactions params.
+   * @param {AuthToken} params.authToken - The authentication token for the account authenticated with the anchor.
+   * @param {string} [params.id] - The transaction ID.
+   * @param {string} [params.stellarTransactionId] - The Stellar transaction ID.
+   * @param {string} [params.externalTransactionId] - The external transaction ID.
+   * @param {string} [params.lang] - The language setting.
+   * @returns {Promise<Sep6Transaction>} The transaction object.
+   * @throws {MissingTransactionIdError} If none of the ID parameters is provided.
+   * @throws {InvalidTransactionResponseError} If the anchor returns an invalid transaction response.
+   * @throws {ServerRequestFailedError} If the server request fails.
+   */
+  async getTransactionBy({
+    authToken,
+    id,
+    stellarTransactionId,
+    externalTransactionId,
+    lang = this.anchor.language,
+  }: GetTransactionParams): Promise<Sep6Transaction> {
+    if (!id && !stellarTransactionId && !externalTransactionId) {
+      throw new MissingTransactionIdError();
+    }
+
+    const toml = await this.anchor.sep1();
+    const transferServerEndpoint = toml.transferServer;
+
+    // Let's convert all params to snake case for the API call
+    const apiParams = camelToSnakeCaseObject({
+      id,
+      stellarTransactionId,
+      externalTransactionId,
+      lang,
+    });
+
+    return _getTransactionBy<Sep6Transaction>(
+      authToken,
+      apiParams,
+      transferServerEndpoint,
+      this.httpClient,
+    );
   }
 }

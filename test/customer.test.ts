@@ -78,5 +78,5 @@ describe("Customer", () => {
 
     // Delete
     await sep12.delete(accountKp.publicKey);
-  });
+  }, 20000);
 });

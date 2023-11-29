@@ -1,13 +1,10 @@
 import { AxiosInstance } from "axios";
-import queryString from "query-string";
 
 import { Anchor } from "../Anchor";
 import {
   AssetNotSupportedError,
   ServerRequestFailedError,
   MissingTransactionIdError,
-  InvalidTransactionResponseError,
-  InvalidTransactionsResponseError,
 } from "../Exceptions";
 import {
   FLOW_TYPE,
@@ -17,8 +14,13 @@ import {
   GetTransactionParams,
   GetTransactionsParams,
   AnchorServiceInfo,
+  WatcherSepType,
 } from "../Types";
-import { Watcher } from "../Watcher";
+import {
+  Watcher,
+  _getTransactionsForAsset,
+  _getTransactionBy,
+} from "../Watcher";
 import { camelToSnakeCaseObject } from "../Utils";
 
 // Let's prevent exporting this constructor type as
@@ -182,7 +184,7 @@ export class Sep24 {
    * @returns {Watcher} A new Watcher instance.
    */
   watcher(): Watcher {
-    return new Watcher(this.anchor);
+    return new Watcher(this.anchor, WatcherSepType.SEP24);
   }
 
   /**
@@ -212,38 +214,20 @@ export class Sep24 {
     const toml = await this.anchor.sep1();
     const transferServerEndpoint = toml.transferServerSep24;
 
-    let qs: { [name: string]: string } = {};
+    // Let's convert all params to snake case for the API call
+    const apiParams = camelToSnakeCaseObject({
+      id,
+      stellarTransactionId,
+      externalTransactionId,
+      lang,
+    });
 
-    if (id) {
-      qs = { id };
-    } else if (stellarTransactionId) {
-      qs = { stellar_transaction_id: stellarTransactionId };
-    } else if (externalTransactionId) {
-      qs = { external_transaction_id: externalTransactionId };
-    }
-
-    qs = { lang, ...qs };
-
-    try {
-      const resp = await this.httpClient.get(
-        `${transferServerEndpoint}/transaction?${queryString.stringify(qs)}`,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        },
-      );
-
-      const transaction: AnchorTransaction = resp.data.transaction;
-
-      if (!transaction || Object.keys(transaction).length === 0) {
-        throw new InvalidTransactionResponseError(transaction);
-      }
-
-      return transaction;
-    } catch (e) {
-      throw new ServerRequestFailedError(e);
-    }
+    return _getTransactionBy<AnchorTransaction>(
+      authToken,
+      apiParams,
+      transferServerEndpoint,
+      this.httpClient,
+    );
   }
 
   /**
@@ -282,27 +266,11 @@ export class Sep24 {
       lang,
     });
 
-    try {
-      const resp = await this.httpClient.get(
-        `${transferServerEndpoint}/transactions?${queryString.stringify(
-          apiParams,
-        )}`,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        },
-      );
-
-      const transactions: AnchorTransaction[] = resp.data.transactions;
-
-      if (!transactions || !Array.isArray(transactions)) {
-        throw new InvalidTransactionsResponseError(transactions);
-      }
-
-      return transactions;
-    } catch (e) {
-      throw new ServerRequestFailedError(e);
-    }
+    return _getTransactionsForAsset<AnchorTransaction>(
+      authToken,
+      apiParams,
+      transferServerEndpoint,
+      this.httpClient,
+    );
   }
 }
