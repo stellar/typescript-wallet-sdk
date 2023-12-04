@@ -1,6 +1,5 @@
 import { AxiosInstance } from "axios";
-import { ServerApi, Transaction } from "stellar-sdk";
-import { AccountRecordSigners } from "stellar-sdk/lib/types/account";
+import { Horizon, Transaction } from "stellar-sdk";
 
 import {
   RecoveryServer,
@@ -156,16 +155,16 @@ export abstract class AccountRecover {
    * 2. All signers in [serverAuth] have the same weight, and the potential signer is
    * the only one with a different weight.
    * @private
-   * @param {ServerApi.AccountRecord} stellarAccount - The Stellar account to lookup existing signers on account.
+   * @param {Horizon.ServerApi.AccountRecord} stellarAccount - The Stellar account to lookup existing signers on account.
    * @param {RecoveryServerSigningMap} serverAuth - A map of recovery servers to use.
-   * @returns {AccountRecordSigners} The deduced account signer.
+   * @returns {Horizon.ServerApi.AccountRecordSigners} The deduced account signer.
    * @throws {NoDeviceKeyForAccountError} When no existing ("lost") device key is found.
    * @throws {UnableToDeduceKeyError} When no criteria match.
    */
   private deduceKey(
-    stellarAccount: ServerApi.AccountRecord,
+    stellarAccount: Horizon.ServerApi.AccountRecord,
     serverAuth: RecoveryServerSigningMap,
-  ): AccountRecordSigners {
+  ): Horizon.ServerApi.AccountRecordSigners {
     // Recovery servers addresses
     const recoveryAddresses = Object.values(serverAuth).map(
       ({ signerAddress }) => signerAddress,

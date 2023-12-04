@@ -1,5 +1,5 @@
 import { AxiosInstance } from "axios";
-import { StellarTomlResolver } from "stellar-sdk";
+import { StellarToml } from "stellar-sdk";
 
 import { Config } from "walletSdk";
 import { Sep10 } from "../Auth";
@@ -70,7 +70,7 @@ export class Anchor {
     }
 
     // fetch fresh TOML values from Anchor domain
-    const stellarToml = await StellarTomlResolver.resolve(this.homeDomain);
+    const stellarToml = await StellarToml.Resolver.resolve(this.homeDomain);
     const parsedToml = parseToml(stellarToml);
     this.toml = parsedToml;
     return parsedToml;

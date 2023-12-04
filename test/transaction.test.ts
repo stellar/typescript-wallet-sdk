@@ -41,7 +41,7 @@ describe("Muxed Transactions", () => {
       const tswtAssetBalance = receivingAccountInfo.balances.find(
         (balanceLine) => {
           const { asset_code, balance } =
-            balanceLine as Horizon.BalanceLineAsset;
+            balanceLine as Horizon.HorizonApi.BalanceLineAsset;
           return asset_code === testingAsset.code && Number(balance) > 1000;
         },
       );

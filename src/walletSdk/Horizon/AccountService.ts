@@ -1,4 +1,4 @@
-import { Keypair, Networks, Server, ServerApi } from "stellar-sdk";
+import { Keypair, Networks, Horizon } from "stellar-sdk";
 
 import { Config } from "walletSdk";
 import { SigningKeypair } from "./Account";
@@ -17,7 +17,7 @@ import { OperationsLimitExceededError } from "../Exceptions";
  * @class
  */
 export class AccountService {
-  private server: Server;
+  private server: Horizon.Server;
   private network: Networks;
 
   /**
@@ -53,16 +53,16 @@ export class AccountService {
    * Get account information from the Stellar network.
    * @param {object} params - The parameters for retrieving account information.
    * @param {string} params.accountAddress - Stellar address of the account.
-   * @param {Server} [params.serverInstance=this.server] - Horizon server instance when default doesn't work.
-   * @returns {Promise<ServerApi.AccountRecord>} Account information.
+   * @param {Horizon.HorizonApi.Server} [params.serverInstance=this.server] - Horizon server instance when default doesn't work.
+   * @returns {Promise<Horizon.ServerApi.AccountRecord>} Account information.
    */
   async getInfo({
     accountAddress,
     serverInstance = this.server,
   }: {
     accountAddress: string;
-    serverInstance?: Server;
-  }): Promise<ServerApi.AccountRecord> {
+    serverInstance?: Horizon.Server;
+  }): Promise<Horizon.ServerApi.AccountRecord> {
     return serverInstance.accounts().accountId(accountAddress).call();
   }
 
@@ -74,7 +74,7 @@ export class AccountService {
    * @param {HORIZON_ORDER} [params.order=HORIZON_ORDER.DESC] - Data order, ascending or descending, defaults to descending
    * @param {string} [params.cursor] - Cursor to specify a starting point
    * @param {boolean} [params.includeFailed=false] - Flag to include failed operations.
-   * @returns {Promise<ServerApi.CollectionPage<ServerApi.OperationRecord>>} A list of operations.
+   * @returns {Promise<Horizon.ServerApi.CollectionPage<Horizon.ServerApi.OperationRecord>>} A list of operations.
    * @throws {OperationsLimitExceededError} when maximum limit of 200 is exceeded.
    */
   async getHistory({
@@ -89,7 +89,9 @@ export class AccountService {
     order?: HORIZON_ORDER;
     cursor?: string;
     includeFailed?: boolean;
-  }): Promise<ServerApi.CollectionPage<ServerApi.OperationRecord>> {
+  }): Promise<
+    Horizon.ServerApi.CollectionPage<Horizon.ServerApi.OperationRecord>
+  > {
     if (limit > HORIZON_LIMIT_MAX) {
       throw new OperationsLimitExceededError(HORIZON_LIMIT_MAX);
     }

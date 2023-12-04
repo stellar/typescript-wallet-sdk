@@ -68,7 +68,7 @@ export class AccountDoesNotExistError extends Error {
 }
 
 export class TransactionSubmitFailedError extends Error {
-  constructor(response: Horizon.SubmitTransactionResponse) {
+  constructor(response: Horizon.HorizonApi.SubmitTransactionResponse) {
     super(`Submit transaction failed ${JSON.stringify(response)}`);
     Object.setPrototypeOf(this, TransactionSubmitFailedError.prototype);
   }

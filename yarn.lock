@@ -1961,10 +1961,10 @@ axios@^1.4.0:
     form-data "^4.0.0"
     proxy-from-env "^1.1.0"
 
-axios@^1.5.0:
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/axios/-/axios-1.5.0.tgz#f02e4af823e2e46a9768cfc74691fdd0517ea267"
-  integrity sha512-D4DdjDo5CY50Qms0qGQTTw6Q44jl7zRwY7bthds06pUGfChBCTcQs+N743eFWGEd6pRTMd6A+I87aWyFV5wiZQ==
+axios@^1.6.0:
+  version "1.6.2"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-1.6.2.tgz#de67d42c755b571d3e698df1b6504cde9b0ee9f2"
+  integrity sha512-7i24Ri4pmDRfJTR7LDBhsOTtcm+9kjX5WiY1X3wIisx6G9So3pfMkEiU7emUBe46oceVImccTEM3k6C5dbVW8A==
   dependencies:
     follow-redirects "^1.15.0"
     form-data "^4.0.0"
@@ -5194,10 +5194,10 @@ stack-utils@^2.0.3:
   dependencies:
     escape-string-regexp "^2.0.0"
 
-stellar-base@^10.0.0-beta.1:
-  version "10.0.0-soroban.8"
-  resolved "https://registry.yarnpkg.com/stellar-base/-/stellar-base-10.0.0-soroban.8.tgz#8c5671f9d5a183aeb3077746db56e65b0b5c05da"
-  integrity sha512-mtj+4EcCnp4ZyH2FzRl62/DAstTXOddHVRZdzFQ94WgyQz2yVNzt+ANDS1D/7ku4d2mIzoJIj9l0/H0A5nRgXQ==
+stellar-base@10.0.0-beta.4:
+  version "10.0.0-beta.4"
+  resolved "https://registry.yarnpkg.com/stellar-base/-/stellar-base-10.0.0-beta.4.tgz#818d3b5dd702a7d18f1db47a72837cec80616716"
+  integrity sha512-3EXDFHSahVDMTHrHiFOO8kFf5KN+AL4x5kd5rxjElElPG+385cyWDbO83GrNmDGU/u9/XiVL+riJjz5gQTv6RQ==
   dependencies:
     base32.js "^0.1.0"
     bignumber.js "^9.1.2"
@@ -5208,16 +5208,16 @@ stellar-base@^10.0.0-beta.1:
   optionalDependencies:
     sodium-native "^4.0.1"
 
-stellar-sdk@^11.0.0-beta.3:
-  version "11.0.0-beta.3"
-  resolved "https://registry.yarnpkg.com/stellar-sdk/-/stellar-sdk-11.0.0-beta.3.tgz#fbdc115d3775adad338658613df2ed97468efa0a"
-  integrity sha512-obdiB4f9bK978twh2l7EA6K3p6i3+67Vf4Bp8vrGTqDG+1iTTDHftt98uBLFVaLjB2B9hq/wXk/Mqttl+hRGHQ==
+stellar-sdk@^11.0.0-beta.6:
+  version "11.0.0-beta.6"
+  resolved "https://registry.yarnpkg.com/stellar-sdk/-/stellar-sdk-11.0.0-beta.6.tgz#3db48994fab841f09b31411290fc1ec9accdba38"
+  integrity sha512-bO1E+xSal+iUFKg9A/CoJylqkOayr58kS/qm6N/BLsKmOaYzWwGTVaRZC0cDI/ZY/bN6uDXGL/H7+W/qbgkmVA==
   dependencies:
-    axios "^1.5.0"
+    axios "^1.6.0"
     bignumber.js "^9.1.2"
     eventsource "^2.0.2"
     randombytes "^2.1.0"
-    stellar-base "^10.0.0-beta.1"
+    stellar-base "10.0.0-beta.4"
     toml "^3.0.0"
     urijs "^1.19.1"
 

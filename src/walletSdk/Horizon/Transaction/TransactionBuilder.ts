@@ -2,7 +2,7 @@ import StellarSdk, {
   TransactionBuilder as StellarTransactionBuilder,
   Account as StellarAccount,
   Transaction,
-  Server,
+  Horizon,
   Memo,
   xdr,
 } from "stellar-sdk";
@@ -41,14 +41,14 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
    * @param {StellarAccount} sourceAccount - The source account for the transaction.
    * @param {number} [baseFee] - The base fee for the transaction. If not given will use the config base fee.
    * @param {Memo} [memo] - The memo for the transaction.
-   * @param {Server.Timebounds} [timebounds] - The timebounds for the transaction. If not given will use the config timebounds.
+   * @param {Horizon.Server.Timebounds} [timebounds] - The timebounds for the transaction. If not given will use the config timebounds.
    */
   constructor(
     cfg: Config,
     sourceAccount: StellarAccount,
     baseFee?: number,
     memo?: Memo,
-    timebounds?: Server.Timebounds,
+    timebounds?: Horizon.Server.Timebounds,
   ) {
     super(sourceAccount.accountId(), []);
     this.builder = new StellarTransactionBuilder(sourceAccount, {

@@ -1,6 +1,6 @@
 import {
   Account as StellarAccount,
-  Server,
+  Horizon,
   Transaction,
   TransactionBuilder as StellarTransactionBuilder,
   FeeBumpTransaction,
@@ -30,7 +30,7 @@ import { SigningKeypair } from "./Account";
  */
 export class Stellar {
   private cfg: Config;
-  server: Server;
+  server: Horizon.Server;
 
   /**
    * Creates a new instance of the Stellar class.
@@ -54,7 +54,7 @@ export class Stellar {
    * Construct a Stellar transaction.
    * @param {TransactionParams} params - The Transaction params.
    * @param {AccountKeypair} params.sourceAddress - The source account keypair.
-   * @param {Server.Timebounds | number} [params.timebounds] - The timebounds for the transaction.
+   * @param {Horizon.Server.Timebounds | number} [params.timebounds] - The timebounds for the transaction.
    * If a number is given, then timebounds constructed from now to now + number in seconds.
    * @param {number} [params.baseFee] - The base fee for the transaction. Defaults to the config base fee.
    * @param {Memo} [params.memo] - The memo for the transaction.
@@ -76,7 +76,7 @@ export class Stellar {
       throw new AccountDoesNotExistError(this.cfg.stellar.network);
     }
 
-    let formattedTimebounds: Server.Timebounds | undefined;
+    let formattedTimebounds: Horizon.Server.Timebounds | undefined;
     if (typeof timebounds === "number") {
       formattedTimebounds = {
         minTime: 0,

@@ -1,8 +1,8 @@
-import { StellarTomlResolver } from "stellar-sdk";
+import { StellarToml } from "stellar-sdk";
 
 import { TomlInfo } from "../Types";
 
-export const parseToml = (toml: StellarTomlResolver.StellarToml): TomlInfo => {
+export const parseToml = (toml: StellarToml.Api.StellarToml): TomlInfo => {
   const tomlDocumentation = toml["DOCUMENTATION"];
   const documentation = {
     orgName: tomlDocumentation["ORG_NAME"],
