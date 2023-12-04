@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import { Networks, Server } from "stellar-sdk";
+import { Networks, Horizon } from "stellar-sdk";
 
 import { Anchor } from "./Anchor";
 import { DefaultSigner, WalletSigner } from "./Auth";
@@ -125,7 +125,7 @@ export class Config {
 }
 
 export class StellarConfiguration {
-  server: Server;
+  server: Horizon.Server;
   network: Networks;
   horizonUrl: string;
   baseFee: number;
@@ -155,7 +155,7 @@ export class StellarConfiguration {
     this.horizonUrl = horizonUrl;
     this.baseFee = baseFee;
     this.defaultTimeout = defaultTimeout;
-    this.server = new Server(horizonUrl);
+    this.server = new Horizon.Server(horizonUrl);
   }
 }
 

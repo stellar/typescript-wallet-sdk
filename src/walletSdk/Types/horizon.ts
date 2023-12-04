@@ -1,4 +1,4 @@
-import { Memo, Server, Transaction } from "stellar-sdk";
+import { Memo, Horizon, Transaction } from "stellar-sdk";
 import { AccountKeypair } from "../Horizon/Account";
 import { SponsoringBuilder, TransactionBuilder } from "walletSdk/Horizon";
 import { StellarAssetId } from "../Asset";
@@ -12,7 +12,7 @@ export type TransactionParams = {
   sourceAddress: AccountKeypair;
   baseFee?: number;
   memo?: Memo;
-  timebounds?: Server.Timebounds | number;
+  timebounds?: Horizon.Server.Timebounds | number;
 };
 
 export type FeeBumpTransactionParams = {

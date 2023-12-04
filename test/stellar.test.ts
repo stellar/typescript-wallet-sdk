@@ -167,7 +167,7 @@ describe("Stellar", () => {
 
     let acc = await stellar.server.loadAccount(kp.publicKey);
     let balance = acc.balances.find(
-      (b) => (b as Horizon.BalanceLineAsset).asset_code === "USDC",
+      (b) => (b as Horizon.HorizonApi.BalanceLineAsset).asset_code === "USDC",
     );
     expect(balance).toBeTruthy();
 
@@ -177,7 +177,7 @@ describe("Stellar", () => {
 
     acc = await stellar.server.loadAccount(kp.publicKey);
     balance = acc.balances.find(
-      (b) => (b as Horizon.BalanceLineAsset).asset_code === "USDC",
+      (b) => (b as Horizon.HorizonApi.BalanceLineAsset).asset_code === "USDC",
     );
     expect(balance).toBeFalsy();
   }, 20000);

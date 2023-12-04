@@ -83,7 +83,8 @@ describe("Horizon", () => {
     expect(
       response.balances.some(
         (balance) =>
-          (balance as Horizon.BalanceLineAsset).asset_code === "USDC",
+          (balance as Horizon.HorizonApi.BalanceLineAsset).asset_code ===
+          "USDC",
       ),
     ).toBeTruthy();
   });
@@ -112,12 +113,14 @@ describe("Horizon", () => {
     expect(response.records[0]).toHaveProperty("created_at");
     expect(
       response.records.some(
-        ({ type }) => type === Horizon.OperationResponseType.createAccount,
+        ({ type }) =>
+          type === Horizon.HorizonApi.OperationResponseType.createAccount,
       ),
     ).toBeTruthy();
     expect(
       response.records.some(
-        ({ type }) => type === Horizon.OperationResponseType.changeTrust,
+        ({ type }) =>
+          type === Horizon.HorizonApi.OperationResponseType.changeTrust,
       ),
     ).toBeTruthy();
   });
