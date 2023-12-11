@@ -157,7 +157,7 @@ export class Sep24 {
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${authToken.token}`,
           },
         },
       );

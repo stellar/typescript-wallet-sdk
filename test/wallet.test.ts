@@ -11,7 +11,11 @@ import {
 import { DefaultClient } from "../src/walletSdk";
 import { ServerRequestFailedError } from "../src/walletSdk/Exceptions";
 import { Watcher } from "../src/walletSdk/Watcher";
-import { TransactionStatus, AnchorTransaction } from "../src/walletSdk/Types";
+import {
+  TransactionStatus,
+  AnchorTransaction,
+  AuthToken,
+} from "../src/walletSdk/Types";
 import {
   WalletSigner,
   DefaultSigner,
@@ -64,7 +68,7 @@ describe("SEP-24 flow", () => {
 
 let anchor: Anchor;
 let accountKp: SigningKeypair;
-let authToken: string;
+let authToken: AuthToken;
 const makeTransaction = (eta: number, txStatus: TransactionStatus) => ({
   kind: "deposit",
   id: "TEST",
@@ -94,13 +98,13 @@ describe("Anchor", () => {
     let auth = await anchor.sep10();
     authToken = await auth.authenticate({ accountKp });
     expect(authToken).toBeTruthy();
-    expect(typeof authToken).toBe("string");
+    expect(authToken.account).toBeTruthy();
 
     // alias
     auth = await anchor.auth();
     authToken = await auth.authenticate({ accountKp });
     expect(authToken).toBeTruthy();
-    expect(typeof authToken).toBe("string");
+    expect(authToken.account).toBeTruthy();
   });
 
   it("should be able to authenticate with client domain", async () => {

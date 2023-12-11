@@ -7,6 +7,7 @@ import {
   GetCustomerResponse,
   AddCustomerResponse,
   AddCustomerParams,
+  AuthToken,
 } from "../Types";
 
 /**
@@ -24,17 +25,21 @@ export class Sep12 {
   /**
    * Creates a new instance of the Sep12 class.
    * @constructor
-   * @param {string} authToken - The authentication token for authenticating with the server.
+   * @param {AuthToken} authToken - The authentication token for authenticating with the server.
    * @param {string} baseUrl - The KYC url.
    * @param {AxiosInstance} httpClient - An Axios instance for making HTTP requests.
    */
-  constructor(authToken: string, baseUrl: string, httpClient: AxiosInstance) {
+  constructor(
+    authToken: AuthToken,
+    baseUrl: string,
+    httpClient: AxiosInstance,
+  ) {
     this.authToken = authToken;
     this.baseUrl = baseUrl;
     this.httpClient = httpClient;
     this.headers = {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${this.authToken}`,
+      Authorization: `Bearer ${this.authToken.token}`,
     };
   }
 
@@ -66,9 +71,9 @@ export class Sep12 {
    * Add a new customer. Customer info is given in sep9Info param. If it
    * is binary type (eg. Buffer of an image) include it in sep9BinaryInfo.
    * @param {AddCustomerParams} params - The parameters for adding a customer.
-   * @param {CustomerInfoMap} params.sep9Info - Customer information. What fields you should
+   * @param {CustomerInfoMap} [params.sep9Info] - Customer information. What fields you should
    * give is indicated by the anchor.
-   * @param {CustomerInfoMap} params.sep9BinaryInfo - Customer information that is in binary
+   * @param {CustomerInfoMap} [params.sep9BinaryInfo] - Customer information that is in binary
    * format (eg. Buffer of an image).
    * @param {string} [params.type] - The type of the customer.
    * @param {string} [params.memo] - A memo associated with the customer.
@@ -106,9 +111,9 @@ export class Sep12 {
    * Updates an existing customer. Customer info is given in sep9Info param. If it
    * is binary type (eg. Buffer of an image) include it in sep9BinaryInfo.
    * @param {AddCustomerParams} params - The parameters for adding a customer.
-   * @param {CustomerInfoMap} params.sep9Info - Customer information. What fields you should
+   * @param {CustomerInfoMap} [params.sep9Info] - Customer information. What fields you should
    * give is indicated by the anchor.
-   * @param {CustomerInfoMap} params.sep9BinaryInfo - Customer information that is in binary
+   * @param {CustomerInfoMap} [params.sep9BinaryInfo] - Customer information that is in binary
    * format (eg. Buffer of an image).
    * @param {string} [params.id] - The id of the customer.
    * @param {string} [params.type] - The type of the customer.

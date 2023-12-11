@@ -236,7 +236,7 @@ export abstract class AccountRecover {
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${auth.authToken}`,
+            Authorization: `Bearer ${auth.authToken.token}`,
           },
         },
       );

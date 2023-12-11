@@ -1,6 +1,8 @@
 import { MemoType } from "stellar-sdk";
 import { Optional } from "utility-types";
 
+import { AuthToken } from "./auth";
+
 export interface AnchorServiceInfo {
   deposit: AssetInfoMap;
   withdraw: AssetInfoMap;
@@ -101,7 +103,7 @@ export interface Payment {
 }
 
 export type GetTransactionParams = {
-  authToken: string;
+  authToken: AuthToken;
   id?: string;
   stellarTransactionId?: string;
   externalTransactionId?: string;
@@ -109,7 +111,7 @@ export type GetTransactionParams = {
 };
 
 export type GetTransactionsParams = {
-  authToken: string;
+  authToken: AuthToken;
   assetCode: string;
   noOlderThan?: string;
   limit?: number;

@@ -1,6 +1,7 @@
 import { AxiosInstance } from "axios";
 import queryString from "query-string";
 
+import { AuthToken } from "../Types";
 import {
   ServerRequestFailedError,
   InvalidTransactionsResponseError,
@@ -8,7 +9,7 @@ import {
 } from "../Exceptions";
 
 export const _getTransactionsForAsset = async <T>(
-  authToken: string,
+  authToken: AuthToken,
   params: { [key: string]: string | number },
   endpoint: string,
   client: AxiosInstance,
@@ -18,7 +19,7 @@ export const _getTransactionsForAsset = async <T>(
       `${endpoint}/transactions?${queryString.stringify(params)}`,
       {
         headers: {
-          Authorization: `Bearer ${authToken}`,
+          Authorization: `Bearer ${authToken.token}`,
         },
       },
     );
@@ -36,7 +37,7 @@ export const _getTransactionsForAsset = async <T>(
 };
 
 export const _getTransactionBy = async <T>(
-  authToken: string,
+  authToken: AuthToken,
   params: { [key: string]: string | number },
   endpoint: string,
   client: AxiosInstance,
@@ -46,7 +47,7 @@ export const _getTransactionBy = async <T>(
       `${endpoint}/transaction?${queryString.stringify(params)}`,
       {
         headers: {
-          Authorization: `Bearer ${authToken}`,
+          Authorization: `Bearer ${authToken.token}`,
         },
       },
     );

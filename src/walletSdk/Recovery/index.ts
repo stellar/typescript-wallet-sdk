@@ -156,7 +156,7 @@ export class Recovery extends AccountRecover {
           const resp = await this.httpClient.get(requestUrl, {
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${authToken}`,
+              Authorization: `Bearer ${authToken.token}`,
             },
           });
 
@@ -288,7 +288,7 @@ export class Recovery extends AccountRecover {
             {
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${authToken}`,
+                Authorization: `Bearer ${authToken.token}`,
               },
             },
           );
