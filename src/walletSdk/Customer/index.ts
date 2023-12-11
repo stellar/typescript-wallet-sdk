@@ -162,10 +162,13 @@ export class Sep12 {
    * @param {string} accountAddress - The account address of the customer to delete.
    * @param {string} [memo] - An optional memo for customer identification.
    */
-  async delete(accountAddress: string, memo?: string) {
-    await this.httpClient.delete(`${this.baseUrl}/customer/${accountAddress}`, {
-      data: { memo },
-      headers: this.headers,
-    });
+  async delete(accountAddress?: string, memo?: string) {
+    await this.httpClient.delete(
+      `${this.baseUrl}/customer/${accountAddress || this.authToken.account}`,
+      {
+        data: { memo },
+        headers: this.headers,
+      },
+    );
   }
 }
