@@ -77,6 +77,6 @@ describe("Customer", () => {
     expect(Object.keys(resp.data.fields).length).toBe(0);
 
     // Delete
-    await sep12.delete(accountKp.publicKey);
+    await sep12.delete();
   }, 20000);
 });

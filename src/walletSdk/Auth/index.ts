@@ -147,17 +147,16 @@ export class Sep10 {
         throw new MissingTokenError();
       }
 
-      const authToken: AuthToken = resp.data.token;
-      validateToken(authToken);
+      validateToken(resp.data.token);
 
-      return authToken;
+      return AuthToken.from(resp.data.token);
     } catch (e) {
       throw new ServerRequestFailedError(e);
     }
   }
 }
 
-const validateToken = (token: AuthToken) => {
+const validateToken = (token: string) => {
   const parsedToken = decode(token);
   if (!parsedToken) {
     throw new InvalidTokenError();

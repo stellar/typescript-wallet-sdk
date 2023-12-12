@@ -18,6 +18,7 @@ import {
   GetTransactionParams,
   GetTransactionsParams,
   WatcherSepType,
+  AuthToken,
 } from "../Types";
 import {
   Watcher,
@@ -76,7 +77,7 @@ export class Sep6 {
    * the anchor are given in the response.
    *
    * @param {object} options - The options for the deposit.
-   * @param {string} options.authToken - The authentication token.
+   * @param {AuthToken} options.authToken - The authentication token.
    * @param {Sep6DepositParams} options.params - The parameters for the deposit request.
    *
    * @returns {Promise<Sep6DepositResponse>} Sep6 deposit response, containing next steps if needed
@@ -88,7 +89,7 @@ export class Sep6 {
     authToken,
     params,
   }: {
-    authToken: string;
+    authToken: AuthToken;
     params: Sep6DepositParams;
   }): Promise<Sep6DepositResponse> {
     return this.flow({ type: "deposit", authToken, params });
@@ -98,7 +99,7 @@ export class Sep6 {
    * Initiates a withdrawal using SEP-6.
    *
    * @param {object} options - The options for the withdrawal operation.
-   * @param {string} options.authToken - The authentication token.
+   * @param {AuthToken} options.authToken - The authentication token.
    * @param {Sep6WithdrawParams} options.params - The parameters for the withdrawal request.
    *
    * @returns {Promise<Sep6WithdrawResponse>} Sep6 withdraw response.
@@ -107,7 +108,7 @@ export class Sep6 {
     authToken,
     params,
   }: {
-    authToken: string;
+    authToken: AuthToken;
     params: Sep6WithdrawParams;
   }): Promise<Sep6WithdrawResponse> {
     return this.flow({ type: "withdraw", authToken, params });
@@ -118,7 +119,7 @@ export class Sep6 {
    * that require an exchange.
    *
    * @param {object} options - The options for the deposit exchange.
-   * @param {string} options.authToken - The authentication token.
+   * @param {AuthToken} options.authToken - The authentication token.
    * @param {Sep6ExchangeParams} options.params - The parameters for the deposit request.
    *
    * @returns {Promise<Sep6DepositResponse>} Sep6 deposit response, containing next steps if needed
@@ -130,7 +131,7 @@ export class Sep6 {
     authToken,
     params,
   }: {
-    authToken: string;
+    authToken: AuthToken;
     params: Sep6ExchangeParams;
   }): Promise<Sep6DepositResponse> {
     return this.flow({ type: "deposit-exchange", authToken, params });
@@ -141,7 +142,7 @@ export class Sep6 {
    * that require an exchange.
    *
    * @param {object} options - The options for the deposit exchange.
-   * @param {string} options.authToken - The authentication token.
+   * @param {AuthToken} options.authToken - The authentication token.
    * @param {Sep6ExchangeParams} options.params - The parameters for the deposit request.
    *
    * @returns {Promise<Sep6WithdrawResponse>} Sep6 withdraw response, containing next steps if needed
@@ -153,7 +154,7 @@ export class Sep6 {
     authToken,
     params,
   }: {
-    authToken: string;
+    authToken: AuthToken;
     params: Sep6ExchangeParams;
   }): Promise<Sep6WithdrawResponse> {
     return this.flow({ type: "withdraw-exchange", authToken, params });
@@ -165,7 +166,7 @@ export class Sep6 {
     params,
   }: {
     type: "deposit" | "withdraw" | "deposit-exchange" | "withdraw-exchange";
-    authToken: string;
+    authToken: AuthToken;
     params: Sep6DepositParams | Sep6WithdrawParams | Sep6ExchangeParams;
   }) {
     const { transferServer } = await this.anchor.sep1();
@@ -176,7 +177,7 @@ export class Sep6 {
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${authToken.token}`,
           },
         },
       );
@@ -204,8 +205,6 @@ export class Sep6 {
    * @param {GetTransactionsParams} params - The Get Transactions params.
    * @param {AuthToken} params.authToken - The authentication token for the account authenticated with the anchor.
    * @param {string} params.assetCode - The target asset to query for.
-   * @param {string} params.account - The stellar account public key involved in the transactions. If the service requires SEP-10
-   * authentication, this parameter must match the authenticated account.
    * @param {string} [params.noOlderThan] - The response should contain transactions starting on or after this date & time.
    * @param {string} [params.limit] - The response should contain at most 'limit' transactions.
    * @param {string} [params.kind] - The kind of transaction that is desired. E.g.: 'deposit', 'withdrawal', 'depo
@@ -219,20 +218,19 @@ export class Sep6 {
   async getTransactionsForAsset({
     authToken,
     assetCode,
-    account,
     noOlderThan,
     limit,
     kind,
     pagingId,
     lang = this.anchor.language,
-  }: GetTransactionsParams & { account: string }): Promise<Sep6Transaction[]> {
+  }: GetTransactionsParams): Promise<Sep6Transaction[]> {
     const toml = await this.anchor.sep1();
     const transferServerEndpoint = toml.transferServer;
 
     // Let's convert all params to snake case for the API call
     const apiParams = camelToSnakeCaseObject({
       assetCode,
-      account,
+      account: authToken.account,
       noOlderThan,
       limit,
       kind,

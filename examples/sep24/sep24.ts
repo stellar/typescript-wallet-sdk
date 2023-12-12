@@ -88,7 +88,7 @@ const createAccount = async () => {
 };
 
 // Create Deposit
-let authToken: string;
+let authToken: Types.AuthToken;
 export const runDeposit = async (anchor: Anchor, kp: SigningKeypair) => {
   console.log("\ncreating deposit ...");
   const auth = await anchor.sep10();

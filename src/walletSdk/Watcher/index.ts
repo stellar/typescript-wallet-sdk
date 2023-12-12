@@ -79,11 +79,10 @@ export class Watcher {
    * You may also provide an array of transaction ids, `watchlist`, and this
    * watcher will always react to transactions whose ids are in the watchlist.
    * @param {WatchTransactionsParams} params - The Watch Transactions params.
-   * @param {string} params.authToken - The authentication token used for authenticating with the anchor.
+   * @param {AuthToken} params.authToken - The authentication token used for authenticating with the anchor.
    * @param {string} params.assetCode - The asset code to filter transactions by.
    * @param {Function} params.onMessage - A callback function to handle incoming transaction messages.
    * @param {Function} params.onError - A callback function to handle errors during transaction streaming.
-   * @param {string} [params.account] - The stellar account public key involved in the transactions.
    * @param {Array<string>} [params.watchlist=[]] - An optional array of specific transaction IDs to watch.
    * @param {number} [params.timeout=5000] - The timeout duration for the streaming connection (in milliseconds).
    * @param {boolean} [params.isRetry=false] - Indicates whether this is a retry attempt (optional).
@@ -97,7 +96,6 @@ export class Watcher {
     assetCode,
     onMessage,
     onError,
-    account,
     watchlist = [],
     timeout = 5000,
     isRetry = false,
@@ -108,7 +106,6 @@ export class Watcher {
     const allParams = {
       authToken,
       assetCode,
-      account,
       onMessage,
       onError,
       watchlist,
@@ -155,7 +152,6 @@ export class Watcher {
       .getTransactionsForAsset({
         authToken,
         assetCode,
-        account,
         lang,
         kind,
         noOlderThan,
@@ -282,7 +278,7 @@ export class Watcher {
    * * onError - When there's a runtime error, or the transaction comes back as
    * no_market / too_small / too_large / error.
    * @param {WatchTransactionParams} params - The Watch Transaction params.
-   * @param {string} params.authToken - The authentication token used for authenticating with th anchor.
+   * @param {AuthToken} params.authToken - The authentication token used for authenticating with th anchor.
    * @param {string} params.assetCode - The asset code to filter transactions by.
    * @param {string} params.id - The id of the transaction to watch.
    * @param {Function} params.onMessage - A callback function to handle incoming transaction messages.

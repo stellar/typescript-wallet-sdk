@@ -10,7 +10,7 @@ import {
 } from "../Exceptions";
 import { Sep6 } from "./Sep6";
 import { Sep24 } from "./Sep24";
-import { AnchorServiceInfo, TomlInfo } from "../Types";
+import { AnchorServiceInfo, TomlInfo, AuthToken } from "../Types";
 import { parseToml } from "../Utils";
 
 // Let's prevent exporting this constructor type as
@@ -125,11 +125,11 @@ export class Anchor {
 
   /**
    * Create new customer object to handle customer records with the anchor using SEP-12.
-   * @param {string} authToken - The authentication token.
+   * @param {AuthToken} authToken - The authentication token.
    * @returns {Promise<Sep12>} - A Sep12 customer instance.
    * @throws {KYCServerNotFoundError} - If the KYC server information is not available.
    */
-  async sep12(authToken: string): Promise<Sep12> {
+  async sep12(authToken: AuthToken): Promise<Sep12> {
     const tomlInfo = await this.sep1();
     const kycServer = tomlInfo?.kycServer;
     if (!kycServer) {
@@ -140,10 +140,10 @@ export class Anchor {
 
   /**
    * Create new customer object to handle customer records using the `sep12` method.
-   * @param {string} authToken - The authentication token.
+   * @param {AuthToken} authToken - The authentication token.
    * @returns {Promise<Customer>} - A Customer instance.
    */
-  async customer(authToken: string): Promise<Customer> {
+  async customer(authToken: AuthToken): Promise<Customer> {
     return this.sep12(authToken);
   }
 
