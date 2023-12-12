@@ -205,8 +205,6 @@ export class Sep6 {
    * @param {GetTransactionsParams} params - The Get Transactions params.
    * @param {AuthToken} params.authToken - The authentication token for the account authenticated with the anchor.
    * @param {string} params.assetCode - The target asset to query for.
-   * @param {string} params.account - The stellar account public key involved in the transactions. If the service requires SEP-10
-   * authentication, this parameter must match the authenticated account.
    * @param {string} [params.noOlderThan] - The response should contain transactions starting on or after this date & time.
    * @param {string} [params.limit] - The response should contain at most 'limit' transactions.
    * @param {string} [params.kind] - The kind of transaction that is desired. E.g.: 'deposit', 'withdrawal', 'depo
@@ -220,20 +218,19 @@ export class Sep6 {
   async getTransactionsForAsset({
     authToken,
     assetCode,
-    account,
     noOlderThan,
     limit,
     kind,
     pagingId,
     lang = this.anchor.language,
-  }: GetTransactionsParams & { account: string }): Promise<Sep6Transaction[]> {
+  }: GetTransactionsParams): Promise<Sep6Transaction[]> {
     const toml = await this.anchor.sep1();
     const transferServerEndpoint = toml.transferServer;
 
     // Let's convert all params to snake case for the API call
     const apiParams = camelToSnakeCaseObject({
       assetCode,
-      account,
+      account: authToken.account,
       noOlderThan,
       limit,
       kind,

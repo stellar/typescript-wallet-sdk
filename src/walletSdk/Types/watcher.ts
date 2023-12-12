@@ -6,7 +6,6 @@ export type WatchTransactionsParams = {
   assetCode: string;
   onMessage: (transaction: AnchorTransaction) => void;
   onError: (error: AnchorTransaction | Error) => void;
-  account?: string;
   watchlist?: string[];
   timeout?: number;
   isRetry?: boolean;

@@ -83,7 +83,6 @@ export class Watcher {
    * @param {string} params.assetCode - The asset code to filter transactions by.
    * @param {Function} params.onMessage - A callback function to handle incoming transaction messages.
    * @param {Function} params.onError - A callback function to handle errors during transaction streaming.
-   * @param {string} [params.account] - The stellar account public key involved in the transactions.
    * @param {Array<string>} [params.watchlist=[]] - An optional array of specific transaction IDs to watch.
    * @param {number} [params.timeout=5000] - The timeout duration for the streaming connection (in milliseconds).
    * @param {boolean} [params.isRetry=false] - Indicates whether this is a retry attempt (optional).
@@ -97,7 +96,6 @@ export class Watcher {
     assetCode,
     onMessage,
     onError,
-    account,
     watchlist = [],
     timeout = 5000,
     isRetry = false,
@@ -108,7 +106,6 @@ export class Watcher {
     const allParams = {
       authToken,
       assetCode,
-      account,
       onMessage,
       onError,
       watchlist,
@@ -155,7 +152,6 @@ export class Watcher {
       .getTransactionsForAsset({
         authToken,
         assetCode,
-        account,
         lang,
         kind,
         noOlderThan,

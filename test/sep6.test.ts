@@ -158,7 +158,6 @@ describe("SEP-6", () => {
     let resp = await anchor.sep6().getTransactionsForAsset({
       authToken,
       assetCode: "SRT",
-      account: accountKp.publicKey,
     });
     expect(resp[0].id).toBeTruthy();
 
@@ -192,7 +191,6 @@ describe("SEP-6", () => {
     const { stop } = watcher.watchAllTransactions({
       authToken,
       assetCode: "SRT",
-      account: accountKp.publicKey,
       onMessage,
       onError,
       timeout: 1,
