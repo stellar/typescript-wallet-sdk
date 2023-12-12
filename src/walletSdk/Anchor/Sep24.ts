@@ -87,7 +87,7 @@ export class Sep24 {
    * Initiates a withdrawal request.
    * @param {Sep24PostParams} params - The SEP-24 Post params.
    * @param {string} params.assetCode - The asset to withdraw.
-   * @param {string} params.authToken - Authentication token for the request.
+   * @param {AuthToken} params.authToken - Authentication token for the request.
    * @param {string} [params.lang] - The language for the request (defaults to the Anchor's language).
    * @param {ExtraFields} [params.extraFields] - Additional fields for the request.
    * @param {string} [params.withdrawalAccount] - The withdrawal account.

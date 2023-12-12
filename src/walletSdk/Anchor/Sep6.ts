@@ -99,7 +99,7 @@ export class Sep6 {
    * Initiates a withdrawal using SEP-6.
    *
    * @param {object} options - The options for the withdrawal operation.
-   * @param {string} options.authToken - The authentication token.
+   * @param {AuthToken} options.authToken - The authentication token.
    * @param {Sep6WithdrawParams} options.params - The parameters for the withdrawal request.
    *
    * @returns {Promise<Sep6WithdrawResponse>} Sep6 withdraw response.
@@ -119,7 +119,7 @@ export class Sep6 {
    * that require an exchange.
    *
    * @param {object} options - The options for the deposit exchange.
-   * @param {string} options.authToken - The authentication token.
+   * @param {AuthToken} options.authToken - The authentication token.
    * @param {Sep6ExchangeParams} options.params - The parameters for the deposit request.
    *
    * @returns {Promise<Sep6DepositResponse>} Sep6 deposit response, containing next steps if needed
@@ -142,7 +142,7 @@ export class Sep6 {
    * that require an exchange.
    *
    * @param {object} options - The options for the deposit exchange.
-   * @param {string} options.authToken - The authentication token.
+   * @param {AuthToken} options.authToken - The authentication token.
    * @param {Sep6ExchangeParams} options.params - The parameters for the deposit request.
    *
    * @returns {Promise<Sep6WithdrawResponse>} Sep6 withdraw response, containing next steps if needed
