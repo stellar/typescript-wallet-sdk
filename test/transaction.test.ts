@@ -313,7 +313,9 @@ describe("Path Payment", () => {
     const txBuilder = await stellar.transaction({
       sourceAddress: sourceKp,
     });
-    const txn = txBuilder.swap(new NativeAssetId(), usdcAsset, ".1").build();
+    const txn = txBuilder
+      .swap(new NativeAssetId(), new NativeAssetId(), ".1")
+      .build();
     sourceKp.sign(txn);
     const success = await stellar.submitTransaction(txn);
     expect(success).toBe(true);
