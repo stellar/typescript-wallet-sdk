@@ -4,7 +4,9 @@ import {
   Transaction,
   TransactionBuilder as StellarTransactionBuilder,
   FeeBumpTransaction,
+  Federation,
 } from "stellar-sdk";
+import axios from "axios";
 
 import { Config } from "walletSdk";
 import { AccountService } from "./AccountService";
@@ -223,5 +225,36 @@ export class Stellar {
    */
   decodeTransaction(xdr: string): Transaction | FeeBumpTransaction {
     return StellarTransactionBuilder.fromXDR(xdr, this.cfg.stellar.network);
+  }
+
+  /**
+   * Returns the recommended fee (stroops) to use in a transaction based on the current
+   * stellar network fee stats.
+   * @returns {string} The recommended fee amount in stroops.
+   */
+  async getRecommendedFee(): Promise<string> {
+    const stats = await this.server.feeStats();
+    return stats.max_fee.mode;
+  }
+
+  /**
+   * Resolves a federation address into a stellar address.
+   * @see {@link https://developers.stellar.org/docs/encyclopedia/federation}
+   * @param {string} fedAddress - The federation address (eg. jed*stellar.org).
+   * @returns {string} The stellar address associated with the federation address.
+   */
+  async resolveFederation(fedAddress: string): Promise<string> {
+    const resp = await Federation.Server.resolve(fedAddress);
+    return resp.account_id;
+  }
+
+  /**
+   * Funds an account on the stellar test network. If it is already funded then call will error.
+   * Please note: only funds on the testnet network.
+   * @see {@link https://developers.stellar.org/docs/fundamentals-and-concepts/testnet-and-pubnet#friendbot}
+   * @param {string} address - The stellar address.
+   */
+  async fundAccount(address: string) {
+    await axios.get(`https://friendbot.stellar.org/?addr=${address}`);
   }
 }
