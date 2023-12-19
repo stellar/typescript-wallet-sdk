@@ -5,6 +5,7 @@ import {
   TransactionBuilder as StellarTransactionBuilder,
   FeeBumpTransaction,
 } from "stellar-sdk";
+import axios from "axios";
 
 import { Config } from "walletSdk";
 import { AccountService } from "./AccountService";
@@ -223,5 +224,25 @@ export class Stellar {
    */
   decodeTransaction(xdr: string): Transaction | FeeBumpTransaction {
     return StellarTransactionBuilder.fromXDR(xdr, this.cfg.stellar.network);
+  }
+
+  /**
+   * Returns the recommended fee (stroops) to use in a transaction based on the current
+   * stellar network fee stats.
+   * @returns {string} The recommended fee amount in stroops.
+   */
+  async getRecommendedFee(): Promise<string> {
+    const stats = await this.server.feeStats();
+    return stats.max_fee.mode;
+  }
+
+  /**
+   * Funds an account on the stellar test network. If it is already funded then call will error.
+   * Please note: only funds on the testnet network.
+   * @see {@link https://developers.stellar.org/docs/fundamentals-and-concepts/testnet-and-pubnet#friendbot}
+   * @param {string} address - The stellar address.
+   */
+  async fundTestnetAccount(address: string) {
+    await axios.get(`https://friendbot.stellar.org/?addr=${address}`);
   }
 }

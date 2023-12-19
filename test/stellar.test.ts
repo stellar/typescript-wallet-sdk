@@ -27,7 +27,7 @@ describe("Stellar", () => {
     try {
       await stellar.server.loadAccount(kp.publicKey);
     } catch (e) {
-      await axios.get("https://friendbot.stellar.org/?addr=" + kp.publicKey);
+      await stellar.fundTestnetAccount(kp.publicKey);
     }
   }, 10000);
   it("should create and submit a transaction", async () => {
@@ -237,6 +237,11 @@ describe("Stellar", () => {
       expect(txn).toBeTruthy();
     }
   }, 20000);
+
+  it("should return recommended fee", async () => {
+    const fee = await stellar.getRecommendedFee();
+    expect(fee).toBeTruthy();
+  });
 });
 
 let txnSourceKp;
