@@ -10,6 +10,7 @@ import {
 } from "../Exceptions";
 import { Sep6 } from "./Sep6";
 import { Sep24 } from "./Sep24";
+import { Sep38 } from "./Sep38";
 import { AnchorServiceInfo, TomlInfo, AuthToken } from "../Types";
 import { parseToml } from "../Utils";
 
@@ -29,6 +30,8 @@ export type Interactive = Sep24;
 export type Auth = Sep10;
 
 export type Customer = Sep12;
+
+// ALEC TODO - alias for sep38
 
 /**
  * Build on/off ramps with anchors.
@@ -162,6 +165,13 @@ export class Anchor {
   interactive(): Interactive {
     return this.sep24();
   }
+
+  // ALEC TODO - jsdoc
+  sep38(): Sep38 {
+    return new Sep38({ anchor: this, httpClient: this.httpClient });
+  }
+
+  // ALEC TODO - sep38 alias method
 
   /**
    * Get information about an Anchor.
