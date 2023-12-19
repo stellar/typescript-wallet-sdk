@@ -280,6 +280,22 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
   }
 
   /**
+   * Merges account into a destination account.
+   * **Warning**: This operation will give full control of the account to the destination account,
+   * effectively removing the merged account from the network.
+   * @param {string} destination - The stellar account merging into.
+   * @param {string} [source] - Account that is being merged. If not given then will default to
+   * the TransactionBuilder source account.
+   * @returns {TransactionBuilder} The TransactionBuilder instance.
+   */
+  accountMerge(destination: string, source?: string): TransactionBuilder {
+    this.operations.push(
+      StellarSdk.Operation.accountMerge({ destination, source }),
+    );
+    return this;
+  }
+
+  /**
    * Builds the Stellar transaction so can be submitted.
    * @returns {Transaction} The built Stellar transaction.
    */

@@ -58,3 +58,18 @@ export class FiatAssetId extends AssetId {
     return this.sep38;
   }
 }
+
+export const Assets = {
+  Main: {
+    USDC: new IssuedAssetId(
+      "USDC",
+      "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+    ),
+  },
+  Test: {
+    USDC: new IssuedAssetId(
+      "USDC",
+      "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+    ),
+  },
+};
