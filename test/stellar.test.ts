@@ -27,7 +27,7 @@ describe("Stellar", () => {
     try {
       await stellar.server.loadAccount(kp.publicKey);
     } catch (e) {
-      await stellar.fundAccount(kp.publicKey);
+      await stellar.fundTestnetAccount(kp.publicKey);
     }
   }, 10000);
   it("should create and submit a transaction", async () => {

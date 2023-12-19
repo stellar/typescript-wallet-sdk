@@ -254,7 +254,7 @@ export class Stellar {
    * @see {@link https://developers.stellar.org/docs/fundamentals-and-concepts/testnet-and-pubnet#friendbot}
    * @param {string} address - The stellar address.
    */
-  async fundAccount(address: string) {
+  async fundTestnetAccount(address: string) {
     await axios.get(`https://friendbot.stellar.org/?addr=${address}`);
   }
 }
