@@ -4,7 +4,6 @@ import {
   Transaction,
   TransactionBuilder as StellarTransactionBuilder,
   FeeBumpTransaction,
-  Federation,
 } from "stellar-sdk";
 import axios from "axios";
 
@@ -235,17 +234,6 @@ export class Stellar {
   async getRecommendedFee(): Promise<string> {
     const stats = await this.server.feeStats();
     return stats.max_fee.mode;
-  }
-
-  /**
-   * Resolves a federation address into a stellar address.
-   * @see {@link https://developers.stellar.org/docs/encyclopedia/federation}
-   * @param {string} fedAddress - The federation address (eg. jed*stellar.org).
-   * @returns {string} The stellar address associated with the federation address.
-   */
-  async resolveFederation(fedAddress: string): Promise<string> {
-    const resp = await Federation.Server.resolve(fedAddress);
-    return resp.account_id;
   }
 
   /**

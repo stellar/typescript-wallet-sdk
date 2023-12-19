@@ -242,11 +242,6 @@ describe("Stellar", () => {
     const fee = await stellar.getRecommendedFee();
     expect(fee).toBeTruthy();
   });
-
-  it("should resolve federation address", async () => {
-    const resp = await stellar.resolveFederation("alec*vibrantapp.com");
-    expect(resp).toBeTruthy();
-  });
 });
 
 let txnSourceKp;
