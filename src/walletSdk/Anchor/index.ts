@@ -25,13 +25,13 @@ type AnchorParams = {
 
 export type Transfer = Sep6;
 
-export type Interactive = Sep24;
-
 export type Auth = Sep10;
 
 export type Customer = Sep12;
 
-// ALEC TODO - alias for sep38
+export type Interactive = Sep24;
+
+export type Quote = Sep38;
 
 /**
  * Build on/off ramps with anchors.
@@ -166,12 +166,22 @@ export class Anchor {
     return this.sep24();
   }
 
-  // ALEC TODO - jsdoc
+  /**
+   * Creates a new quote service. It can be used for getting price quotes from an anchor
+   * for exchanging assets.
+   * @returns {Sep38} - quote service.
+   */
   sep38(): Sep38 {
     return new Sep38({ anchor: this, httpClient: this.httpClient });
   }
 
-  // ALEC TODO - sep38 alias method
+  /**
+   * Creates a new quote service using the `sep38` method.
+   * @returns {Quote} - quote service.
+   */
+  quote(): Quote {
+    return this.sep38();
+  }
 
   /**
    * Get information about an Anchor.

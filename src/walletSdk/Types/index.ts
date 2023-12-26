@@ -39,5 +39,6 @@ export * from "./recovery";
 export * from "./sep6";
 export * from "./sep12";
 export * from "./sep24";
+export * from "./sep38";
 export * from "./utils";
 export * from "./watcher";

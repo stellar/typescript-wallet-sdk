@@ -1,28 +1,18 @@
-// ALEC TODO - change file name?
 import { AxiosInstance } from "axios";
+import queryString from "query-string";
 
 import { Anchor } from "../Anchor";
 import { ServerRequestFailedError } from "../Exceptions";
-import { AuthToken } from "../Types";
-
-// ALEC TODO - move
-interface Sep38DeliveryMethod {
-  name: string;
-  description: string;
-}
-interface Sep38Info {
-  assets: Array<Sep38AssetInfo>;
-}
-interface Sep38AssetInfo {
-  asset: string;
-  sell_delivery_methods?: Array<Sep38DeliveryMethod>;
-  buy_delivery_methods?: Array<Sep38DeliveryMethod>;
-  country_codes?: Array<string>;
-}
-export type Sep38Params = {
-  anchor: Anchor;
-  httpClient: AxiosInstance;
-};
+import {
+  AuthToken,
+  Sep38Info,
+  Sep38Params,
+  Sep38PricesParams,
+  Sep38PriceParams,
+  Sep38PricesResponse,
+  Sep38PriceResponse,
+} from "../Types";
+import { camelToSnakeCaseObject } from "../Utils";
 
 export class Sep38 {
   private anchor: Anchor;
@@ -69,6 +59,85 @@ export class Sep38 {
         headers,
       });
       this.sep38Info = resp.data;
+      return resp.data;
+    } catch (e) {
+      throw new ServerRequestFailedError(e);
+    }
+  }
+
+  /**
+   * Get indicative prices of off-chain assets in exchange for a Stellar asset, or vice versa,
+   * from an anchor using Sep-38.
+   * @param {object} options - The options for the request
+   * @param {Sep38PricesParams} options.params - The parameters for the GET prices request.
+   * @param {AuthToken} [options.authToken] - The authentication token. This may be optional
+   * if the anchor does not require it.
+   * @returns {Promise<Sep38PricesResponse>} - SEP-38 /prices response.
+   */
+  async prices({
+    params,
+    authToken,
+  }: {
+    params: Sep38PricesParams;
+    authToken?: AuthToken;
+  }): Promise<Sep38PricesResponse> {
+    const { anchorQuoteServer } = await this.anchor.sep1();
+    let headers;
+    if (authToken) {
+      headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken.token}`,
+      };
+    }
+
+    try {
+      const resp = await this.httpClient.get(
+        `${anchorQuoteServer}/prices?${queryString.stringify(
+          camelToSnakeCaseObject(params),
+        )}`,
+        {
+          headers,
+        },
+      );
+      return resp.data;
+    } catch (e) {
+      throw new ServerRequestFailedError(e);
+    }
+  }
+
+  /**
+   * Get an indicative price for an an asset pair from and anchor using SEP-38.
+   * @param {object} options - The options for the request
+   * @param {Sep38PriceParams} options.params - The parameters for the GET price request.
+   * @param {AuthToken} [options.authToken] - The authentication token. This may be optional
+   * if the anchor does not require it.
+   * @returns {Promise<Sep38PriceResponse>} - SEP-38 /price response.
+   */
+  async price({
+    params,
+    authToken,
+  }: {
+    params: Sep38PriceParams;
+    authToken?: AuthToken;
+  }): Promise<Sep38PriceResponse> {
+    const { anchorQuoteServer } = await this.anchor.sep1();
+    let headers;
+    if (authToken) {
+      headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken.token}`,
+      };
+    }
+
+    try {
+      const resp = await this.httpClient.get(
+        `${anchorQuoteServer}/price?${queryString.stringify(
+          camelToSnakeCaseObject(params),
+        )}`,
+        {
+          headers,
+        },
+      );
       return resp.data;
     } catch (e) {
       throw new ServerRequestFailedError(e);
