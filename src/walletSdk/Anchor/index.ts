@@ -169,18 +169,24 @@ export class Anchor {
   /**
    * Creates a new quote service. It can be used for getting price quotes from an anchor
    * for exchanging assets.
+   * @param {AuthToken} [authToken] - The authentication token.
    * @returns {Sep38} - quote service.
    */
-  sep38(): Sep38 {
-    return new Sep38({ anchor: this, httpClient: this.httpClient });
+  sep38(authToken?: AuthToken): Sep38 {
+    return new Sep38({
+      anchor: this,
+      httpClient: this.httpClient,
+      authToken,
+    });
   }
 
   /**
    * Creates a new quote service using the `sep38` method.
+   * @param {AuthToken} [authToken] - The authentication token.
    * @returns {Quote} - quote service.
    */
-  quote(): Quote {
-    return this.sep38();
+  quote(authToken?: AuthToken): Quote {
+    return this.sep38(authToken);
   }
 
   /**

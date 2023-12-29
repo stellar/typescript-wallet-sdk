@@ -1,5 +1,6 @@
 import { AxiosInstance } from "axios";
 import { Anchor } from "../Anchor";
+import { AuthToken } from "./auth";
 
 export interface Sep38Info {
   assets: Array<Sep38AssetInfo>;
@@ -20,6 +21,7 @@ export interface Sep38DeliveryMethod {
 export type Sep38Params = {
   anchor: Anchor;
   httpClient: AxiosInstance;
+  authToken?: AuthToken;
 };
 
 export interface Sep38PricesParams {
