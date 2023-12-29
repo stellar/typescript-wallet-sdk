@@ -116,22 +116,14 @@ export class Sep38 {
     }
   }
 
-  // ALEC TODO - name?
-
   /**
    * Request a firm quote from the anchor.
-   * @param {object} options - The options for the request
-   * @param {Sep38PostQuoteParams} options.params - The parameters for the quote request.
-   * @param {AuthToken} options.authToken - The authentication token.
+   * @param {Sep38PostQuoteParams} params - The parameters for the quote request.
    * @returns {Promise<Sep38PostQuoteResponse>} - SEP-38 quote response.
    */
-  async requestQuote({
-    params,
-    authToken,
-  }: {
-    params: Sep38PostQuoteParams;
-    authToken: AuthToken;
-  }): Promise<Sep38PostQuoteResponse> {
+  async requestQuote(
+    params: Sep38PostQuoteParams,
+  ): Promise<Sep38PostQuoteResponse> {
     const { anchorQuoteServer } = await this.anchor.sep1();
 
     try {
@@ -139,52 +131,32 @@ export class Sep38 {
         `${anchorQuoteServer}/quote`,
         params,
         {
-          headers: {
-            // ALEC TODO - better way of handling these repeated fields?
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken.token}`,
-          },
+          headers: this.headers,
         },
       );
       return resp.data;
     } catch (e) {
-      console.log(e.response.status); // ALEC TODO - remove
-      console.log(e.response); // ALEC TODO - remove
       throw new ServerRequestFailedError(e);
     }
   }
 
   /**
    * Get a previously-provided quote from the anchor.
-   * @param {object} options - The options for the request
-   * @param {string} options.quoteId - The id of the quote to fetch.
-   * @param {AuthToken} options.authToken - The authentication token.
+   * @param {string} quoteId - The id of the quote to fetch.
    * @returns {Promise<Sep38PostQuoteResponse>} - SEP-38 quote response.
    */
-  async getQuote({
-    quoteId,
-    authToken,
-  }: {
-    quoteId: string;
-    authToken: AuthToken;
-  }): Promise<Sep38PostQuoteResponse> {
+  async getQuote(quoteId: string): Promise<Sep38PostQuoteResponse> {
     const { anchorQuoteServer } = await this.anchor.sep1();
 
     try {
       const resp = await this.httpClient.get(
         `${anchorQuoteServer}/quote/${quoteId}`,
         {
-          headers: {
-            // ALEC TODO - better way of handling these repeated fields?
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken.token}`,
-          },
+          headers: this.headers,
         },
       );
       return resp.data;
     } catch (e) {
-      console.log(e.response.status); // ALEC TODO - remove
-      console.log(e.response); // ALEC TODO - remove
       throw new ServerRequestFailedError(e);
     }
   }
