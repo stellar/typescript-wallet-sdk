@@ -13,12 +13,15 @@ import {
   Sep38PriceResponse,
   Sep38PostQuoteParams,
   Sep38PostQuoteResponse,
+  HttpHeaders,
 } from "../Types";
 import { camelToSnakeCaseObject } from "../Utils";
 
 export class Sep38 {
   private anchor: Anchor;
   private httpClient: AxiosInstance;
+  private authToken: AuthToken;
+  private headers: HttpHeaders;
   private sep38Info: Sep38Info;
 
   /**
@@ -27,38 +30,35 @@ export class Sep38 {
    * @param {Sep38Params} params - Parameters to initialize the Sep38 instance.
    */
   constructor(params: Sep38Params) {
-    const { anchor, httpClient } = params;
+    const { anchor, httpClient, authToken } = params;
 
     this.anchor = anchor;
     this.httpClient = httpClient;
+    this.authToken = authToken;
+    if (authToken) {
+      this.headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.authToken.token}`,
+      };
+    }
   }
 
   /**
    * Get SEP-38 anchor information.
    * If `shouldRefresh` is set to `true`, it fetches fresh values; otherwise, it returns cached values if available.
    * @param {boolean} [shouldRefresh=false] - Flag to force a refresh of TOML values.
-   * @param {boolean} [authToken] - Optional Auth Token for a personal response (if supported by anchor).
    * @returns {Promise<Sep38Info>} - SEP-38 information about the anchor.
    */
-  async info(
-    shouldRefresh?: boolean,
-    authToken?: AuthToken,
-  ): Promise<Sep38Info> {
+  async info(shouldRefresh?: boolean): Promise<Sep38Info> {
     if (this.sep38Info && !shouldRefresh) {
       return this.sep38Info;
     }
 
     const { anchorQuoteServer } = await this.anchor.sep1();
-    let headers;
-    if (authToken) {
-      headers = {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken.token}`,
-      };
-    }
+
     try {
       const resp = await this.httpClient.get(`${anchorQuoteServer}/info`, {
-        headers,
+        headers: this.headers,
       });
       this.sep38Info = resp.data;
       return resp.data;
@@ -70,27 +70,12 @@ export class Sep38 {
   /**
    * Get indicative prices of off-chain assets in exchange for a Stellar asset, or vice versa,
    * from an anchor using Sep-38.
-   * @param {object} options - The options for the request
-   * @param {Sep38PricesParams} options.params - The parameters for the GET prices request.
-   * @param {AuthToken} [options.authToken] - The authentication token. This may be optional
+   * @param {Sep38PricesParams} params - The parameters for the GET prices request.
    * if the anchor does not require it.
    * @returns {Promise<Sep38PricesResponse>} - SEP-38 /prices response.
    */
-  async prices({
-    params,
-    authToken,
-  }: {
-    params: Sep38PricesParams;
-    authToken?: AuthToken;
-  }): Promise<Sep38PricesResponse> {
+  async prices(params: Sep38PricesParams): Promise<Sep38PricesResponse> {
     const { anchorQuoteServer } = await this.anchor.sep1();
-    let headers;
-    if (authToken) {
-      headers = {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken.token}`,
-      };
-    }
 
     try {
       const resp = await this.httpClient.get(
@@ -98,7 +83,7 @@ export class Sep38 {
           camelToSnakeCaseObject(params),
         )}`,
         {
-          headers,
+          headers: this.headers,
         },
       );
       return resp.data;
@@ -109,27 +94,12 @@ export class Sep38 {
 
   /**
    * Get an indicative price for an an asset pair from and anchor using SEP-38.
-   * @param {object} options - The options for the request
-   * @param {Sep38PriceParams} options.params - The parameters for the GET price request.
-   * @param {AuthToken} [options.authToken] - The authentication token. This may be optional
+   * @param {Sep38PriceParams} params - The parameters for the GET price request.
    * if the anchor does not require it.
    * @returns {Promise<Sep38PriceResponse>} - SEP-38 /price response.
    */
-  async price({
-    params,
-    authToken,
-  }: {
-    params: Sep38PriceParams;
-    authToken?: AuthToken;
-  }): Promise<Sep38PriceResponse> {
+  async price(params: Sep38PriceParams): Promise<Sep38PriceResponse> {
     const { anchorQuoteServer } = await this.anchor.sep1();
-    let headers;
-    if (authToken) {
-      headers = {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken.token}`,
-      };
-    }
 
     try {
       const resp = await this.httpClient.get(
@@ -137,7 +107,7 @@ export class Sep38 {
           camelToSnakeCaseObject(params),
         )}`,
         {
-          headers,
+          headers: this.headers,
         },
       );
       return resp.data;
