@@ -27,9 +27,9 @@ describe("SEP-38", () => {
     sep38 = anchor.sep38(authToken);
 
     const resp = await sep38.prices({
-      sell_asset: "iso4217:USD",
-      sell_amount: "5",
-      sell_delivery_method: "ach_debit",
+      sellAsset: "iso4217:USD",
+      sellAmount: "5",
+      sellDeliveryMethod: "ach_debit",
     });
     expect(resp.buy_assets[0].asset).toBeTruthy();
   });
@@ -40,10 +40,10 @@ describe("SEP-38", () => {
     sep38 = anchor.sep38(authToken);
 
     const resp = await sep38.price({
-      sell_asset: "iso4217:USD",
-      buy_asset:
+      sellAsset: "iso4217:USD",
+      buyAsset:
         "stellar:SRT:GCDNJUBQSX7AJWLJACMJ7I4BC3Z47BQUTMHEICZLE6MU4KQBRYG5JY6B",
-      sell_amount: "5",
+      sellAmount: "5",
       context: "sep6",
     });
     expect(resp.price).toBeTruthy();

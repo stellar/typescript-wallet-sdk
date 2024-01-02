@@ -244,3 +244,10 @@ export class NoAccountAndNoSponsorError extends Error {
     Object.setPrototypeOf(this, NoAccountAndNoSponsorError.prototype);
   }
 }
+
+export class Sep38PriceOnlyOneAmountError extends Error {
+  constructor() {
+    super("Must give sellAmount or buyAmount value, but not both");
+    Object.setPrototypeOf(this, Sep38PriceOnlyOneAmountError.prototype);
+  }
+}
