@@ -2,7 +2,10 @@ import { AxiosInstance } from "axios";
 import queryString from "query-string";
 
 import { Anchor } from "../Anchor";
-import { ServerRequestFailedError } from "../Exceptions";
+import {
+  ServerRequestFailedError,
+  Sep38PriceOnlyOneAmountError,
+} from "../Exceptions";
 import {
   AuthToken,
   Sep38Info,
@@ -101,9 +104,16 @@ export class Sep38 {
    * Get an indicative price for an an asset pair from and anchor using SEP-38.
    * @param {Sep38PriceParams} params - The parameters for the GET price request.
    * if the anchor does not require it.
+   * @throws {Sep38PriceOnlyOneAmountError} Must give only sellAmount or buyAmount, and not both.
    * @returns {Promise<Sep38PriceResponse>} - SEP-38 /price response.
    */
   async price(params: Sep38PriceParams): Promise<Sep38PriceResponse> {
+    if (
+      (params.sellAmount && params.buyAmount) ||
+      (!params.sellAmount && !params.buyAmount)
+    ) {
+      throw new Sep38PriceOnlyOneAmountError();
+    }
     const { anchorQuoteServer } = await this.anchor.sep1();
 
     try {
