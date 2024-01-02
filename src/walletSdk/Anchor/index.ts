@@ -10,6 +10,7 @@ import {
 } from "../Exceptions";
 import { Sep6 } from "./Sep6";
 import { Sep24 } from "./Sep24";
+import { Sep38 } from "./Sep38";
 import { AnchorServiceInfo, TomlInfo, AuthToken } from "../Types";
 import { parseToml } from "../Utils";
 
@@ -24,11 +25,13 @@ type AnchorParams = {
 
 export type Transfer = Sep6;
 
-export type Interactive = Sep24;
-
 export type Auth = Sep10;
 
 export type Customer = Sep12;
+
+export type Interactive = Sep24;
+
+export type Quote = Sep38;
 
 /**
  * Build on/off ramps with anchors.
@@ -161,6 +164,29 @@ export class Anchor {
    */
   interactive(): Interactive {
     return this.sep24();
+  }
+
+  /**
+   * Creates a new quote service. It can be used for getting price quotes from an anchor
+   * for exchanging assets.
+   * @param {AuthToken} [authToken] - The authentication token.
+   * @returns {Sep38} - quote service.
+   */
+  sep38(authToken?: AuthToken): Sep38 {
+    return new Sep38({
+      anchor: this,
+      httpClient: this.httpClient,
+      authToken,
+    });
+  }
+
+  /**
+   * Creates a new quote service using the `sep38` method.
+   * @param {AuthToken} [authToken] - The authentication token.
+   * @returns {Quote} - quote service.
+   */
+  quote(authToken?: AuthToken): Quote {
+    return this.sep38(authToken);
   }
 
   /**
