@@ -15,6 +15,13 @@ import {
 } from "../Types";
 import { camelToSnakeCaseObject } from "../Utils";
 
+/**
+ * Quote service using SEP-38. It can be used for getting price quotes from an anchor
+ * for exchanging assets.
+ * @see {@link https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0038.md}
+ * Do not create this object directly, use the Anchor class.
+ * @class
+ */
 export class Sep38 {
   private anchor: Anchor;
   private httpClient: AxiosInstance;
