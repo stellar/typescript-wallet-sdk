@@ -14,6 +14,8 @@ import {
   Sep38PriceParams,
   Sep38PricesResponse,
   Sep38PriceResponse,
+  Sep38PostQuoteParams,
+  Sep38PostQuoteResponse,
   HttpHeaders,
 } from "../Types";
 import { camelToSnakeCaseObject } from "../Utils";
@@ -121,6 +123,51 @@ export class Sep38 {
         `${anchorQuoteServer}/price?${queryString.stringify(
           camelToSnakeCaseObject(params),
         )}`,
+        {
+          headers: this.headers,
+        },
+      );
+      return resp.data;
+    } catch (e) {
+      throw new ServerRequestFailedError(e);
+    }
+  }
+
+  /**
+   * Request a firm quote from the anchor.
+   * @param {Sep38PostQuoteParams} params - The parameters for the quote request.
+   * @returns {Promise<Sep38PostQuoteResponse>} - SEP-38 quote response.
+   */
+  async requestQuote(
+    params: Sep38PostQuoteParams,
+  ): Promise<Sep38PostQuoteResponse> {
+    const { anchorQuoteServer } = await this.anchor.sep1();
+
+    try {
+      const resp = await this.httpClient.post(
+        `${anchorQuoteServer}/quote`,
+        params,
+        {
+          headers: this.headers,
+        },
+      );
+      return resp.data;
+    } catch (e) {
+      throw new ServerRequestFailedError(e);
+    }
+  }
+
+  /**
+   * Get a previously-provided quote from the anchor.
+   * @param {string} quoteId - The id of the quote to fetch.
+   * @returns {Promise<Sep38PostQuoteResponse>} - SEP-38 quote response.
+   */
+  async getQuote(quoteId: string): Promise<Sep38PostQuoteResponse> {
+    const { anchorQuoteServer } = await this.anchor.sep1();
+
+    try {
+      const resp = await this.httpClient.get(
+        `${anchorQuoteServer}/quote/${quoteId}`,
         {
           headers: this.headers,
         },

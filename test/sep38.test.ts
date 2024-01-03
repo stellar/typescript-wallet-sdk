@@ -48,4 +48,24 @@ describe("SEP-38", () => {
     });
     expect(resp.price).toBeTruthy();
   });
+
+  it("should request and get Sep-38 Quote", async () => {
+    const auth = await anchor.sep10();
+    const authToken = await auth.authenticate({ accountKp });
+    sep38 = anchor.sep38(authToken);
+    const postResp = await sep38.requestQuote({
+      sell_asset: "iso4217:USD",
+      buy_asset:
+        "stellar:SRT:GCDNJUBQSX7AJWLJACMJ7I4BC3Z47BQUTMHEICZLE6MU4KQBRYG5JY6B",
+      sell_amount: "5",
+      context: "sep6",
+      sell_delivery_method: "ach_debit",
+    });
+    expect(postResp.id).toBeTruthy();
+
+    const quoteId = postResp.id;
+    const getResp = await sep38.getQuote(quoteId);
+
+    expect(getResp.id).toBeTruthy();
+  });
 });

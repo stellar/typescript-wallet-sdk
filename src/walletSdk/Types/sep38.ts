@@ -75,3 +75,31 @@ export interface Sep38FeeDetails {
   description?: string;
   amount: string;
 }
+
+export interface Sep38PostQuoteParams {
+  sell_asset: string;
+  buy_asset: string;
+  sell_amount: string;
+  buy_amount: string;
+  context: string;
+  expire_after?: string;
+  sell_delivery_method?: string;
+  buy_delivery_method?: string;
+  country_code?: string;
+}
+
+export interface Sep38PostQuoteResponse {
+  id: string;
+  expires_at: string;
+  total_price: string;
+  price: string;
+  sell_asset: string;
+  sell_amount: string;
+  buy_asset: string;
+  buy_amount: string;
+  fee: {
+    total: string;
+    asset: string;
+    details?: Array<Sep38FeeDetails>;
+  };
+}
