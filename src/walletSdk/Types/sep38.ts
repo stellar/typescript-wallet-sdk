@@ -55,6 +55,7 @@ export interface Sep38PriceParams {
 
 export enum Sep38PriceContext {
   SEP6 = "sep6",
+  SEP24 = "sep24",
   SEP31 = "sep31",
 }
 
@@ -81,7 +82,7 @@ export interface Sep38PostQuoteParams {
   buy_asset: string;
   sell_amount: string;
   buy_amount: string;
-  context: string;
+  context: Sep38PriceContext;
   expire_after?: string;
   sell_delivery_method?: string;
   buy_delivery_method?: string;
