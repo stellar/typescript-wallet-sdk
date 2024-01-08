@@ -1,9 +1,28 @@
 import { Networks, Horizon } from "stellar-sdk";
-import { AnchorTransaction, FLOW_TYPE, GetCustomerParams } from "../Types";
+import axios from "axios";
+import {
+  AnchorTransaction,
+  FLOW_TYPE,
+  AxiosErrorData,
+  GetCustomerParams,
+} from "../Types";
+import { extractAxiosErrorData } from "../Utils";
 
 export class ServerRequestFailedError extends Error {
+  data: AxiosErrorData;
+
   constructor(e: Error) {
-    super(`Server request failed with error: ${e}`);
+    if (axios.isAxiosError(e)) {
+      const errorData = extractAxiosErrorData(e);
+      const message =
+        errorData.responseData && Object.keys(errorData.responseData).length > 0
+          ? JSON.stringify(errorData.responseData)
+          : errorData.statusText;
+      super(`Server request failed with error: ${errorData.status} ${message}`);
+      this.data = errorData;
+    } else {
+      super(`Server request failed with error: ${e}`);
+    }
     Object.setPrototypeOf(this, ServerRequestFailedError.prototype);
   }
 }

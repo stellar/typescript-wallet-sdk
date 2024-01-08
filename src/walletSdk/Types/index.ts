@@ -1,5 +1,5 @@
+import { RawAxiosRequestHeaders } from "axios";
 import { Networks } from "stellar-sdk";
-
 import { ApplicationConfiguration, StellarConfiguration } from "walletSdk";
 import { RecoveryServerMap } from "./recovery";
 
@@ -29,6 +29,14 @@ export type StellarConfigurationParams = {
   horizonUrl: string;
   baseFee?: number;
   defaultTimeout?: number;
+};
+
+export type AxiosErrorData = {
+  status?: number;
+  statusText?: string;
+  // eslint-disable-next-line
+  responseData?: any;
+  headers?: RawAxiosRequestHeaders;
 };
 
 // Export all other types from walletSdk/Types.ts
