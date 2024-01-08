@@ -11,7 +11,11 @@ import {
 import { DefaultClient } from "../src/walletSdk";
 import { ServerRequestFailedError } from "../src/walletSdk/Exceptions";
 import { Watcher } from "../src/walletSdk/Watcher";
-import { TransactionStatus, AnchorTransaction } from "../src/walletSdk/Types";
+import {
+  TransactionStatus,
+  AnchorTransaction,
+  AuthToken,
+} from "../src/walletSdk/Types";
 import {
   WalletSigner,
   DefaultSigner,
@@ -34,21 +38,21 @@ describe("Wallet", () => {
     Wallet.TestNet();
     Wallet.MainNet();
   });
-  it("should be able return a client", async () => {
-    let appConfig = new ApplicationConfiguration();
-    let wal = new Wallet({
+  it("should be able customize config", () => {
+    const appConfig = new ApplicationConfiguration();
+    new Wallet({
       stellarConfiguration: StellarConfiguration.TestNet(),
       applicationConfiguration: appConfig,
     });
   });
-  it("should be able to customize a client", async () => {
+  it("should be able to customize a client", () => {
     const customClient: AxiosInstance = axios.create({
       baseURL: "https://some-url.com/api",
       timeout: 1000,
       headers: { "X-Custom-Header": "foobar" },
     });
-    let appConfig = new ApplicationConfiguration(DefaultSigner, customClient);
-    let wal = new Wallet({
+    const appConfig = new ApplicationConfiguration(DefaultSigner, customClient);
+    new Wallet({
       stellarConfiguration: StellarConfiguration.TestNet(),
       applicationConfiguration: appConfig,
     });
@@ -64,7 +68,7 @@ describe("SEP-24 flow", () => {
 
 let anchor: Anchor;
 let accountKp: SigningKeypair;
-let authToken: string;
+let authToken: AuthToken;
 const makeTransaction = (eta: number, txStatus: TransactionStatus) => ({
   kind: "deposit",
   id: "TEST",
@@ -81,17 +85,26 @@ describe("Anchor", () => {
     );
   });
   it("should give TOML info", async () => {
-    const resp = await anchor.sep1();
+    let resp = await anchor.sep1();
+    expect(resp.webAuthEndpoint).toBe("https://testanchor.stellar.org/auth");
+    expect(resp.currencies.length).toBe(2);
 
+    // alias
+    resp = await anchor.getInfo();
     expect(resp.webAuthEndpoint).toBe("https://testanchor.stellar.org/auth");
     expect(resp.currencies.length).toBe(2);
   });
   it("should be able to authenticate", async () => {
-    const auth = await anchor.sep10();
-
+    let auth = await anchor.sep10();
     authToken = await auth.authenticate({ accountKp });
     expect(authToken).toBeTruthy();
-    expect(typeof authToken).toBe("string");
+    expect(authToken.account).toBeTruthy();
+
+    // alias
+    auth = await anchor.auth();
+    authToken = await auth.authenticate({ accountKp });
+    expect(authToken).toBeTruthy();
+    expect(authToken.account).toBeTruthy();
   });
 
   it("should be able to authenticate with client domain", async () => {
@@ -111,7 +124,9 @@ describe("Anchor", () => {
       signWithDomainAccount: async ({
         transactionXDR,
         networkPassphrase,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         accountKp,
+        // eslint-disable-next-line @typescript-eslint/require-await
       }) => {
         // dummy secret key for signing
         const clientDomainKp = Keypair.fromSecret(
@@ -138,8 +153,12 @@ describe("Anchor", () => {
     expect(signedByDomain).toBe(true);
   });
   it("should get anchor services info", async () => {
-    const serviceInfo = await anchor.sep24().getServicesInfo();
+    let serviceInfo = await anchor.sep24().getServicesInfo();
+    expect(serviceInfo.deposit).toBeTruthy();
+    expect(serviceInfo.withdraw).toBeTruthy();
 
+    // alias
+    serviceInfo = await anchor.interactive().getServicesInfo();
     expect(serviceInfo.deposit).toBeTruthy();
     expect(serviceInfo.withdraw).toBeTruthy();
   });
@@ -198,11 +217,12 @@ describe("Anchor", () => {
   it("should throw ServerRequestFailedError", async () => {
     const assetCode = "SRT";
     let didError = false;
+    const badAuthToken = new AuthToken();
     try {
-      const resp = await anchor.sep24().withdraw({
+      await anchor.sep24().withdraw({
         withdrawalAccount: accountKp.publicKey,
         assetCode,
-        authToken: "bad auth token",
+        authToken: badAuthToken,
       });
     } catch (e) {
       didError = true;
@@ -232,12 +252,12 @@ describe("Anchor", () => {
     const { id, kind, status, amount_in, amount_out } = transaction;
 
     expect(transaction).toBeTruthy();
-    expect(id === transactionId).toBeTruthy;
-    expect(kind === "deposit").toBeTruthy;
-    expect(status === "incomplete").toBeTruthy;
+    expect(id === transactionId).toBeTruthy();
+    expect(kind === "deposit").toBeTruthy();
+    expect(status === TransactionStatus.incomplete).toBeTruthy();
     // we expect fresh 'incomplete' transactions to not have amounts set yet
-    expect(amount_in).toBeFalsy;
-    expect(amount_out).toBeFalsy;
+    expect(amount_in).toBeFalsy();
+    expect(amount_out).toBeFalsy();
   });
 
   it("should error fetching non-existing transaction by id", async () => {
@@ -313,7 +333,7 @@ describe("Anchor", () => {
     let clock: sinon.SinonFakeTimers;
     let watcher: Watcher;
 
-    beforeEach(async () => {
+    beforeEach(() => {
       clock = sinon.useFakeTimers(0);
       watcher = anchor.sep24().watcher();
     });
@@ -895,7 +915,7 @@ describe("Anchor", () => {
     let clock: sinon.SinonFakeTimers;
     let watcher: Watcher;
 
-    beforeEach(async () => {
+    beforeEach(() => {
       clock = sinon.useFakeTimers(0);
       watcher = anchor.sep24().watcher();
       jest.resetAllMocks();
@@ -1190,7 +1210,7 @@ describe("Anchor", () => {
     });
 
     test("Several pending transactions, one completed, no more after that", async () => {
-      const onMessage = sinon.spy((m) => {
+      const onMessage = sinon.spy(() => {
         expect(onMessage.callCount).toBeLessThanOrEqual(8);
       });
 
@@ -1463,7 +1483,7 @@ describe("Anchor", () => {
     });
 
     test("One pending, one refunded, no more after that", async () => {
-      const onMessage = sinon.spy((e) => {
+      const onMessage = sinon.spy(() => {
         expect(onMessage.callCount).toBeLessThanOrEqual(1);
       });
 

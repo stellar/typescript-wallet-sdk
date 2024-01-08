@@ -1,6 +1,11 @@
 import { Networks, Horizon } from "stellar-sdk";
 import axios from "axios";
-import { AnchorTransaction, FLOW_TYPE, AxiosErrorData } from "../Types";
+import {
+  AnchorTransaction,
+  FLOW_TYPE,
+  AxiosErrorData,
+  GetCustomerParams,
+} from "../Types";
 import { extractAxiosErrorData } from "../Utils";
 
 export class ServerRequestFailedError extends Error {
@@ -82,8 +87,8 @@ export class AccountDoesNotExistError extends Error {
 }
 
 export class TransactionSubmitFailedError extends Error {
-  constructor(response: Horizon.SubmitTransactionResponse) {
-    super(`Submit transaction failed ${response}`);
+  constructor(response: Horizon.HorizonApi.SubmitTransactionResponse) {
+    super(`Submit transaction failed ${JSON.stringify(response)}`);
     Object.setPrototypeOf(this, TransactionSubmitFailedError.prototype);
   }
 }
@@ -167,9 +172,101 @@ export class PathPayOnlyOneAmountError extends Error {
     Object.setPrototypeOf(this, PathPayOnlyOneAmountError.prototype);
   }
 }
+
 export class WithdrawalTxMemoError extends Error {
   constructor() {
     super(`Error parsing withdrawal transaction memo`);
     Object.setPrototypeOf(this, WithdrawalTxMemoError.prototype);
+  }
+}
+
+export class Sep9InfoRequiredError extends Error {
+  constructor() {
+    super(`Sep-9 info required`);
+    Object.setPrototypeOf(this, Sep9InfoRequiredError.prototype);
+  }
+}
+
+export class CustomerNotFoundError extends Error {
+  constructor(params: GetCustomerParams) {
+    super(`Customer not found using params ${JSON.stringify(params)}`);
+    Object.setPrototypeOf(this, CustomerNotFoundError.prototype);
+  }
+}
+
+export class KYCServerNotFoundError extends Error {
+  constructor() {
+    super(`Required KYC server URL not found`);
+    Object.setPrototypeOf(this, KYCServerNotFoundError.prototype);
+  }
+}
+
+export class RecoveryServerNotFoundError extends Error {
+  constructor(serverKey: string) {
+    super(`Server with key ${serverKey} was not found`);
+    Object.setPrototypeOf(this, RecoveryServerNotFoundError.prototype);
+  }
+}
+
+export class RecoveryIdentityNotFoundError extends Error {
+  constructor(serverKey: string) {
+    super(`Account identity for server ${serverKey} was not specified`);
+    Object.setPrototypeOf(this, RecoveryIdentityNotFoundError.prototype);
+  }
+}
+
+export class NotAllSignaturesFetchedError extends Error {
+  constructor() {
+    super(`Didn't get all recovery server signatures`);
+    Object.setPrototypeOf(this, NotAllSignaturesFetchedError.prototype);
+  }
+}
+
+export class LostSignerKeyNotFound extends Error {
+  constructor() {
+    super(`Lost key doesn't belong to the account`);
+    Object.setPrototypeOf(this, LostSignerKeyNotFound.prototype);
+  }
+}
+
+export class NoDeviceKeyForAccountError extends Error {
+  constructor() {
+    super(`No device key is setup for this account`);
+    Object.setPrototypeOf(this, NoDeviceKeyForAccountError.prototype);
+  }
+}
+
+export class UnableToDeduceKeyError extends Error {
+  constructor() {
+    super(`Couldn't deduce lost key. Please provide lost key explicitly`);
+    Object.setPrototypeOf(this, UnableToDeduceKeyError.prototype);
+  }
+}
+
+export class NoAccountSignersError extends Error {
+  constructor() {
+    super(`There are no signers on this recovery server`);
+    Object.setPrototypeOf(this, NoAccountSignersError.prototype);
+  }
+}
+
+export class DeviceKeyEqualsMasterKeyError extends Error {
+  constructor() {
+    super(`Device key must be different from master (account) key`);
+    Object.setPrototypeOf(this, DeviceKeyEqualsMasterKeyError.prototype);
+  }
+}
+
+export class NoAccountAndNoSponsorError extends Error {
+  constructor() {
+    super(`Account does not exist and is not sponsored`);
+    Object.setPrototypeOf(this, NoAccountAndNoSponsorError.prototype);
+  }
+}
+
+export class Sep38PriceOnlyOneAmountError extends Error {
+  constructor() {
+    super("Must give sellAmount or buyAmount value, but not both");
+    Object.setPrototypeOf(this, Sep38PriceOnlyOneAmountError.prototype);
   }
 }

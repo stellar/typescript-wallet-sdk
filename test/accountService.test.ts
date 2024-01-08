@@ -83,9 +83,21 @@ describe("Horizon", () => {
     expect(
       response.balances.some(
         (balance) =>
-          (balance as Horizon.BalanceLineAsset).asset_code === "USDC",
+          (balance as Horizon.HorizonApi.BalanceLineAsset).asset_code ===
+          "USDC",
       ),
     ).toBeTruthy();
+  });
+
+  it("should error 404 in case account not found", async () => {
+    // Any recently generated keypair won't be tied to a stellar account
+    const publicKeyWithoutAccount = accountService.createKeypair().publicKey;
+
+    try {
+      await accountService.getInfo({ accountAddress: publicKeyWithoutAccount });
+    } catch (e) {
+      expect(e?.response?.status).toBe(404);
+    }
   });
 
   it("should return stellar account operations", async () => {
@@ -100,10 +112,16 @@ describe("Horizon", () => {
     expect(response.records[0]).toHaveProperty("type");
     expect(response.records[0]).toHaveProperty("created_at");
     expect(
-      response.records.some(({ type }) => type === "create_account"),
+      response.records.some(
+        ({ type }) =>
+          type === Horizon.HorizonApi.OperationResponseType.createAccount,
+      ),
     ).toBeTruthy();
     expect(
-      response.records.some(({ type }) => type === "change_trust"),
+      response.records.some(
+        ({ type }) =>
+          type === Horizon.HorizonApi.OperationResponseType.changeTrust,
+      ),
     ).toBeTruthy();
   });
 });

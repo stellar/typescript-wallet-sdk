@@ -11,6 +11,12 @@ export abstract class CommonTransactionBuilder<T> {
     this.operations = operations;
   }
 
+  /**
+   * Add a trustline for an asset so can receive or send it.
+   * @param {IssuedAssetId} asset - The asset for which support is added.
+   * @param {string} [trustLimit] - The trust limit for the asset.
+   * @returns {T} The builder class instance called with.
+   */
   addAssetSupport(asset: IssuedAssetId, trustLimit?: string): T {
     this.operations.push(
       StellarSdk.Operation.changeTrust({
@@ -19,13 +25,25 @@ export abstract class CommonTransactionBuilder<T> {
         source: this.sourceAddress,
       }),
     );
-    return this as any as T;
+    return this as unknown as T;
   }
 
+  /**
+   * Remove a trustline for an asset.
+   * @param {IssuedAssetId} asset - The asset for which support is added.
+   * @returns {T} The builder class instance called with.
+   */
   removeAssetSupport(asset: IssuedAssetId): T {
     return this.addAssetSupport(asset, "0");
   }
 
+  /**
+   * Add a signer to the account.
+   * @see {@link https://developers.stellar.org/docs/encyclopedia/signatures-multisig}
+   * @param {AccountKeypair} signerAddress - The new account being added
+   * @param {number} signerWeight - The weight given to the new signer.
+   * @returns {T} The builder class instance called with.
+   */
   addAccountSigner(signerAddress: AccountKeypair, signerWeight: number): T {
     this.operations.push(
       StellarSdk.Operation.setOptions({
@@ -36,13 +54,25 @@ export abstract class CommonTransactionBuilder<T> {
         },
       }),
     );
-    return this as any as T;
+    return this as unknown as T;
   }
 
+  /**
+   * Removes a signer from an account.
+   * @see {@link https://developers.stellar.org/docs/encyclopedia/signatures-multisig}
+   * @param {AccountKeypair} signerAddress - The new account being added
+   * @returns {T} The builder class instance called with.
+   */
   removeAccountSigner(signerAddress: AccountKeypair): T {
     return this.addAccountSigner(signerAddress, 0);
   }
 
+  /**
+   * Locking an account by setting the master key weight to 0.
+   * Be careful, if no other signers then the account will be locked and unable to
+   * sign new transactions permanently.
+   * @returns {T} The builder class instance called with.
+   */
   lockAccountMasterKey(): T {
     this.operations.push(
       StellarSdk.Operation.setOptions({
@@ -50,9 +80,18 @@ export abstract class CommonTransactionBuilder<T> {
         masterWeight: 0,
       }),
     );
-    return this as any as T;
+    return this as unknown as T;
   }
 
+  /**
+   * Set thesholds for an account.
+   * @see {@link https://developers.stellar.org/docs/encyclopedia/signatures-multisig#thresholds}
+   * @param {object} options - The threshold options.
+   * @param {number} [options.low] - The low theshold level.
+   * @param {number} [options.medium] - The medium theshold level.
+   * @param {number} [options.high] - The high theshold level.
+   * @returns {T} The builder class instance called with.
+   */
   setThreshold({
     low,
     medium,
@@ -70,6 +109,6 @@ export abstract class CommonTransactionBuilder<T> {
         highThreshold: high,
       }),
     );
-    return this as any as T;
+    return this as unknown as T;
   }
 }

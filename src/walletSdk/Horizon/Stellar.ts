@@ -1,10 +1,11 @@
 import {
   Account as StellarAccount,
-  Server,
+  Horizon,
   Transaction,
   TransactionBuilder as StellarTransactionBuilder,
   FeeBumpTransaction,
 } from "stellar-sdk";
+import axios from "axios";
 
 import { Config } from "walletSdk";
 import { AccountService } from "./AccountService";
@@ -19,25 +20,48 @@ import {
   TransactionSubmitFailedError,
   TransactionSubmitWithFeeIncreaseFailedError,
   SignerRequiredError,
-  ServerRequestFailedError,
 } from "../Exceptions";
 import { getResultCode } from "../Utils/getResultCode";
 import { SigningKeypair } from "./Account";
 
-// Do not create this object directly, use the Wallet class.
+/**
+ * Interaction with the Stellar Network.
+ * Do not create this object directly, use the Wallet class.
+ * @class
+ */
 export class Stellar {
   private cfg: Config;
-  server: Server;
+  server: Horizon.Server;
 
+  /**
+   * Creates a new instance of the Stellar class.
+   * @constructor
+   * @param {Config} cfg - Configuration object.
+   */
   constructor(cfg: Config) {
     this.cfg = cfg;
     this.server = cfg.stellar.server;
   }
 
+  /**
+   * Returns an AccountService instance for managing Stellar accounts.
+   * @returns {AccountService} An AccountService instance.
+   */
   account(): AccountService {
     return new AccountService(this.cfg);
   }
 
+  /**
+   * Construct a Stellar transaction.
+   * @param {TransactionParams} params - The Transaction params.
+   * @param {AccountKeypair} params.sourceAddress - The source account keypair.
+   * @param {Horizon.Server.Timebounds | number} [params.timebounds] - The timebounds for the transaction.
+   * If a number is given, then timebounds constructed from now to now + number in seconds.
+   * @param {number} [params.baseFee] - The base fee for the transaction. Defaults to the config base fee.
+   * @param {Memo} [params.memo] - The memo for the transaction.
+   * @returns {TransactionBuilder} A TransactionBuilder instance.
+   * @throws {AccountDoesNotExistError} If the source account does not exist.
+   */
   async transaction({
     sourceAddress,
     baseFee,
@@ -53,7 +77,7 @@ export class Stellar {
       throw new AccountDoesNotExistError(this.cfg.stellar.network);
     }
 
-    let formattedTimebounds: Server.Timebounds | undefined;
+    let formattedTimebounds: Horizon.Server.Timebounds | undefined;
     if (typeof timebounds === "number") {
       formattedTimebounds = {
         minTime: 0,
@@ -72,6 +96,14 @@ export class Stellar {
     );
   }
 
+  /**
+   * Creates a FeeBumpTransaction instance for increasing the fee of an existing transaction.
+   * @param {FeeBumpTransactionParams} params - The Fee Bump Transaction params.
+   * @param {AccountKeypair} params.feeAddress - The account that will pay for the transaction's fee.
+   * @param {Transaction} params.transaction - The transaction to be fee bumped.
+   * @param {number} [params.baseFee] - The base fee (stroops) for the fee bump transaction. Defaults to the config base fee.
+   * @returns {FeeBumpTransaction} A FeeBumpTransaction instance.
+   */
   makeFeeBump({
     feeAddress,
     transaction,
@@ -85,6 +117,13 @@ export class Stellar {
     );
   }
 
+  /**
+   * Submits a signed transaction to the server. If the submission fails with status
+   * 504 indicating a timeout error, it will automatically retry.
+   * @param {Transaction|FeeBumpTransaction} signedTransaction - The signed transaction to submit.
+   * @returns {boolean} `true` if the transaction was successfully submitted.
+   * @throws {TransactionSubmitFailedError} If the transaction submission fails.
+   */
   async submitTransaction(
     signedTransaction: Transaction | FeeBumpTransaction,
   ): Promise<boolean> {
@@ -105,6 +144,25 @@ export class Stellar {
     }
   }
 
+  /**
+   * Submits a signed transaction. If the submission fails with error code: tx_too_late,
+   * then resubmit with an increased base fee.
+   * @see {@link https://developers.stellar.org/docs/encyclopedia/error-handling#retrying-until-success-strategy}
+   * for more info on this strategy.
+   * @param {SubmitWithFeeIncreaseParams} params - The SubmitWithFeeIncrease params.
+   * @param {AccountKeypair} params.sourceAddress - The source account keypair.
+   * @param {number} params.timeout - The number of seconds from now the transaction is allowed to be submitted.
+   * @param {number} params.baseFeeIncrease - The amount to increase base fee (in stroops) if submission fails.
+   * @param {(builder: TransactionBuilder) => TransactionBuilder} params.buildingFunction - Function for building the
+   * operations of the transactions.
+   * @param {(builder: TransactionBuilder) => TransactionBuilder} [params.signerFunction] - Function for signing the transaction.
+   * If not given, will use the soure keypair to sign.
+   * @param {number} [params.baseFee] - The base fee (stroops) of the transaction.
+   * @param {Memo} [params.memo] - The memo of the transaction.
+   * @param {number} [params.maxFee] - The max fee allowed (stroops) of the transaction, afterward will stop submitting and throw error.
+   * @returns {Transaction} The submitted transaction.
+   * @throws {TransactionSubmitWithFeeIncreaseFailedError} If the transaction submission with fee increase fails.
+   */
   async submitWithFeeIncrease({
     sourceAddress,
     timeout,
@@ -134,7 +192,7 @@ export class Stellar {
     }
 
     try {
-      const success = await this.submitTransaction(transaction);
+      await this.submitTransaction(transaction);
       return transaction;
     } catch (e) {
       const resultCode = getResultCode(e);
@@ -159,7 +217,32 @@ export class Stellar {
     }
   }
 
+  /**
+   * Decodes a Stellar transaction from xdr.
+   * @param {string} xdr - The XDR representation of the transaction.
+   * @returns {Transaction|FeeBumpTransaction} The decoded transaction.
+   */
   decodeTransaction(xdr: string): Transaction | FeeBumpTransaction {
     return StellarTransactionBuilder.fromXDR(xdr, this.cfg.stellar.network);
+  }
+
+  /**
+   * Returns the recommended fee (stroops) to use in a transaction based on the current
+   * stellar network fee stats.
+   * @returns {string} The recommended fee amount in stroops.
+   */
+  async getRecommendedFee(): Promise<string> {
+    const stats = await this.server.feeStats();
+    return stats.max_fee.mode;
+  }
+
+  /**
+   * Funds an account on the stellar test network. If it is already funded then call will error.
+   * Please note: only funds on the testnet network.
+   * @see {@link https://developers.stellar.org/docs/fundamentals-and-concepts/testnet-and-pubnet#friendbot}
+   * @param {string} address - The stellar address.
+   */
+  async fundTestnetAccount(address: string) {
+    await axios.get(`https://friendbot.stellar.org/?addr=${address}`);
   }
 }

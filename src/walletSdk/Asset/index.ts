@@ -1,4 +1,4 @@
-import StellarSdk from "stellar-sdk";
+import { Asset as StellarAsset } from "stellar-sdk";
 
 const STELLAR_SCHEME = "stellar";
 
@@ -18,11 +18,11 @@ export class StellarAssetId extends AssetId {
   issuer: string;
   scheme = STELLAR_SCHEME;
 
-  toAsset() {
+  toAsset(): StellarAsset {
     if (this.id === "native") {
-      return new StellarSdk.Asset("XLM");
+      return new StellarAsset("XLM");
     }
-    return new StellarSdk.Asset(this.code, this.issuer);
+    return new StellarAsset(this.code, this.issuer);
   }
 }
 
@@ -38,6 +38,8 @@ export class IssuedAssetId extends StellarAssetId {
     return this.sep38;
   }
 }
+
+export type XLM = NativeAssetId;
 
 export class NativeAssetId extends StellarAssetId {
   id = "native";
@@ -56,3 +58,18 @@ export class FiatAssetId extends AssetId {
     return this.sep38;
   }
 }
+
+export const Assets = {
+  Main: {
+    USDC: new IssuedAssetId(
+      "USDC",
+      "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+    ),
+  },
+  Test: {
+    USDC: new IssuedAssetId(
+      "USDC",
+      "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+    ),
+  },
+};

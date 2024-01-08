@@ -1,7 +1,8 @@
 import { AnchorTransaction } from "./anchor";
+import { AuthToken } from "./auth";
 
 export type WatchTransactionsParams = {
-  authToken: string;
+  authToken: AuthToken;
   assetCode: string;
   onMessage: (transaction: AnchorTransaction) => void;
   onError: (error: AnchorTransaction | Error) => void;
@@ -14,7 +15,7 @@ export type WatchTransactionsParams = {
 };
 
 export type WatchTransactionParams = {
-  authToken: string;
+  authToken: AuthToken;
   assetCode: string;
   id: string;
   onMessage: (transaction: AnchorTransaction) => void;
@@ -31,4 +32,9 @@ export type WatcherStopFunction = () => void;
 export interface WatcherResponse {
   refresh: WatcherRefreshFunction;
   stop: WatcherStopFunction;
+}
+
+export enum WatcherSepType {
+  SEP6 = "SEP6",
+  SEP24 = "SEP24",
 }

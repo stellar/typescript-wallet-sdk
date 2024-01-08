@@ -1,11 +1,4 @@
-import {
-  Keypair,
-  Memo,
-  MemoText,
-  Operation,
-  Asset,
-  Horizon,
-} from "stellar-sdk";
+import { Keypair, Memo, MemoText, Horizon } from "stellar-sdk";
 import axios from "axios";
 
 import { Stellar, Wallet } from "../src";
@@ -17,6 +10,7 @@ import {
   IssuedAssetId,
   FiatAssetId,
   NativeAssetId,
+  Assets,
 } from "../src/walletSdk/Asset";
 import { TransactionStatus, WithdrawTransaction } from "../src/walletSdk/Types";
 
@@ -34,7 +28,7 @@ describe("Stellar", () => {
     try {
       await stellar.server.loadAccount(kp.publicKey);
     } catch (e) {
-      await axios.get("https://friendbot.stellar.org/?addr=" + kp.publicKey);
+      await stellar.fundTestnetAccount(kp.publicKey);
     }
   }, 10000);
   it("should create and submit a transaction", async () => {
@@ -174,7 +168,7 @@ describe("Stellar", () => {
 
     let acc = await stellar.server.loadAccount(kp.publicKey);
     let balance = acc.balances.find(
-      (b) => (b as Horizon.BalanceLineAsset).asset_code === "USDC",
+      (b) => (b as Horizon.HorizonApi.BalanceLineAsset).asset_code === "USDC",
     );
     expect(balance).toBeTruthy();
 
@@ -184,12 +178,12 @@ describe("Stellar", () => {
 
     acc = await stellar.server.loadAccount(kp.publicKey);
     balance = acc.balances.find(
-      (b) => (b as Horizon.BalanceLineAsset).asset_code === "USDC",
+      (b) => (b as Horizon.HorizonApi.BalanceLineAsset).asset_code === "USDC",
     );
     expect(balance).toBeFalsy();
   }, 20000);
 
-  it("should import and sign a transaction from xdr", async () => {
+  it("should import and sign a transaction from xdr", () => {
     const txnXdr =
       "AAAAAgAAAACHw+LvUYx5O3Ot8A1SUChfTVk4qxFFJZ5QZ/ktaEUKPwAAAGQACEjuAAABDAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAQAAAACHw+LvUYx5O3Ot8A1SUChfTVk4qxFFJZ5QZ/ktaEUKPwAAAAAAAAAAATEtAAAAAAAAAAAA";
 
@@ -244,6 +238,11 @@ describe("Stellar", () => {
       expect(txn).toBeTruthy();
     }
   }, 20000);
+
+  it("should return recommended fee", async () => {
+    const fee = await stellar.getRecommendedFee();
+    expect(fee).toBeTruthy();
+  });
 });
 
 let txnSourceKp;
@@ -385,6 +384,17 @@ describe("Asset", () => {
     const fiat = new FiatAssetId("USD");
     expect(fiat.sep38).toBe("iso4217:USD");
   });
+  it("should use premade constants", () => {
+    let issued = Assets.Main.USDC;
+    expect(issued.sep38).toBe(
+      "stellar:USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+    );
+
+    issued = Assets.Test.USDC;
+    expect(issued.sep38).toBe(
+      "stellar:USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+    );
+  });
 });
 
 describe("Account Modifying", () => {
@@ -462,4 +472,39 @@ describe("Account Modifying", () => {
     resp = await stellar.server.loadAccount(sourceKp.publicKey);
     expect(resp.signers[0].weight).toBe(0);
   }, 45000);
+
+  it("should merge account", async () => {
+    const wallet = Wallet.TestNet();
+    const stellar = wallet.stellar();
+    const account = wallet.stellar().account();
+
+    const accountKp = account.createKeypair();
+    const sourceKp = account.createKeypair();
+    await stellar.fundTestnetAccount(accountKp.publicKey);
+    await stellar.fundTestnetAccount(sourceKp.publicKey);
+
+    const txBuilder = await stellar.transaction({
+      sourceAddress: accountKp,
+      baseFee: 1000,
+    });
+    const mergeTxn = txBuilder
+      .accountMerge(accountKp.publicKey, sourceKp.publicKey)
+      .build();
+    mergeTxn.sign(accountKp.keypair);
+    mergeTxn.sign(sourceKp.keypair);
+    await stellar.submitTransaction(mergeTxn);
+
+    let found;
+    try {
+      const accResp = await stellar.server.loadAccount(sourceKp.publicKey);
+      if (accResp) {
+        found = true;
+      }
+    } catch (e) {
+      found = false;
+    }
+    expect(found).toBeFalsy();
+    const accResp = await stellar.server.loadAccount(accountKp.publicKey);
+    expect(parseInt(accResp.balances[0].balance)).toBeGreaterThan(19998);
+  }, 30000);
 });
