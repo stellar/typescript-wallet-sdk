@@ -217,11 +217,12 @@ describe("Anchor", () => {
   it("should throw ServerRequestFailedError", async () => {
     const assetCode = "SRT";
     let didError = false;
+    const badAuthToken = new AuthToken();
     try {
       await anchor.sep24().withdraw({
         withdrawalAccount: accountKp.publicKey,
         assetCode,
-        authToken: "bad auth token",
+        authToken: badAuthToken,
       });
     } catch (e) {
       didError = true;
