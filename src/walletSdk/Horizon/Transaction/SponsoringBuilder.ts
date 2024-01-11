@@ -1,4 +1,4 @@
-import StellarSdk, { xdr } from "stellar-sdk";
+import StellarSdk, { xdr } from "@stellar/stellar-sdk";
 
 import { CommonTransactionBuilder } from "./CommonTransactionBuilder";
 import { AccountKeypair } from "../Account";

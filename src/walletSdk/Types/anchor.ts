@@ -1,4 +1,4 @@
-import { MemoType } from "stellar-sdk";
+import { MemoType } from "@stellar/stellar-sdk";
 import { Optional } from "utility-types";
 
 import { AuthToken } from "./auth";

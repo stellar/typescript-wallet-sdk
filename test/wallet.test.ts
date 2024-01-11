@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import sinon from "sinon";
-import StellarSdk, { Keypair, Memo, MemoText } from "stellar-sdk";
+import StellarSdk, { Keypair, Memo, MemoText } from "@stellar/stellar-sdk";
 
 import {
   Anchor,

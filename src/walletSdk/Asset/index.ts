@@ -1,4 +1,4 @@
-import { Asset as StellarAsset } from "stellar-sdk";
+import { Asset as StellarAsset } from "@stellar/stellar-sdk";
 
 const STELLAR_SCHEME = "stellar";
 

@@ -1,5 +1,5 @@
 import { RawAxiosRequestHeaders } from "axios";
-import { Networks } from "stellar-sdk";
+import { Networks } from "@stellar/stellar-sdk";
 import { ApplicationConfiguration, StellarConfiguration } from "walletSdk";
 import { RecoveryServerMap } from "./recovery";
 

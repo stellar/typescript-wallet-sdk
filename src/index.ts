@@ -43,7 +43,7 @@ import * as Exceptions from "./walletSdk/Exceptions";
 export { Exceptions };
 
 import * as walletSdk from "./walletSdk";
-import { Keypair } from "stellar-sdk";
+import { Keypair } from "@stellar/stellar-sdk";
 // TODO - figure out why Keypair used in parent codebase throws error
 export { walletSdk, Keypair };
 export default { walletSdk };

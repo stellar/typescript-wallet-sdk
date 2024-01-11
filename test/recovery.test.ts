@@ -1,5 +1,5 @@
 import axios from "axios";
-import { xdr } from "stellar-sdk";
+import { xdr } from "@stellar/stellar-sdk";
 
 import { SigningKeypair, Wallet } from "../src";
 

@@ -1,5 +1,5 @@
 import { AxiosInstance } from "axios";
-import { StellarToml } from "stellar-sdk";
+import { StellarToml } from "@stellar/stellar-sdk";
 
 import { Config } from "walletSdk";
 import { Sep10 } from "../Auth";

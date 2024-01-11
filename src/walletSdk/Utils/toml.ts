@@ -1,4 +1,4 @@
-import { StellarToml } from "stellar-sdk";
+import { StellarToml } from "@stellar/stellar-sdk";
 
 import { TomlInfo } from "../Types";
 

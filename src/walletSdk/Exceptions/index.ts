@@ -1,4 +1,4 @@
-import { Networks, Horizon } from "stellar-sdk";
+import { Networks, Horizon } from "@stellar/stellar-sdk";
 import axios from "axios";
 import {
   AnchorTransaction,

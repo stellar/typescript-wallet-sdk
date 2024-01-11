@@ -1,4 +1,4 @@
-import StellarSdk, { xdr } from "stellar-sdk";
+import StellarSdk, { xdr } from "@stellar/stellar-sdk";
 import { IssuedAssetId } from "../../Asset";
 import { AccountKeypair } from "../Account";
 

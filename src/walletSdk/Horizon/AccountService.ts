@@ -1,4 +1,4 @@
-import { Keypair, Networks, Horizon } from "stellar-sdk";
+import { Keypair, Networks, Horizon } from "@stellar/stellar-sdk";
 
 import { Config } from "walletSdk";
 import { SigningKeypair } from "./Account";
