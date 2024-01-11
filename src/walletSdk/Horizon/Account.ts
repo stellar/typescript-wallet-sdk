@@ -1,4 +1,4 @@
-import { Keypair, Transaction, FeeBumpTransaction } from "stellar-sdk";
+import { Keypair, Transaction, FeeBumpTransaction } from "@stellar/stellar-sdk";
 
 export class AccountKeypair {
   keypair: Keypair;

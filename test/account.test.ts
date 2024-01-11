@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { TransactionBuilder, Networks } from "stellar-sdk";
+import { TransactionBuilder, Networks } from "@stellar/stellar-sdk";
 
 import { Wallet } from "../src";
 import { PublicKeypair } from "../src/walletSdk/Horizon/Account";

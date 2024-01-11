@@ -4,7 +4,7 @@ import {
   Transaction,
   TransactionBuilder as StellarTransactionBuilder,
   FeeBumpTransaction,
-} from "stellar-sdk";
+} from "@stellar/stellar-sdk";
 import axios from "axios";
 
 import { Config } from "walletSdk";

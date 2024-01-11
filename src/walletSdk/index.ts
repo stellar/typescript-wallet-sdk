@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import { Networks, Horizon } from "stellar-sdk";
+import { Networks, Horizon } from "@stellar/stellar-sdk";
 
 import { Anchor } from "./Anchor";
 import { DefaultSigner, WalletSigner } from "./Auth";

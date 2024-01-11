@@ -1,5 +1,5 @@
 import { AxiosInstance } from "axios";
-import StellarSdk, { Transaction } from "stellar-sdk";
+import StellarSdk, { Transaction } from "@stellar/stellar-sdk";
 import { decode } from "jws";
 
 import { Config } from "walletSdk";

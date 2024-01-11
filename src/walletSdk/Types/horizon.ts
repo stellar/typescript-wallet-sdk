@@ -1,4 +1,4 @@
-import { Memo, Horizon, Transaction } from "stellar-sdk";
+import { Memo, Horizon, Transaction } from "@stellar/stellar-sdk";
 import { AccountKeypair } from "../Horizon/Account";
 import { SponsoringBuilder, TransactionBuilder } from "walletSdk/Horizon";
 import { StellarAssetId } from "../Asset";

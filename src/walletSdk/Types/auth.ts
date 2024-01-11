@@ -1,4 +1,4 @@
-import { Transaction } from "stellar-sdk";
+import { Transaction } from "@stellar/stellar-sdk";
 import { decode } from "jws";
 
 import { WalletSigner } from "../Auth/WalletSigner";

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Horizon, MuxedAccount } from "stellar-sdk";
+import { Horizon, MuxedAccount } from "@stellar/stellar-sdk";
 
 import { AccountService, SigningKeypair, Stellar, Wallet } from "../src";
 import { IssuedAssetId, NativeAssetId } from "../src/walletSdk/Asset";

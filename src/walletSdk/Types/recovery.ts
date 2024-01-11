@@ -1,4 +1,4 @@
-import { Transaction } from "stellar-sdk";
+import { Transaction } from "@stellar/stellar-sdk";
 
 import { WalletSigner } from "walletSdk/Auth";
 import { AccountKeypair, PublicKeypair } from "walletSdk/Horizon";

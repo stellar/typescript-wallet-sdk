@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Horizon } from "stellar-sdk";
+import { Horizon } from "@stellar/stellar-sdk";
 
 import { AccountService, SigningKeypair, Wallet } from "../src";
 import { HORIZON_ORDER } from "../src/walletSdk/Types";

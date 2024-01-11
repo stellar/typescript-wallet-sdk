@@ -5,7 +5,7 @@ import StellarSdk, {
   Horizon,
   Memo,
   xdr,
-} from "stellar-sdk";
+} from "@stellar/stellar-sdk";
 
 import { Config } from "walletSdk";
 import { AccountKeypair } from "../Account";

@@ -10,7 +10,12 @@ import {
   IssuedAssetId,
   DefaultSigner,
 } from "../../src";
-import { Memo, MemoText, Transaction, TransactionBuilder } from "stellar-sdk";
+import {
+  Memo,
+  MemoText,
+  Transaction,
+  TransactionBuilder,
+} from "@stellar/stellar-sdk";
 
 import * as dotenv from "dotenv";
 dotenv.config({ path: path.resolve(__dirname, ".env") });

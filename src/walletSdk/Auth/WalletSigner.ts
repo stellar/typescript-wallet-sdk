@@ -1,7 +1,7 @@
 import {
   Transaction,
   TransactionBuilder as StellarTransactionBuilder,
-} from "stellar-sdk";
+} from "@stellar/stellar-sdk";
 import { AxiosInstance } from "axios";
 
 import {

@@ -1,5 +1,5 @@
 import { AxiosInstance } from "axios";
-import { Horizon, Transaction } from "stellar-sdk";
+import { Horizon, Transaction } from "@stellar/stellar-sdk";
 
 import {
   RecoveryServer,

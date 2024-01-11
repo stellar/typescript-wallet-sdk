@@ -1,4 +1,4 @@
-import { Keypair, Memo, MemoText, Horizon } from "stellar-sdk";
+import { Keypair, Memo, MemoText, Horizon } from "@stellar/stellar-sdk";
 import axios from "axios";
 
 import { Stellar, Wallet } from "../src";
