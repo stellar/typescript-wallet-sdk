@@ -29,50 +29,22 @@ describe("Horizon", () => {
       );
     }
 
-    const testingAccountKp = SigningKeypair.fromSecret(
-      "SAXW2HC7JH5IJSIRFQ22JTMT6T3VONKGMYSIBLHNEJCV7AXLIGAXNESD",
+    // create test account
+    const testingAccountKp = accountService.createKeypair();
+    await axios.get(
+      "https://friendbot.stellar.org/?addr=" + testingAccountKp.publicKey,
     );
 
-    // make sure testing account exists
+    const txBuilder = await stellar.transaction({
+      sourceAddress: testingAccountKp,
+    });
+    const asset = new IssuedAssetId("USDC", fundingAccountKp.publicKey);
+    const addUsdcTx = txBuilder.addAssetSupport(asset).build();
+    addUsdcTx.sign(testingAccountKp.keypair);
+
+    await stellar.submitTransaction(addUsdcTx);
+
     accountAddress = testingAccountKp.publicKey;
-    try {
-      await stellar.server.loadAccount(accountAddress);
-    } catch (e) {
-      const txBuilder1 = await stellar.transaction({
-        sourceAddress: fundingAccountKp,
-        baseFee: 100,
-      });
-      const createAccTx = txBuilder1.createAccount(testingAccountKp, 2).build();
-      createAccTx.sign(fundingAccountKp.keypair);
-
-      let failed = false;
-      try {
-        await stellar.submitTransaction(createAccTx);
-        await stellar.server.loadAccount(accountAddress);
-      } catch (e) {
-        failed = true;
-      }
-
-      const txBuilder2 = await stellar.transaction({
-        sourceAddress: testingAccountKp,
-        baseFee: 100,
-      });
-      const asset = new IssuedAssetId(
-        "USDC",
-        "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
-      );
-      const addUsdcTx = txBuilder2.addAssetSupport(asset).build();
-      addUsdcTx.sign(testingAccountKp.keypair);
-
-      // make sure testing account has USDC trustline
-      try {
-        await stellar.submitTransaction(addUsdcTx);
-      } catch (e) {
-        failed = true;
-      }
-
-      expect(failed).toBeFalsy();
-    }
   }, 30000);
 
   it("should return stellar account details", async () => {
