@@ -1366,6 +1366,11 @@
   resolved "https://registry.yarnpkg.com/@sinonjs/text-encoding/-/text-encoding-0.7.2.tgz#5981a8db18b56ba38ef0efb7d995b12aa7b51918"
   integrity sha512-sXXKG+uL9IrKqViTtao2Ws6dy0znu9sOaP1di/jKGW1M6VssO8vlpXCQcpZ+jisQ1tTFAC5Jo/EOzFbggBagFQ==
 
+"@stellar/freighter-api@^1.7.1":
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/@stellar/freighter-api/-/freighter-api-1.7.1.tgz#d62b432abc7e0140a6025cd672455ecee7b3199a"
+  integrity sha512-XvPO+XgEbkeP0VhP0U1edOkds+rGS28+y8GRGbCVXeZ9ZslbWqRFQoETAdX8IXGuykk2ib/aPokiLc5ZaWYP7w==
+
 "@stellar/js-xdr@^3.0.1":
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/@stellar/js-xdr/-/js-xdr-3.0.1.tgz#d500f1e1332210cd56e0ef95e44c54506d9f48f3"
@@ -1390,10 +1395,9 @@
   optionalDependencies:
     sodium-native "^4.0.1"
 
-"@stellar/stellar-sdk@^11.1.0":
+"@stellar/stellar-sdk@stellar/js-stellar-sdk#bindings":
   version "11.1.0"
-  resolved "https://registry.yarnpkg.com/@stellar/stellar-sdk/-/stellar-sdk-11.1.0.tgz#4a619fa645a7392204b6e80cb0a7f3ef94cdd077"
-  integrity sha512-Ufw+4udr7lqyzPIhqSAzBTgcl/YlgFZLgeBlDr5ZZy1v+g7AT4dOZFurcCrHt7Pz8DGtVcxNX7GLxYLdOC3GIg==
+  resolved "https://codeload.github.com/stellar/js-stellar-sdk/tar.gz/40693148bf93dea93552f09a2d50ef19bb555535"
   dependencies:
     "@stellar/stellar-base" "10.0.1"
     axios "^1.6.0"
