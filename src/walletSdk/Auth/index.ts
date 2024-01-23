@@ -1,5 +1,10 @@
 import { AxiosInstance } from "axios";
-import StellarSdk, { Transaction } from "@stellar/stellar-sdk";
+import StellarSdk, {
+  Transaction,
+  TransactionBuilder,
+  Keypair,
+  StellarToml,
+} from "@stellar/stellar-sdk";
 import { decode } from "jws";
 
 import { Config } from "walletSdk";
@@ -10,6 +15,8 @@ import {
   InvalidTokenError,
   MissingTokenError,
   ExpiredTokenError,
+  ChallengeTxnIncorrectSequenceError,
+  ChallengeTxnInvalidSignatureError,
 } from "../Exceptions";
 import {
   AuthenticateParams,
@@ -17,7 +24,9 @@ import {
   ChallengeParams,
   ChallengeResponse,
   SignParams,
+  ValidateChallengeTxnParams,
 } from "../Types";
+import { parseToml } from "../Utils";
 
 export { WalletSigner, DefaultSigner } from "./WalletSigner";
 
@@ -164,4 +173,43 @@ const validateToken = (token: string) => {
   if (parsedToken.expiresAt < Math.floor(Date.now() / 1000)) {
     throw new ExpiredTokenError(parsedToken.expiresAt);
   }
+};
+
+/**
+ * Helper method for validating and then signing a SEP-10 challenge transaction if valid.
+ * @param {ValidateChallengeTxnParams} params - The Authentication params.
+ * @param {AccountKeypair} params.accountKp - Keypair for the Stellar account signing the transaction.
+ * @param {string} [params.challengeTx] - The challenge transaction given by an anchor for authentication.
+ * @param {string} [params.networkPassphrase] - The network passphrase for the network authenticating on.
+ * @param {string} [params.anchorDomain] - Domain hosting stellar.toml file containing `SIGNING_KEY`.
+ * @returns {Promise<Transaction>} The signed transaction.
+ */
+export const validateThenSignChallengeTransaction = async ({
+  accountKp,
+  challengeTx,
+  networkPassphrase,
+  anchorDomain,
+}: ValidateChallengeTxnParams) => {
+  const tx = TransactionBuilder.fromXDR(
+    challengeTx,
+    networkPassphrase,
+  ) as Transaction;
+
+  if (parseInt(tx.sequence) !== 0) {
+    throw new ChallengeTxnIncorrectSequenceError();
+  }
+
+  const tomlResp = await StellarToml.Resolver.resolve(anchorDomain);
+  const parsedToml = parseToml(tomlResp);
+  const anchorKp = Keypair.fromPublicKey(parsedToml.signingKey);
+
+  const isValid =
+    tx.signatures.length &&
+    anchorKp.verify(tx.hash(), tx.signatures[0].signature());
+  if (!isValid) {
+    throw new ChallengeTxnInvalidSignatureError();
+  }
+
+  accountKp.sign(tx);
+  return tx;
 };
