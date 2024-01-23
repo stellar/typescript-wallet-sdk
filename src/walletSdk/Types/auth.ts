@@ -86,3 +86,8 @@ export type SignChallengeTxnParams = {
   networkPassphrase: string;
   anchorDomain: string;
 };
+
+export type SignChallengeTxnResponse = {
+  transaction: XdrEncodedTransaction;
+  networkPassphrase: NetworkPassphrase;
+};

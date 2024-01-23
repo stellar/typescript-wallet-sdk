@@ -1,8 +1,10 @@
+import { TransactionBuilder } from "@stellar/stellar-sdk";
 import { Wallet, signChallengeTransaction } from "../src";
 
 let wallet;
 let account;
 let accountKp;
+const networkPassphrase = "Test SDF Network ; September 2015";
 describe("SEP-10 helpers", () => {
   beforeEach(() => {
     wallet = Wallet.TestNet();
@@ -16,13 +18,18 @@ describe("SEP-10 helpers", () => {
 
     let isValid;
     try {
-      const signedTx = await signChallengeTransaction({
+      const signedResp = await signChallengeTransaction({
         accountKp,
         challengeTx: validChallengeTx,
-        networkPassphrase: "Test SDF Network ; September 2015",
+        networkPassphrase,
         anchorDomain: "testanchor.stellar.org",
       });
-      expect(signedTx.signatures.length).toBe(2);
+      const signedTxn = TransactionBuilder.fromXDR(
+        signedResp.transaction,
+        networkPassphrase,
+      );
+      expect(signedTxn.signatures.length).toBe(2);
+      expect(signedResp.networkPassphrase).toBe(networkPassphrase);
       isValid = true;
     } catch (e) {
       isValid = false;
@@ -40,7 +47,7 @@ describe("SEP-10 helpers", () => {
       await signChallengeTransaction({
         accountKp,
         challengeTx: invalidChallengeTx,
-        networkPassphrase: "Test SDF Network ; September 2015",
+        networkPassphrase,
         anchorDomain: "testanchor.stellar.org",
       });
       isValid = true;

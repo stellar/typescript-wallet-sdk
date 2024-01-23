@@ -25,6 +25,7 @@ import {
   ChallengeResponse,
   SignParams,
   SignChallengeTxnParams,
+  SignChallengeTxnResponse,
 } from "../Types";
 import { parseToml } from "../Utils";
 
@@ -182,14 +183,14 @@ const validateToken = (token: string) => {
  * @param {string} [params.challengeTx] - The challenge transaction given by an anchor for authentication.
  * @param {string} [params.networkPassphrase] - The network passphrase for the network authenticating on.
  * @param {string} [params.anchorDomain] - Domain hosting stellar.toml file containing `SIGNING_KEY`.
- * @returns {Promise<Transaction>} The signed transaction.
+ * @returns {Promise<SignChallengeTxnResponse>} The signed transaction.
  */
 export const signChallengeTransaction = async ({
   accountKp,
   challengeTx,
   networkPassphrase,
   anchorDomain,
-}: SignChallengeTxnParams) => {
+}: SignChallengeTxnParams): Promise<SignChallengeTxnResponse> => {
   const tx = TransactionBuilder.fromXDR(
     challengeTx,
     networkPassphrase,
@@ -211,5 +212,8 @@ export const signChallengeTransaction = async ({
   }
 
   accountKp.sign(tx);
-  return tx;
+  return {
+    transaction: tx.toXDR(),
+    networkPassphrase,
+  };
 };
