@@ -20,7 +20,7 @@ export {
   Sep10,
   WalletSigner,
   DefaultSigner,
-  validateThenSignChallengeTransaction,
+  signChallengeTransaction,
 } from "./walletSdk/Auth";
 export {
   AccountKeypair,

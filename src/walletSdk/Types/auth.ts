@@ -80,7 +80,7 @@ export type HttpHeaders = {
   [key: string]: string;
 };
 
-export type ValidateChallengeTxnParams = {
+export type SignChallengeTxnParams = {
   accountKp: SigningKeypair;
   challengeTx: string;
   networkPassphrase: string;

@@ -1,4 +1,4 @@
-import { Wallet, validateThenSignChallengeTransaction } from "../src";
+import { Wallet, signChallengeTransaction } from "../src";
 
 let wallet;
 let account;
@@ -16,7 +16,7 @@ describe("SEP-10 helpers", () => {
 
     let isValid;
     try {
-      const signedTx = await validateThenSignChallengeTransaction({
+      const signedTx = await signChallengeTransaction({
         accountKp,
         challengeTx: validChallengeTx,
         networkPassphrase: "Test SDF Network ; September 2015",
@@ -37,7 +37,7 @@ describe("SEP-10 helpers", () => {
 
     let isValid;
     try {
-      await validateThenSignChallengeTransaction({
+      await signChallengeTransaction({
         accountKp,
         challengeTx: invalidChallengeTx,
         networkPassphrase: "Test SDF Network ; September 2015",

@@ -24,7 +24,7 @@ import {
   ChallengeParams,
   ChallengeResponse,
   SignParams,
-  ValidateChallengeTxnParams,
+  SignChallengeTxnParams,
 } from "../Types";
 import { parseToml } from "../Utils";
 
@@ -176,20 +176,20 @@ const validateToken = (token: string) => {
 };
 
 /**
- * Helper method for validating and then signing a SEP-10 challenge transaction if valid.
- * @param {ValidateChallengeTxnParams} params - The Authentication params.
+ * Helper method for signing a SEP-10 challenge transaction if valid.
+ * @param {SignChallengeTxnParams} params - The Authentication params.
  * @param {AccountKeypair} params.accountKp - Keypair for the Stellar account signing the transaction.
  * @param {string} [params.challengeTx] - The challenge transaction given by an anchor for authentication.
  * @param {string} [params.networkPassphrase] - The network passphrase for the network authenticating on.
  * @param {string} [params.anchorDomain] - Domain hosting stellar.toml file containing `SIGNING_KEY`.
  * @returns {Promise<Transaction>} The signed transaction.
  */
-export const validateThenSignChallengeTransaction = async ({
+export const signChallengeTransaction = async ({
   accountKp,
   challengeTx,
   networkPassphrase,
   anchorDomain,
-}: ValidateChallengeTxnParams) => {
+}: SignChallengeTxnParams) => {
   const tx = TransactionBuilder.fromXDR(
     challengeTx,
     networkPassphrase,
