@@ -2,7 +2,7 @@ import { Transaction } from "@stellar/stellar-sdk";
 import { decode } from "jws";
 
 import { WalletSigner } from "../Auth/WalletSigner";
-import { AccountKeypair } from "../Horizon/Account";
+import { AccountKeypair, SigningKeypair } from "../Horizon/Account";
 
 export type AuthenticateParams = {
   accountKp: AccountKeypair;
@@ -78,4 +78,16 @@ export type SignWithDomainAccountParams = {
 
 export type HttpHeaders = {
   [key: string]: string;
+};
+
+export type SignChallengeTxnParams = {
+  accountKp: SigningKeypair;
+  challengeTx: string;
+  networkPassphrase: string;
+  anchorDomain: string;
+};
+
+export type SignChallengeTxnResponse = {
+  transaction: XdrEncodedTransaction;
+  networkPassphrase: NetworkPassphrase;
 };

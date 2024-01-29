@@ -42,6 +42,12 @@ export { Utils };
 import * as Exceptions from "./walletSdk/Exceptions";
 export { Exceptions };
 
+/**
+ * Server
+ */
+import * as Server from "./walletSdk/Server";
+export { Server };
+
 import * as walletSdk from "./walletSdk";
 import { Keypair } from "@stellar/stellar-sdk";
 // TODO - figure out why Keypair used in parent codebase throws error

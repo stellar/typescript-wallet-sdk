@@ -270,3 +270,17 @@ export class Sep38PriceOnlyOneAmountError extends Error {
     Object.setPrototypeOf(this, Sep38PriceOnlyOneAmountError.prototype);
   }
 }
+
+export class ChallengeTxnIncorrectSequenceError extends Error {
+  constructor() {
+    super("Challenge transaction sequence number must be 0");
+    Object.setPrototypeOf(this, ChallengeTxnIncorrectSequenceError.prototype);
+  }
+}
+
+export class ChallengeTxnInvalidSignatureError extends Error {
+  constructor() {
+    super("Invalid signature for challenge transaction");
+    Object.setPrototypeOf(this, ChallengeTxnInvalidSignatureError.prototype);
+  }
+}
