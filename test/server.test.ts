@@ -1,5 +1,5 @@
 import { TransactionBuilder } from "@stellar/stellar-sdk";
-import { Wallet, signChallengeTransaction } from "../src";
+import { Wallet, Server } from "../src";
 
 let wallet;
 let account;
@@ -18,7 +18,7 @@ describe("SEP-10 helpers", () => {
 
     let isValid;
     try {
-      const signedResp = await signChallengeTransaction({
+      const signedResp = await Server.signChallengeTransaction({
         accountKp,
         challengeTx: validChallengeTx,
         networkPassphrase,
@@ -44,7 +44,7 @@ describe("SEP-10 helpers", () => {
 
     let isValid;
     try {
-      await signChallengeTransaction({
+      await Server.signChallengeTransaction({
         accountKp,
         challengeTx: invalidChallengeTx,
         networkPassphrase,

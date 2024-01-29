@@ -16,12 +16,7 @@ export {
 export { Anchor } from "./walletSdk/Anchor";
 export { Sep24 } from "./walletSdk/Anchor/Sep24";
 export { IssuedAssetId, NativeAssetId, FiatAssetId } from "./walletSdk/Asset";
-export {
-  Sep10,
-  WalletSigner,
-  DefaultSigner,
-  signChallengeTransaction,
-} from "./walletSdk/Auth";
+export { Sep10, WalletSigner, DefaultSigner } from "./walletSdk/Auth";
 export {
   AccountKeypair,
   PublicKeypair,
@@ -46,6 +41,12 @@ export { Utils };
  */
 import * as Exceptions from "./walletSdk/Exceptions";
 export { Exceptions };
+
+/**
+ * Server
+ */
+import * as Server from "./walletSdk/Server";
+export { Server };
 
 import * as walletSdk from "./walletSdk";
 import { Keypair } from "@stellar/stellar-sdk";
