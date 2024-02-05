@@ -61,9 +61,9 @@ export class Sep24 {
    * @param {ExtraFields} [params.extraFields] - Additional fields for the request.
    * @param {Memo} [params.destinationMemo] - Memo information for the destination account.
    * @param {string} [params.destinationAccount] - The destination account for the deposit.
-   * @param {string} [params.callback] - The callback URL or postMessage the anchor should POST to
+   * @param {string} [params.callback] - The callback URL the anchor should POST to
    * on a successfully completed interactive flow.
-   * @param {string} [params.on_change_callback] - The URL or postMessage the anchor should POST to
+   * @param {string} [params.on_change_callback] - The URL the anchor should POST to
    * when the 'status' or 'kyc_verified' properties change.
    * @returns {Promise<Sep24PostResponse>} The Sep24 response.
    * @throws {AssetNotSupportedError} If the asset is not supported for deposit.
@@ -99,9 +99,9 @@ export class Sep24 {
    * @param {string} [params.lang] - The language for the request (defaults to the Anchor's language).
    * @param {ExtraFields} [params.extraFields] - Additional fields for the request.
    * @param {string} [params.withdrawalAccount] - The withdrawal account.
-   * @param {string} [params.callback] - The callback URL or postMessage the anchor should POST to
+   * @param {string} [params.callback] - The callback URL the anchor should POST to
    * on a successfully completed interactive flow.
-   * @param {string} [params.on_change_callback] - The URL or postMessage the anchor should POST to
+   * @param {string} [params.on_change_callback] - The URL the anchor should POST to
    * when the 'status' or 'kyc_verified' properties change.
    * @returns {Promise<Sep24PostResponse>} The Sep24 response.
    * @throws {AssetNotSupportedError} If the asset is not supported for withdrawal.
