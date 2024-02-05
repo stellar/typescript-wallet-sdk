@@ -180,6 +180,28 @@ describe("Anchor", () => {
     expect(resp.id).toBeTruthy();
   });
 
+  it("should give url with a callback", async () => {
+    const assetCode = "SRT";
+    const resp = await anchor.sep24().deposit({
+      destinationAccount: accountKp.publicKey,
+      assetCode,
+      authToken,
+      callback: "mycallback.com",
+    });
+    expect(resp.url.includes("callback=mycallback.com")).toBeTruthy();
+  });
+
+  it("should give url with a on_change_callback", async () => {
+    const assetCode = "SRT";
+    const resp = await anchor.sep24().deposit({
+      destinationAccount: accountKp.publicKey,
+      assetCode,
+      authToken,
+      on_change_callback: "mycallback.com",
+    });
+    expect(resp.url.includes("on_change_callback=mycallback.com")).toBeTruthy();
+  });
+
   it("should give interactive deposit url without giving account and giving memo", async () => {
     const assetCode = "SRT";
     const resp = await anchor.sep24().deposit({

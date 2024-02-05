@@ -22,6 +22,8 @@ export type Sep24PostParams = {
   destinationAccount?: string;
   withdrawalAccount?: string;
   account?: string;
+  callback?: string;
+  on_change_callback?: string;
 };
 
 export enum Sep24ResponseType {

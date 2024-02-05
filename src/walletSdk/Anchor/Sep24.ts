@@ -71,6 +71,8 @@ export class Sep24 {
     extraFields,
     destinationMemo,
     destinationAccount,
+    callback,
+    on_change_callback,
   }: Sep24PostParams): Promise<Sep24PostResponse> {
     return this.flow({
       assetCode,
@@ -79,6 +81,8 @@ export class Sep24 {
       extraFields,
       destinationMemo,
       account: destinationAccount,
+      callback,
+      on_change_callback,
       type: FLOW_TYPE.DEPOSIT,
     });
   }
@@ -100,6 +104,8 @@ export class Sep24 {
     lang,
     extraFields,
     withdrawalAccount,
+    callback,
+    on_change_callback,
   }: Sep24PostParams): Promise<Sep24PostResponse> {
     return this.flow({
       assetCode,
@@ -107,6 +113,8 @@ export class Sep24 {
       lang,
       extraFields,
       account: withdrawalAccount,
+      callback,
+      on_change_callback,
       type: FLOW_TYPE.WITHDRAW,
     });
   }
@@ -163,6 +171,12 @@ export class Sep24 {
       );
 
       const interactiveResponse: Sep24PostResponse = resp.data;
+
+      if (params.callback) {
+        interactiveResponse.url = `${interactiveResponse.url}&callback=${params.callback}`;
+      } else if (params.on_change_callback) {
+        interactiveResponse.url = `${interactiveResponse.url}&on_change_callback=${params.on_change_callback}`;
+      }
 
       return interactiveResponse;
     } catch (e) {
