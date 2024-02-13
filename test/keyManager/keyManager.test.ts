@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-
+jest.mock("node-fetch");
 import {
   Networks,
   Keypair,
@@ -11,9 +11,9 @@ import {
   BASE_FEE,
 } from "@stellar/stellar-sdk";
 import { mockRandomForEach } from "jest-mock-random";
-import fetchMock from "jest-fetch-mock";
 import randomBytes from "randombytes";
 import sinon from "sinon";
+import { Response } from "node-fetch";
 
 import { KeyManager } from "../../src";
 import { KeyType } from "../../src/walletSdk/Types";
@@ -23,7 +23,7 @@ import {
   ScryptEncrypter,
 } from "../../src/walletSdk/KeyManager/plugins";
 
-fetchMock.enableMocks();
+const { Response } = jest.requireActual("node-fetch");
 
 describe("KeyManager", () => {
   let clock: sinon.SinonFakeTimers;
@@ -115,7 +115,7 @@ describe("KeyManager", () => {
         "The function should have thrown but didn't, the test failed!",
       ).toBe(null);
     } catch (e) {
-      expect((e ).toString()).toContain("Key not found");
+      expect(e.toString()).toContain("Key not found");
     }
   });
 
@@ -188,7 +188,7 @@ describe("KeyManager", () => {
         "The function should have thrown but didn't, the test failed!",
       ).toBe(null);
     } catch (e) {
-      expect((e ).toString()).toContain("Key not found");
+      expect(e.toString()).toContain("Key not found");
     }
   });
 
@@ -246,8 +246,7 @@ describe("KeyManager", () => {
 
 describe("fetchAuthToken", () => {
   beforeEach(() => {
-    // @ts-ignore
-    fetch.resetMocks();
+    jest.resetAllMocks();
   });
 
   test("Throws errors for missing params", async () => {
@@ -270,12 +269,7 @@ describe("fetchAuthToken", () => {
     const error = "Test error";
     const password = "very secure password";
 
-    // @ts-ignore
-    fetch.mockResponseOnce(
-      JSON.stringify({
-        error,
-      }),
-    );
+    jest.spyOn(global, "fetch").mockRejectedValueOnce(error);
 
     // set up the manager
     const testStore = new MemoryKeyStore();
@@ -311,7 +305,7 @@ describe("fetchAuthToken", () => {
 
       expect("This test failed").toBe(null);
     } catch (e) {
-      expect((e ).toString()).toBe(`Error: ${error}`);
+      expect(e).toBe(error);
     }
   });
 
@@ -365,21 +359,24 @@ describe("fetchAuthToken", () => {
 
     tx.sign(accountKey);
 
-    fetch
-      // @ts-ignore
-      .mockResponseOnce(
-        JSON.stringify({
-          transaction: tx.toXDR(),
-          network_passphrase: keyNetwork,
-        }),
+    jest
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            transaction: tx.toXDR(),
+            network_passphrase: keyNetwork,
+          }),
+        ),
       )
-      // @ts-ignore
-      .mockResponseOnce(
-        JSON.stringify({
-          token,
-          status: 1,
-          message: "Good job friend",
-        }),
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            token,
+            status: 1,
+            message: "Good job friend",
+          }),
+        ),
       );
 
     // save this key
@@ -402,8 +399,9 @@ describe("fetchAuthToken", () => {
       authServerHomeDomains: ["stellar.org"],
     });
 
-    // @ts-ignore accessing mock property
-    const xdr: string = JSON.parse(fetch.mock.calls[1][1].body).transaction;
+    const xdr: string = JSON.parse(
+      (global.fetch as any).mock.calls[1][1].body,
+    ).transaction;
     const submittedTx = new Transaction(xdr, keyNetwork);
 
     expect(submittedTx.signatures.length).toEqual(2);
@@ -460,21 +458,24 @@ describe("fetchAuthToken", () => {
 
     tx.sign(accountKey);
 
-    fetch
-      // @ts-ignore
-      .mockResponseOnce(
-        JSON.stringify({
-          transaction: tx.toXDR(),
-          network_passphrase: keyNetwork,
-        }),
+    jest
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            transaction: tx.toXDR(),
+            network_passphrase: keyNetwork,
+          }),
+        ),
       )
-      // @ts-ignore
-      .mockResponseOnce(
-        JSON.stringify({
-          token,
-          status: 1,
-          message: "Good job friend",
-        }),
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            token,
+            status: 1,
+            message: "Good job friend",
+          }),
+        ),
       );
 
     // save this key
@@ -498,7 +499,7 @@ describe("fetchAuthToken", () => {
       clientDomain: "example.com",
     });
 
-    expect(fetch).toHaveBeenNthCalledWith(
+    expect(global.fetch).toHaveBeenNthCalledWith(
       1,
       "https://www.stellar.org/auth?account=" +
         "GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H" +
@@ -557,21 +558,24 @@ describe("fetchAuthToken", () => {
 
     tx.sign(accountKey);
 
-    fetch
-      // @ts-ignore
-      .mockResponseOnce(
-        JSON.stringify({
-          transaction: tx.toXDR(),
-          network_passphrase: keyNetwork,
-        }),
+    jest
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            transaction: tx.toXDR(),
+            network_passphrase: keyNetwork,
+          }),
+        ),
       )
-      // @ts-ignore
-      .mockResponseOnce(
-        JSON.stringify({
-          token,
-          status: 1,
-          message: "Good job friend",
-        }),
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            token,
+            status: 1,
+            message: "Good job friend",
+          }),
+        ),
       );
 
     // save this key
@@ -600,7 +604,9 @@ describe("fetchAuthToken", () => {
     });
 
     // @ts-ignore accessing mock property
-    const xdr: string = JSON.parse(fetch.mock.calls[1][1].body).transaction;
+    const xdr: string = JSON.parse(
+      (global.fetch as any).mock.calls[1][1].body,
+    ).transaction;
     const submittedTx = new Transaction(xdr, keyNetwork);
 
     expect(submittedTx.signatures.length).toEqual(3);
@@ -663,21 +669,24 @@ describe("fetchAuthToken", () => {
 
     tx.sign(accountKey);
 
-    fetch
-      // @ts-ignore
-      .mockResponseOnce(
-        JSON.stringify({
-          transaction: tx.toXDR(),
-          network_passphrase: keyNetwork,
-        }),
+    jest
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            transaction: tx.toXDR(),
+            network_passphrase: keyNetwork,
+          }),
+        ),
       )
-      // @ts-ignore
-      .mockResponseOnce(
-        JSON.stringify({
-          token,
-          status: 1,
-          message: "Good job friend",
-        }),
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            token,
+            status: 1,
+            message: "Good job friend",
+          }),
+        ),
       );
 
     // save this key
@@ -703,7 +712,7 @@ describe("fetchAuthToken", () => {
 
       expect("This test failed: transaction didn't cause error").toBe(null);
     } catch (e) {
-      expect((e ).toString()).toMatch(
+      expect(e.toString()).toMatch(
         `InvalidChallengeError: The transaction` +
           ` sequence number should be zero`,
       );
@@ -760,21 +769,24 @@ describe("fetchAuthToken", () => {
 
     tx.sign(accountKey);
 
-    fetch
-      // @ts-ignore
-      .mockResponseOnce(
-        JSON.stringify({
-          transaction: tx.toXDR(),
-          network_passphrase: keyNetwork,
-        }),
+    jest
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            transaction: tx.toXDR(),
+            network_passphrase: keyNetwork,
+          }),
+        ),
       )
-      // @ts-ignore
-      .mockResponseOnce(
-        JSON.stringify({
-          token,
-          status: 1,
-          message: "Good job friend",
-        }),
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            token,
+            status: 1,
+            message: "Good job friend",
+          }),
+        ),
       );
 
     // save this key
@@ -800,7 +812,7 @@ describe("fetchAuthToken", () => {
 
       expect(res).toBe(null);
     } catch (e) {
-      expect((e ).toString()).toContain("Network mismatch");
+      expect(e.toString()).toContain("Network mismatch");
     }
   });
 
@@ -855,21 +867,24 @@ describe("fetchAuthToken", () => {
 
     tx.sign(badKey);
 
-    fetch
-      // @ts-ignore
-      .mockResponseOnce(
-        JSON.stringify({
-          transaction: tx.toXDR(),
-          network_passphrase: keyNetwork,
-        }),
+    jest
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            transaction: tx.toXDR(),
+            network_passphrase: keyNetwork,
+          }),
+        ),
       )
-      // @ts-ignore
-      .mockResponseOnce(
-        JSON.stringify({
-          token,
-          status: 1,
-          message: "Good job friend",
-        }),
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            token,
+            status: 1,
+            message: "Good job friend",
+          }),
+        ),
       );
 
     // save this key
@@ -895,7 +910,7 @@ describe("fetchAuthToken", () => {
 
       expect("This test failed: transaction didn't cause error").toBe(null);
     } catch (e) {
-      expect((e ).toString()).toMatch(
+      expect(e.toString()).toMatch(
         `InvalidChallengeError: Transaction not signed by server`,
       );
     }
@@ -953,21 +968,24 @@ describe("fetchAuthToken", () => {
     tx.sign(accountKey);
     tx.sign(badKey);
 
-    fetch
-      // @ts-ignore
-      .mockResponseOnce(
-        JSON.stringify({
-          transaction: tx.toXDR(),
-          network_passphrase: keyNetwork,
-        }),
+    jest
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            transaction: tx.toXDR(),
+            network_passphrase: keyNetwork,
+          }),
+        ),
       )
-      // @ts-ignore
-      .mockResponseOnce(
-        JSON.stringify({
-          token,
-          status: 1,
-          message: "Good job friend",
-        }),
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            token,
+            status: 1,
+            message: "Good job friend",
+          }),
+        ),
       );
 
     // save this key
@@ -1044,21 +1062,24 @@ describe("fetchAuthToken", () => {
 
     tx.sign(badKey);
 
-    fetch
-      // @ts-ignore
-      .mockResponseOnce(
-        JSON.stringify({
-          transaction: tx.toXDR(),
-          network_passphrase: keyNetwork,
-        }),
+    jest
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            transaction: tx.toXDR(),
+            network_passphrase: keyNetwork,
+          }),
+        ),
       )
-      // @ts-ignore
-      .mockResponseOnce(
-        JSON.stringify({
-          token,
-          status: 1,
-          message: "Good job friend",
-        }),
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            token,
+            status: 1,
+            message: "Good job friend",
+          }),
+        ),
       );
 
     // save this key
@@ -1084,7 +1105,7 @@ describe("fetchAuthToken", () => {
 
       expect("This test failed: transaction didn't cause error").toBe(null);
     } catch (e) {
-      expect((e ).toString()).toMatch(
+      expect(e.toString()).toMatch(
         `InvalidChallengeError: 'web_auth_domain' operation ` +
           `value does not match www.stellar.org`,
       );
@@ -1141,21 +1162,24 @@ describe("fetchAuthToken", () => {
 
     tx.sign(accountKey);
 
-    fetch
-      // @ts-ignore
-      .mockResponseOnce(
-        JSON.stringify({
-          transaction: tx.toXDR(),
-          network_passphrase: keyNetwork,
-        }),
+    jest
+      .spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            transaction: tx.toXDR(),
+            network_passphrase: keyNetwork,
+          }),
+        ),
       )
-      // @ts-ignore
-      .mockResponseOnce(
-        JSON.stringify({
-          token,
-          status: 1,
-          message: "Good job friend",
-        }),
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            token,
+            status: 1,
+            message: "Good job friend",
+          }),
+        ),
       );
 
     // save this key
@@ -1183,7 +1207,7 @@ describe("fetchAuthToken", () => {
 
       expect("This test failed: transaction didn't cause error").toBe(null);
     } catch (e) {
-      expect((e ).toString()).toMatch(
+      expect(e.toString()).toMatch(
         `InvalidChallengeError: The transaction source account` +
           ` is not equal to the server's account`,
       );
@@ -1243,7 +1267,7 @@ describe("KeyManager Scrypt", () => {
         "The function should have thrown but didn't, the test failed!",
       ).toBe(null);
     } catch (e) {
-      expect((e ).toString()).toContain("Couldn’t decrypt key");
+      expect(e.toString()).toContain("Couldn’t decrypt key");
     }
 
     await testKeyManager.removeKey(metadata.id);
@@ -1254,7 +1278,7 @@ describe("KeyManager Scrypt", () => {
         "The function should have thrown but didn't, the test failed!",
       ).toBe(null);
     } catch (e) {
-      expect((e ).toString()).toContain("Key not found");
+      expect(e.toString()).toContain("Key not found");
     }
   });
 });
