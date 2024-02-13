@@ -24,7 +24,6 @@ module.exports = {
     "@typescript-eslint/no-inferrable-types": "off",
     "@typescript-eslint/no-misused-promises": "off",
     "@typescript-eslint/no-base-to-string": "off",
-    "jsdoc/require-param-description": "off",
     "jsdoc/check-indentation": "off",
 
     // Warn
@@ -34,8 +33,7 @@ module.exports = {
     "jsdoc/require-returns-type": "warn",
     "jsdoc/require-param": "warn",
     "jsdoc/check-types": "warn",
-    // ALEC TODO - uncomment, and remove above
-    // "jsdoc/require-param-description": "warn",
+    "jsdoc/require-param-description": "warn",
     "jsdoc/require-param-name": "warn",
     "jsdoc/require-param-type": "warn",
     "jsdoc/require-property": "warn",
