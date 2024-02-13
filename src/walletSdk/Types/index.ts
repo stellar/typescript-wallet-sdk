@@ -43,6 +43,7 @@ export type AxiosErrorData = {
 export * from "./anchor";
 export * from "./auth";
 export * from "./horizon";
+export * from "./keyManager";
 export * from "./recovery";
 export * from "./sep6";
 export * from "./sep12";

@@ -27,6 +27,7 @@ export {
   TransactionBuilder,
   SponsoringBuilder,
 } from "./walletSdk/Horizon";
+export { KeyManager } from "./walletSdk/KeyManager";
 export { Recovery } from "./walletSdk/Recovery";
 export { Watcher } from "./walletSdk/Watcher";
 
