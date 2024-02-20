@@ -13,7 +13,7 @@ jobs:
           node-version: 18
       - run: yarn install
       - run: yarn build
-      - run: yarn test:integration:ci
+      - run: yarn test:recovery:ci
       - name: Print Docker Logs
         if: always() # This ensures that the logs are printed even if the tests fail
         run: docker-compose -f test/docker/docker-compose.yml logs

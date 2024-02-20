@@ -18,4 +18,4 @@ jobs:
         with:
           node-version: 18
       - run: yarn install
-      - run: yarn start
+      - run: yarn test:anchorplatform:ci
