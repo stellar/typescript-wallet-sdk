@@ -17,9 +17,9 @@ jobs:
         run: sleep 90
       - name: test curl
         run: curl http://localhost:8080/.well-known/stellar.toml
-      # - uses: actions/checkout@v2
-      # - uses: actions/setup-node@v2
-      #   with:
-      #     node-version: 18
-      # - run: yarn install
-      # - run: yarn test:anchorplatform:ci
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 18
+      - run: yarn install
+      - run: yarn test:anchorplatform:ci

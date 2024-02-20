@@ -1,5 +1,3 @@
-import axios from "axios";
-
 import { Wallet } from "../../src";
 import { IssuedAssetId } from "../../src/walletSdk/Asset";
 
@@ -11,11 +9,12 @@ const anchorUrl = "http://localhost:8080";
 
 describe("ALEC TODO", () => {
   beforeAll(async () => {
-    // Wait for docker to be ready
-    const ready = await isServerReady();
-    if (!ready) {
-      throw new Error("Server not ready, check Docker");
-    }
+    // ALEC TODO - remove?
+    // // Wait for docker to be ready
+    // const ready = await isServerReady();
+    // if (!ready) {
+    //   throw new Error("Server not ready, check Docker");
+    // }
 
     // Setup
     wallet = Wallet.TestNet();
@@ -74,18 +73,19 @@ describe("ALEC TODO", () => {
   }, 30000);
 });
 
-const isServerReady = async () => {
-  let ready = false;
-  for (let fails = 0; fails < 60; fails++) {
-    try {
-      const resp = await axios.get(`${anchorUrl}/.well-known/stellar.toml`);
-      console.log({ resp }); // ALEC TODO - remove
-      ready = true;
-      break;
-    } catch (e) {
-      console.log({ e }); // ALEC TODO - remove
-      await new Promise((resolve) => setTimeout(resolve, 10000));
-    }
-  }
-  return ready;
-};
+// ALEC TODO - remove?
+// const isServerReady = async () => {
+//   let ready = false;
+//   for (let fails = 0; fails < 60; fails++) {
+//     try {
+//       const resp = await axios.get(`${anchorUrl}/.well-known/stellar.toml`);
+//       console.log({ resp }); // ALEC TODO - remove
+//       ready = true;
+//       break;
+//     } catch (e) {
+//       console.log({ e }); // ALEC TODO - remove
+//       await new Promise((resolve) => setTimeout(resolve, 10000));
+//     }
+//   }
+//   return ready;
+// };
