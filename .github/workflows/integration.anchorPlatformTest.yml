@@ -12,7 +12,7 @@ jobs:
       - name: Start docker
         run:
           docker-compose -f
-          service-runner/src/main/resources/docker-compose.yaml up -d
+          service-runner/src/main/resources/docker-compose.yaml up
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
