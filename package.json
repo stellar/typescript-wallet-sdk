@@ -58,7 +58,7 @@
     "prepare": "husky install",
     "test": "jest --watchAll",
     "test:ci": "jest --ci",
-    "test:recovery:ci": "jest --config jest.integration.config.js integration.recoveryTest.yml --ci",
+    "test:recovery:ci": "jest --config jest.integration.config.js recovery.test.ts --ci",
     "test:anchorplatform:ci": "yarn jest --config jest.integration.config.js anchorplatform.test.ts --ci",
     "build:web": "webpack --config webpack.config.js",
     "build:node": "webpack --env NODE=true --config webpack.config.js",

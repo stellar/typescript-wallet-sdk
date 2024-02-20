@@ -76,7 +76,7 @@ describe("ALEC TODO", () => {
 
 const isServerReady = async () => {
   let ready = false;
-  for (let fails = 0; fails < 6; fails++) {
+  for (let fails = 0; fails < 10; fails++) {
     try {
       const resp = await axios.get(`${anchorUrl}/.well-known/stellar.toml`);
       console.log({ resp }); // ALEC TODO - remove
