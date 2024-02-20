@@ -1,4 +1,5 @@
 import { AxiosInstance } from "axios";
+import toml from "toml";
 import { StellarToml } from "@stellar/stellar-sdk";
 
 import { Config } from "walletSdk";
@@ -72,8 +73,19 @@ export class Anchor {
       return this.toml;
     }
 
-    // fetch fresh TOML values from Anchor domain
-    const stellarToml = await StellarToml.Resolver.resolve(this.homeDomain);
+    // ALEC TODO - change back?
+    // ALEC TODO - or just make it this way always?
+    let stellarToml;
+    if (this.homeDomain.includes("localhost")) {
+      const resp = await this.httpClient.get(
+        `http://${this.homeDomain}/.well-known/stellar.toml`,
+      );
+      stellarToml = toml.parse(resp.data);
+    } else {
+      // fetch fresh TOML values from Anchor domain
+      stellarToml = await StellarToml.Resolver.resolve(this.homeDomain);
+    }
+
     const parsedToml = parseToml(stellarToml);
     this.toml = parsedToml;
     return parsedToml;
@@ -198,8 +210,8 @@ export class Anchor {
   async getServicesInfo(
     lang: string = this.language,
   ): Promise<AnchorServiceInfo> {
-    const toml = await this.sep1();
-    const transferServerEndpoint = toml.transferServerSep24;
+    const tomlData = await this.sep1();
+    const transferServerEndpoint = tomlData.transferServerSep24;
 
     try {
       const resp = await this.httpClient.get(

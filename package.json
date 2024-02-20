@@ -48,6 +48,7 @@
     "lodash": "^4.17.21",
     "query-string": "^7.1.3",
     "stream-http": "^3.2.0",
+    "toml": "^3.0.0",
     "url": "^0.11.0",
     "util": "^0.12.5",
     "utility-types": "^3.10.0"
@@ -58,6 +59,7 @@
     "test": "jest --watchAll",
     "test:ci": "jest --ci",
     "test:integration:ci": "jest --config jest.integration.config.js --ci",
+    "alectodo:test": "yarn jest --config jest.integration.config.js anchorplatform.test.ts",
     "build:web": "webpack --config webpack.config.js",
     "build:node": "webpack --env NODE=true --config webpack.config.js",
     "build": "run-p build:web build:node",
