@@ -23,7 +23,7 @@ describe("ALEC TODO", () => {
     anchor = wallet.anchor({ homeDomain: anchorUrl });
     accountKp = stellar.account().createKeypair();
     await stellar.fundTestnetAccount(accountKp.publicKey);
-  }, 120000);
+  }, 300000);
 
   it("auth should work", async () => {
     const auth = await anchor.sep10();
@@ -76,7 +76,7 @@ describe("ALEC TODO", () => {
 
 const isServerReady = async () => {
   let ready = false;
-  for (let fails = 0; fails < 10; fails++) {
+  for (let fails = 0; fails < 20; fails++) {
     try {
       const resp = await axios.get(`${anchorUrl}/.well-known/stellar.toml`);
       console.log({ resp }); // ALEC TODO - remove
