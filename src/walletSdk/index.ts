@@ -14,6 +14,7 @@ import {
   NETWORK_URLS,
 } from "./Types";
 import { getUrlDomain } from "./Utils";
+import { AllowHttpOnNonTestnetError } from "./Exceptions";
 
 /* eslint-disable-next-line @typescript-eslint/no-var-requires */
 const version = require("../../package.json").version;
@@ -73,16 +74,27 @@ export class Wallet {
    * @param {WalletAnchor} params - The anchor params.
    * @param {string} params.homeDomain - The home domain of the anchor. This domain will be used for
    * things like getting the toml info.
+   * @param {allowHttp} [params.allowHttp] - Flag to allow http protocol for the home domain.
+   * Defaults to false, and can only be set to true on Testnet.
    * @param {string} [params.language=this.language] - The language setting for the Anchor.
    * @returns {Anchor} An Anchor instance.
    */
-  anchor({ homeDomain, language = this.language }: WalletAnchor): Anchor {
+  anchor({
+    homeDomain,
+    allowHttp = false,
+    language = this.language,
+  }: WalletAnchor): Anchor {
     const url =
       homeDomain.indexOf("://") !== -1 ? homeDomain : `https://${homeDomain}`;
+
+    if (allowHttp && this.cfg.stellar.network !== Networks.TESTNET) {
+      throw new AllowHttpOnNonTestnetError();
+    }
 
     return new Anchor({
       cfg: this.cfg,
       homeDomain: getUrlDomain(url),
+      allowHttp,
       httpClient: this.cfg.app.defaultClient,
       language,
     });

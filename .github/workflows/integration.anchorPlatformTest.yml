@@ -1,0 +1,23 @@
+name: Run Test
+on: [pull_request]
+jobs:
+  test-ci:
+    name: anchor platform test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Java Anchor SDK
+        uses: actions/checkout@v2
+        with:
+          repository: stellar/java-stellar-anchor-sdk
+      - name: Start docker
+        run:
+          docker-compose -f
+          service-runner/src/main/resources/docker-compose.yaml up -d
+      - name: Wait for docker to be ready
+        run: sleep 90 && curl http://localhost:8080/.well-known/stellar.toml
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 18
+      - run: yarn install
+      - run: yarn test:anchorplatform:ci

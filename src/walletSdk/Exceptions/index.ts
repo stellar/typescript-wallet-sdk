@@ -284,3 +284,10 @@ export class ChallengeTxnInvalidSignatureError extends Error {
     Object.setPrototypeOf(this, ChallengeTxnInvalidSignatureError.prototype);
   }
 }
+
+export class AllowHttpOnNonTestnetError extends Error {
+  constructor() {
+    super("Can only allow Http on Testnet");
+    Object.setPrototypeOf(this, AllowHttpOnNonTestnetError.prototype);
+  }
+}

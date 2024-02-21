@@ -19,6 +19,7 @@ import { parseToml } from "../Utils";
 type AnchorParams = {
   cfg: Config;
   homeDomain: string;
+  allowHttp?: boolean;
   httpClient: AxiosInstance;
   language: string;
 };
@@ -43,6 +44,7 @@ export class Anchor {
 
   private cfg: Config;
   private homeDomain: string;
+  private allowHttp: boolean;
   private httpClient: AxiosInstance;
   private toml: TomlInfo;
 
@@ -52,10 +54,10 @@ export class Anchor {
    * @param {AnchorParams} params - The parameters to initialize the Anchor.
    */
   constructor(params: AnchorParams) {
-    const { cfg, homeDomain, httpClient, language } = params;
-
+    const { cfg, homeDomain, httpClient, language, allowHttp = false } = params;
     this.cfg = cfg;
     this.homeDomain = homeDomain;
+    this.allowHttp = allowHttp;
     this.httpClient = httpClient;
     this.language = language;
   }
@@ -72,8 +74,10 @@ export class Anchor {
       return this.toml;
     }
 
-    // fetch fresh TOML values from Anchor domain
-    const stellarToml = await StellarToml.Resolver.resolve(this.homeDomain);
+    const stellarToml = await StellarToml.Resolver.resolve(this.homeDomain, {
+      allowHttp: this.allowHttp,
+    });
+
     const parsedToml = parseToml(stellarToml);
     this.toml = parsedToml;
     return parsedToml;
