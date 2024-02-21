@@ -102,6 +102,7 @@ describe("Anchor Platform Integration Tests", () => {
       id: transactionId,
     });
     expect(transaction.id).toBeTruthy();
+    expect(transaction.status).toBe("incomplete");
 
     const transactions = await anchor.sep24().getTransactionsForAsset({
       authToken,
