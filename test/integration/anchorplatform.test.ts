@@ -15,7 +15,7 @@ describe("Anchor Platform Integration Tests", () => {
     anchor = wallet.anchor({ homeDomain: anchorUrl, allowHttp: true });
     accountKp = stellar.account().createKeypair();
     await stellar.fundTestnetAccount(accountKp.publicKey);
-  }, 600000);
+  }, 15000);
 
   it("SEP-10 auth should work", async () => {
     const auth = await anchor.sep10();
