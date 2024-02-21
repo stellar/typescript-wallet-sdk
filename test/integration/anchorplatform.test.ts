@@ -12,7 +12,7 @@ describe("Anchor Platform Integration Tests", () => {
     // Setup
     wallet = Wallet.TestNet();
     stellar = wallet.stellar();
-    anchor = wallet.anchor({ homeDomain: anchorUrl });
+    anchor = wallet.anchor({ homeDomain: anchorUrl, allowHttp: true });
     accountKp = stellar.account().createKeypair();
     await stellar.fundTestnetAccount(accountKp.publicKey);
   }, 600000);

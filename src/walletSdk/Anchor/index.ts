@@ -1,5 +1,4 @@
 import { AxiosInstance } from "axios";
-import toml from "toml";
 import { StellarToml } from "@stellar/stellar-sdk";
 
 import { Config } from "walletSdk";
@@ -20,6 +19,7 @@ import { parseToml } from "../Utils";
 type AnchorParams = {
   cfg: Config;
   homeDomain: string;
+  allowHttp?: boolean;
   httpClient: AxiosInstance;
   language: string;
 };
@@ -44,6 +44,7 @@ export class Anchor {
 
   private cfg: Config;
   private homeDomain: string;
+  private allowHttp: boolean;
   private httpClient: AxiosInstance;
   private toml: TomlInfo;
 
@@ -53,10 +54,10 @@ export class Anchor {
    * @param {AnchorParams} params - The parameters to initialize the Anchor.
    */
   constructor(params: AnchorParams) {
-    const { cfg, homeDomain, httpClient, language } = params;
-
+    const { cfg, homeDomain, httpClient, language, allowHttp = false } = params;
     this.cfg = cfg;
     this.homeDomain = homeDomain;
+    this.allowHttp = allowHttp;
     this.httpClient = httpClient;
     this.language = language;
   }
@@ -73,18 +74,9 @@ export class Anchor {
       return this.toml;
     }
 
-    // ALEC TODO - change back?
-    // ALEC TODO - or just make it this way always?
-    let stellarToml;
-    if (this.homeDomain.includes("localhost")) {
-      const resp = await this.httpClient.get(
-        `http://${this.homeDomain}/.well-known/stellar.toml`,
-      );
-      stellarToml = toml.parse(resp.data);
-    } else {
-      // fetch fresh TOML values from Anchor domain
-      stellarToml = await StellarToml.Resolver.resolve(this.homeDomain);
-    }
+    const stellarToml = await StellarToml.Resolver.resolve(this.homeDomain, {
+      allowHttp: this.allowHttp,
+    });
 
     const parsedToml = parseToml(stellarToml);
     this.toml = parsedToml;
@@ -210,8 +202,8 @@ export class Anchor {
   async getServicesInfo(
     lang: string = this.language,
   ): Promise<AnchorServiceInfo> {
-    const tomlData = await this.sep1();
-    const transferServerEndpoint = tomlData.transferServerSep24;
+    const toml = await this.sep1();
+    const transferServerEndpoint = toml.transferServerSep24;
 
     try {
       const resp = await this.httpClient.get(
