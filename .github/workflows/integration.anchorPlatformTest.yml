@@ -15,6 +15,7 @@ jobs:
           service-runner/src/main/resources/docker-compose.yaml up -d
       - name: Wait for docker to be ready
         run: sleep 90
+        # ALEC TODO - remove
       - name: test curl
         run: curl http://localhost:8080/.well-known/stellar.toml
       - uses: actions/checkout@v2

@@ -7,15 +7,8 @@ let anchor;
 let accountKp;
 const anchorUrl = "http://localhost:8080";
 
-describe("ALEC TODO", () => {
+describe("Anchor Platform Integration Tests", () => {
   beforeAll(async () => {
-    // ALEC TODO - remove?
-    // // Wait for docker to be ready
-    // const ready = await isServerReady();
-    // if (!ready) {
-    //   throw new Error("Server not ready, check Docker");
-    // }
-
     // Setup
     wallet = Wallet.TestNet();
     stellar = wallet.stellar();
@@ -71,21 +64,68 @@ describe("ALEC TODO", () => {
     });
     expect(sep6Resp.id).toBeTruthy();
   }, 30000);
-});
 
-// ALEC TODO - remove?
-// const isServerReady = async () => {
-//   let ready = false;
-//   for (let fails = 0; fails < 60; fails++) {
-//     try {
-//       const resp = await axios.get(`${anchorUrl}/.well-known/stellar.toml`);
-//       console.log({ resp }); // ALEC TODO - remove
-//       ready = true;
-//       break;
-//     } catch (e) {
-//       console.log({ e }); // ALEC TODO - remove
-//       await new Promise((resolve) => setTimeout(resolve, 10000));
-//     }
-//   }
-//   return ready;
-// };
+  it("SEP-24 should work", async () => {
+    const assetCode = "USDC";
+    const auth = await anchor.sep10();
+    const authToken = await auth.authenticate({ accountKp });
+
+    const dResp = await anchor.sep24().deposit({
+      assetCode,
+      authToken,
+    });
+    const transactionId = dResp.id;
+    expect(transactionId).toBeTruthy();
+
+    const wResp = await anchor.sep24().withdraw({
+      withdrawalAccount: accountKp.publicKey,
+      assetCode,
+      authToken,
+    });
+    expect(wResp.id).toBeTruthy();
+
+    const transaction = await anchor.sep24().getTransactionBy({
+      authToken,
+      id: transactionId,
+    });
+    expect(transaction.id).toBeTruthy();
+
+    const transactions = await anchor.sep24().getTransactionsForAsset({
+      authToken,
+      assetCode,
+      limit: 5,
+    });
+    expect(transactions.length).toBe(2);
+  }, 45000);
+
+  it("SEP-38 should work", async () => {
+    const auth = await anchor.sep10();
+    const authToken = await auth.authenticate({ accountKp });
+    const sep38 = anchor.sep38(authToken);
+
+    // Price
+    const resp = await sep38.price({
+      sellAsset: "iso4217:USD",
+      buyAsset:
+        "stellar:USDC:GDQOE23CFSUMSVQK4Y5JHPPYK73VYCNHZHA7ENKCV37P6SUEO6XQBKPP",
+      sellAmount: "5",
+      context: "sep6",
+    });
+    expect(resp.price).toBeTruthy();
+
+    // Create Quote
+    const postResp = await sep38.requestQuote({
+      sell_asset: "iso4217:USD",
+      buy_asset:
+        "stellar:USDC:GDQOE23CFSUMSVQK4Y5JHPPYK73VYCNHZHA7ENKCV37P6SUEO6XQBKPP",
+      sell_amount: "5",
+      context: "sep6",
+    });
+    expect(postResp.id).toBeTruthy();
+
+    // Get Quote
+    const quoteId = postResp.id;
+    const getResp = await sep38.getQuote(quoteId);
+    expect(getResp.id).toBeTruthy();
+  });
+});
