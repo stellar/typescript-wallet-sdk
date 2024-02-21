@@ -183,7 +183,6 @@ export class Sep6 {
       );
       return resp.data;
     } catch (e) {
-      console.log(e.response.data); // ALEC TODO - remove
       if (e.response?.data?.type === "non_interactive_customer_info_needed") {
         return e.response?.data;
       } else if (e.response?.data?.type === "customer_info_status") {
