@@ -17,13 +17,13 @@ describe("Anchor Platform Integration Tests", () => {
     await stellar.fundTestnetAccount(accountKp.publicKey);
   }, 600000);
 
-  it("auth should work", async () => {
+  it("SEP-10 auth should work", async () => {
     const auth = await anchor.sep10();
     const authToken = await auth.authenticate({ accountKp });
     expect(authToken.token).toBeTruthy();
   });
 
-  it("KYC and SEP-6 deposit should work", async () => {
+  it("SEP-12 KYC and SEP-6 should work", async () => {
     const auth = await anchor.sep10();
     const authToken = await auth.authenticate({ accountKp });
 
@@ -53,16 +53,29 @@ describe("Anchor Platform Integration Tests", () => {
     });
     expect(sep12Resp.data.id).toBeTruthy();
 
-    // make SEP-6 deposit
+    // SEP-6 deposit
     const sep6 = anchor.sep6();
-    const sep6Resp = await sep6.deposit({
+    const dResp = await sep6.deposit({
       authToken,
       params: {
         asset_code: "USDC",
         account: accountKp.publicKey,
       },
     });
-    expect(sep6Resp.id).toBeTruthy();
+    expect(dResp.id).toBeTruthy();
+
+    // SEP-6 withdraw
+    const wResp = await sep6.withdraw({
+      authToken,
+      params: {
+        asset_code: "USDC",
+        account: accountKp.publicKey,
+        type: "bank_account",
+        dest: "123",
+        dest_extra: "12345",
+      },
+    });
+    expect(wResp.id).toBeTruthy();
   }, 30000);
 
   it("SEP-24 should work", async () => {
