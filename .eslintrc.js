@@ -2,7 +2,12 @@ module.exports = {
   ignorePatterns: ["lib/", "node_modules/", "docs/"],
   parser: "@typescript-eslint/parser",
   parserOptions: {
-    project: ["tsconfig.json", "examples/tsconfig.json", "test/tsconfig.json"],
+    project: [
+      "tsconfig.json",
+      "examples/tsconfig.json",
+      "@stellar/typescript-wallet-sdk/tsconfig.json",
+      "@stellar/typescript-wallet-sdk/test/tsconfig.json",
+    ],
     sourceType: "module",
   },
   plugins: ["@typescript-eslint", "jsdoc"],

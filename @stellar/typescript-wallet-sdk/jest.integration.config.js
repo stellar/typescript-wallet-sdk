@@ -5,5 +5,6 @@ module.exports = {
     "^.+\\.(ts|tsx)?$": "ts-jest",
     "^.+\\.(js|jsx)$": "babel-jest",
   },
-  testPathIgnorePatterns: ["/node_modules/", "/integration/"],
+  testPathIgnorePatterns: ["/node_modules/"],
+  testMatch: ["**/*integration.test.ts"],
 };

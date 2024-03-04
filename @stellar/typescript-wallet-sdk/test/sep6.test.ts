@@ -166,7 +166,7 @@ describe("SEP-6", () => {
     resp = await anchor.sep6().getTransactionBy({ authToken, id });
 
     expect(resp.id).toEqual(id);
-  }, 10000);
+  });
 
   let txId;
 

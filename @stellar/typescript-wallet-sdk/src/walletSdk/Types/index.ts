@@ -12,7 +12,6 @@ export type WalletParams = {
 
 export type WalletAnchor = {
   homeDomain: string;
-  allowHttp?: boolean;
   language?: string;
 };
 

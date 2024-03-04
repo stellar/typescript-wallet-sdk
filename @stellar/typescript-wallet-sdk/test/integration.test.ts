@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Wallet } from "../../src";
+import { Wallet } from "../src";
 
 import {
   RecoveryServer,
@@ -9,7 +9,7 @@ import {
   RecoveryRole,
   RecoveryAccountIdentity,
   RecoveryType,
-} from "../../src/walletSdk/Types/recovery";
+} from "../src/walletSdk/Types/recovery";
 
 describe("Recovery Integration Tests", () => {
   it("should work", async () => {
