@@ -9,10 +9,12 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: stellar/java-stellar-anchor-sdk
-      - name: Start docker
-        run:
-          docker-compose -f
-          service-runner/src/main/resources/docker-compose.yaml up -d
+      - name: ALec todo - remove
+        run: ls
+      # - name: Start docker
+      #   run:
+      #     docker-compose -f
+      #     service-runner/src/main/resources/docker-compose.yaml up -d
       # - name: Wait for docker to be ready
       #   run: sleep 90 && curl http://localhost:8080/.well-known/stellar.toml
       # - uses: actions/checkout@v2
