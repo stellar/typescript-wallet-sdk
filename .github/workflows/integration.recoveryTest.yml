@@ -7,7 +7,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Start docker
-        run: docker-compose -f test/docker/docker-compose.yml up -d
+        run:
+          docker-compose -f
+          @stellar/typescript-wallet-sdk/test/docker/docker-compose.yml up -d
       - uses: actions/setup-node@v2
         with:
           node-version: 18
@@ -16,4 +18,6 @@ jobs:
       - run: yarn test:recovery:ci
       - name: Print Docker Logs
         if: always() # This ensures that the logs are printed even if the tests fail
-        run: docker-compose -f test/docker/docker-compose.yml logs
+        run:
+          docker-compose -f
+          @stellar/typescript-wallet-sdk/test/docker/docker-compose.yml logs
