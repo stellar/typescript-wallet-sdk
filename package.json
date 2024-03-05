@@ -2,14 +2,21 @@
   "private": true,
   "main": ".eslintrc.js",
   "workspaces": [
-    "@stellar/typescript-wallet-sdk"
+    "@stellar/typescript-wallet-sdk",
+    "@stellar/typescript-wallet-sdk-km"
   ],
   "scripts": {
-    "test": "yarn workspace @stellar/typescript-wallet-sdk test",
-    "test:ci": "yarn workspace @stellar/typescript-wallet-sdk test:ci",
+    "lint": "eslint . --ext .ts",
+    "test": "jest --watchAll",
+    "test:ci": "jest --ci",
     "test:recovery:ci": "yarn workspace @stellar/typescript-wallet-sdk test:recovery:ci",
     "test:anchorplatform:ci": "yarn workspace @stellar/typescript-wallet-sdk test:anchorplatform:ci",
-    "build": "yarn workspace @stellar/typescript-wallet-sdk build"
+    "build": "yarn workspace @stellar/typescript-wallet-sdk build && yarn workspace @stellar/typescript-wallet-sdk-km build"
+  },
+  "lint-staged": {
+    "**/*.ts": [
+      "eslint --fix --max-warnings 0"
+    ]
   },
   "author": "",
   "license": "ISC"

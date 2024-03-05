@@ -3,9 +3,11 @@ module.exports = {
   parser: "@typescript-eslint/parser",
   parserOptions: {
     project: [
-      "examples/tsconfig.json",
+      "@stellar/typescript-wallet-sdk/examples/tsconfig.json",
       "@stellar/typescript-wallet-sdk/tsconfig.json",
       "@stellar/typescript-wallet-sdk/test/tsconfig.json",
+      "@stellar/typescript-wallet-sdk-km/tsconfig.json",
+      "@stellar/typescript-wallet-sdk-km/test/tsconfig.json",
     ],
     sourceType: "module",
   },
@@ -28,6 +30,7 @@ module.exports = {
     "@typescript-eslint/no-inferrable-types": "off",
     "@typescript-eslint/no-misused-promises": "off",
     "@typescript-eslint/no-base-to-string": "off",
+    "jsdoc/check-indentation": "off",
 
     // Warn
     "jsdoc/check-param-names": "warn",
@@ -66,11 +69,10 @@ module.exports = {
     "@typescript-eslint/no-empty-function": "error",
     "@typescript-eslint/no-empty-interface": "error",
     "jsdoc/check-alignment": "error",
-    "jsdoc/check-indentation": "error",
   },
   overrides: [
     {
-      files: ["test/**", "examples/**"],
+      files: ["**/test/**", "@stellar/typescript-wallet-sdk/examples/**"],
       rules: {
         "@typescript-eslint/no-shadow": "off",
         "@typescript-eslint/no-explicit-any": "off",
