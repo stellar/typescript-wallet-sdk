@@ -11,7 +11,8 @@ jobs:
           repository: stellar/java-stellar-anchor-sdk
       - name: Start docker
         run:
-          docker-compose -f
+          docker build --build-arg BASE_IMAGE=gradle:7.6.4-jdk11 -t
+          anchor-platform:local ./ docker-compose -f
           service-runner/src/main/resources/docker-compose.yaml up -d
       - name: Wait for docker to be ready
         run: sleep 90 && curl http://localhost:8080/.well-known/stellar.toml
