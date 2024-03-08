@@ -1,6 +1,7 @@
-import StellarSdk, {
+import {
   TransactionBuilder as StellarTransactionBuilder,
   Account as StellarAccount,
+  Operation,
   Transaction,
   Horizon,
   Memo,
@@ -101,7 +102,7 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
     }
 
     this.operations.push(
-      StellarSdk.Operation.createAccount({
+      Operation.createAccount({
         destination: newAccount.publicKey,
         startingBalance: startingBalance.toString(),
         source: this.sourceAddress,
@@ -123,7 +124,7 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
     amount: string,
   ): TransactionBuilder {
     this.operations.push(
-      StellarSdk.Operation.payment({
+      Operation.payment({
         destination: destinationAddress,
         asset: assetId.toAsset(),
         amount,
@@ -167,7 +168,7 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
     }
     if (sendAmount) {
       this.operations.push(
-        StellarSdk.Operation.pathPaymentStrictSend({
+        Operation.pathPaymentStrictSend({
           destination: destinationAddress,
           sendAsset: sendAsset.toAsset(),
           sendAmount,
@@ -177,7 +178,7 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
       );
     } else {
       this.operations.push(
-        StellarSdk.Operation.pathPaymentStrictReceive({
+        Operation.pathPaymentStrictReceive({
           destination: destinationAddress,
           sendAsset: sendAsset.toAsset(),
           destAmount,
@@ -290,7 +291,7 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
    */
   accountMerge(destination: string, source?: string): TransactionBuilder {
     this.operations.push(
-      StellarSdk.Operation.accountMerge({ destination, source }),
+      Operation.accountMerge({ destination, source }),
     );
     return this;
   }
