@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-jest.mock("node-fetch");
 import {
   Networks,
   Keypair,
@@ -21,8 +20,6 @@ import {
   IdentityEncrypter,
   ScryptEncrypter,
 } from "../src/Plugins";
-
-const { Response } = jest.requireActual("node-fetch");
 
 describe("KeyManager", () => {
   let clock: sinon.SinonFakeTimers;

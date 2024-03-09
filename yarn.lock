@@ -2569,11 +2569,11 @@
   integrity sha512-lC51QSlYRM8K3oGe0/WGPq+p9+u+yPzwZXSKrZXKOe4sq79vzfiqFbQyp5enOffFzXlahcDyTgY67mBOkJytfw==
 
 "@trezor/connect-plugin-stellar@^9.0.2":
-  version "9.0.2"
-  resolved "https://registry.yarnpkg.com/@trezor/connect-plugin-stellar/-/connect-plugin-stellar-9.0.2.tgz#5af4833ff4e0f1f3e887c64ac8e781fbdb174632"
-  integrity sha512-e3o/v3T5vHZONewAcVurqDbQQLmD6pr/DzC9tYV/h2QDS0f10uM5QxOcUhk+FZZfyWNmcvFkptF+LpI0FdVxiQ==
+  version "9.0.3"
+  resolved "https://registry.yarnpkg.com/@trezor/connect-plugin-stellar/-/connect-plugin-stellar-9.0.3.tgz#1c922d984931c26d6440e77bdfd855c56211f7bc"
+  integrity sha512-cYAAMdRlNAA5RFDyLle+WpB8Gd7WtmOgp3mHbg2fGm1sd6hMG6VCfVls0DIMu4jRqJCilfKLcx6Cbu+2rfBC/w==
   dependencies:
-    bignumber.js "^9.1.1"
+    bignumber.js "^9.1.2"
 
 "@tsconfig/node10@^1.0.7":
   version "1.0.9"
@@ -3411,7 +3411,7 @@ base64-js@^1.3.1:
   resolved "https://registry.yarnpkg.com/base64-js/-/base64-js-1.5.1.tgz#1b1b440160a5bf7ad40b650f095963481903930a"
   integrity sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==
 
-bignumber.js@^9.1.1, bignumber.js@^9.1.2:
+bignumber.js@^9.1.2:
   version "9.1.2"
   resolved "https://registry.yarnpkg.com/bignumber.js/-/bignumber.js-9.1.2.tgz#b7c4242259c008903b13707983b5f4bbd31eda0c"
   integrity sha512-2/mKyZH9K85bzOEfhXDBFZTGd1CTs+5IHpeFQo9luiBG7hghdC851Pj2WAhb6E3R6b9tZj/XKhbg4fum+Kepug==
