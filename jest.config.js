@@ -1,9 +1,22 @@
-module.exports = {
-  rootDir: "./",
-  preset: "ts-jest",
+const commonConfigs = {
   transform: {
-    "^.+\\.(ts|tsx)?$": "ts-jest",
-    "^.+\\.(js|jsx)$": "babel-jest",
+    "^.+\\.(js|jsx|ts|tsx|mjs)$": ["babel-jest"],
   },
-  testPathIgnorePatterns: ["/node_modules/", "/integration/"],
+};
+
+module.exports = {
+  projects: [
+    {
+      displayName: "Wallet SDK",
+      roots: ["./@stellar/typescript-wallet-sdk"],
+      testPathIgnorePatterns: ["/node_modules/", "/integration/"],
+      ...commonConfigs,
+    },
+    {
+      displayName: "Wallet SDK KM",
+      roots: ["./@stellar/typescript-wallet-sdk-km"],
+      testPathIgnorePatterns: ["/node_modules/"],
+      ...commonConfigs,
+    },
+  ],
 };
