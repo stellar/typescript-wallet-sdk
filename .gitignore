@@ -11,6 +11,7 @@ node_modules
 */**/build
 */**/.docusaurus
 /lib/
+*/**/lib
 
 # misc
 .DS_Store
