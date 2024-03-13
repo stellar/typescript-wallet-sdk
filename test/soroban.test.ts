@@ -6,8 +6,12 @@ import {
   Transaction,
   TransactionBuilder,
 } from "@stellar/stellar-sdk";
+import BigNumber from "bignumber.js";
 
-import { getTokenInvocationArgs } from "../src/walletSdk/Utils";
+import {
+  formatTokenAmount,
+  getTokenInvocationArgs,
+} from "../src/walletSdk/Utils";
 import { SorobanTokenInterface } from "../src/walletSdk/Types";
 
 const transactions = {
@@ -72,5 +76,24 @@ describe("Soroban Utils", () => {
     const args = getTokenInvocationArgs(op);
 
     expect(args).toBe(null);
+  });
+
+  it("should format different types of token amount values", () => {
+    const formatted = "1000000.1234567";
+
+    const value2 = BigInt("10000001234567");
+    expect(formatTokenAmount(value2, 7)).toBe(formatted);
+
+    const value1 = new BigNumber("10000001234567");
+    expect(formatTokenAmount(value1, 7)).toBe(formatted);
+
+    const value3 = Number("10000001234567");
+    expect(formatTokenAmount(value3, 7)).toBe(formatted);
+
+    const value4 = 10000001234567;
+    expect(formatTokenAmount(value4, 7)).toBe(formatted);
+
+    const value5 = "10000001234567";
+    expect(formatTokenAmount(value5, 7)).toBe(formatted);
   });
 });

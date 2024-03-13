@@ -1,4 +1,5 @@
 import { Operation, StrKey, scValToNative, xdr } from "@stellar/stellar-sdk";
+import BigNumber from "bignumber.js";
 
 import {
   ArgsForTokenInvocation,
@@ -81,4 +82,32 @@ export const getTokenInvocationArgs = (
     contractId,
     ...opArgs,
   };
+};
+
+// Adopted from https://github.com/ethers-io/ethers.js/blob/master/packages/bignumber/src.ts/fixednumber.ts#L27
+export const formatTokenAmount = (
+  amount: BigNumber | bigint | number | string,
+  decimals: number,
+): string => {
+  const bigNumberAmount = new BigNumber(amount.toString());
+
+  let formatted = bigNumberAmount.toString();
+
+  if (decimals > 0) {
+    formatted = bigNumberAmount
+      .shiftedBy(-decimals)
+      .toFixed(decimals)
+      .toString();
+
+    // Trim trailing zeros
+    while (formatted[formatted.length - 1] === "0") {
+      formatted = formatted.substring(0, formatted.length - 1);
+    }
+
+    if (formatted.endsWith(".")) {
+      formatted = formatted.substring(0, formatted.length - 1);
+    }
+  }
+
+  return formatted;
 };
