@@ -10,7 +10,7 @@ export const getArgsForTokenInvocation = (
   fnName: string,
   args: xdr.ScVal[],
 ): ArgsForTokenInvocation => {
-  let amount: bigint;
+  let amount: bigint | number;
   let from = "";
   let to = "";
 

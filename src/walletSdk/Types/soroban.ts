@@ -7,7 +7,7 @@ export enum SorobanTokenInterface {
 export type ArgsForTokenInvocation = {
   from: string;
   to: string;
-  amount: bigint;
+  amount: bigint | number;
 };
 
 export type TokenInvocationArgs = ArgsForTokenInvocation & {
