@@ -85,8 +85,15 @@ export const getTokenInvocationArgs = (
 };
 
 // Adopted from https://github.com/ethers-io/ethers.js/blob/master/packages/bignumber/src.ts/fixednumber.ts#L27
+/*
+  This function formats an integer amount (e.g. a bigint value which is broadly
+  used in the soroban env) to a stringfied floating amount. This function is
+  basically the counterpart of the 'parseTokenAmount' function below.
+
+  E.g: formatTokenAmount(BigInt(10000001234567), 7) => "1000000.1234567"  
+*/
 export const formatTokenAmount = (
-  amount: BigNumber | bigint | number | string,
+  amount: bigint | BigNumber | number | string,
   decimals: number,
 ): string => {
   const bigNumberAmount = new BigNumber(amount.toString());
@@ -110,4 +117,49 @@ export const formatTokenAmount = (
   }
 
   return formatted;
+};
+
+/*
+  This function parses a floating amount to a bigint amount, which is broadly
+  used in the soroban env. This function is basically the counterpart of the
+  'formatTokenAmount' function above.
+
+  E.g: parseTokenAmount("1000000.1234567", 7) => BigInt(10000001234567)
+*/
+export const parseTokenAmount = (
+  amount: string | number | BigNumber | bigint,
+  decimals: number,
+): bigint => {
+  const comps = amount.toString().split(".");
+
+  let whole = comps[0];
+  let fraction = comps[1];
+  if (!whole) {
+    whole = "0";
+  }
+  if (!fraction) {
+    fraction = "0";
+  }
+
+  // Trim trailing zeros
+  while (fraction[fraction.length - 1] === "0") {
+    fraction = fraction.substring(0, fraction.length - 1);
+  }
+
+  // If decimals is 0, we have an empty string for fraction
+  if (fraction === "") {
+    fraction = "0";
+  }
+
+  // Fully pad the string with zeros to get to value
+  while (fraction.length < decimals) {
+    fraction += "0";
+  }
+
+  const wholeValue = new BigNumber(whole);
+  const fractionValue = new BigNumber(fraction);
+
+  const parsed = wholeValue.shiftedBy(decimals).plus(fractionValue);
+
+  return BigInt(parsed.toString());
 };
