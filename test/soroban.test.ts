@@ -6,8 +6,13 @@ import {
   Transaction,
   TransactionBuilder,
 } from "@stellar/stellar-sdk";
+import BigNumber from "bignumber.js";
 
-import { getTokenInvocationArgs } from "../src/walletSdk/Utils";
+import {
+  formatTokenAmount,
+  getTokenInvocationArgs,
+  parseTokenAmount,
+} from "../src/walletSdk/Utils";
 import { SorobanTokenInterface } from "../src/walletSdk/Types";
 
 const transactions = {
@@ -72,5 +77,43 @@ describe("Soroban Utils", () => {
     const args = getTokenInvocationArgs(op);
 
     expect(args).toBe(null);
+  });
+
+  it("should format different types of token amount values", () => {
+    const formatted = "1000000.1234567";
+
+    const value1 = BigInt(10000001234567);
+    expect(formatTokenAmount(value1, 7)).toStrictEqual(formatted);
+
+    const value2 = new BigNumber("10000001234567");
+    expect(formatTokenAmount(value2, 7)).toStrictEqual(formatted);
+
+    const value3 = Number("10000001234567");
+    expect(formatTokenAmount(value3, 7)).toStrictEqual(formatted);
+
+    const value4 = 10000001234567;
+    expect(formatTokenAmount(value4, 7)).toStrictEqual(formatted);
+
+    const value5 = "10000001234567";
+    expect(formatTokenAmount(value5, 7)).toStrictEqual(formatted);
+  });
+
+  it("should parse different types of token amount values", () => {
+    const parsed = BigInt(10000001234567);
+
+    const value5 = "1000000.1234567";
+    expect(parseTokenAmount(value5, 7) === parsed).toBeTruthy();
+
+    const value4 = 1000000.1234567;
+    expect(parseTokenAmount(value4, 7) === parsed).toBeTruthy();
+
+    const value3 = Number("1000000.1234567");
+    expect(parseTokenAmount(value3, 7) === parsed).toBeTruthy();
+
+    const value2 = new BigNumber("1000000.1234567");
+    expect(parseTokenAmount(value2, 7) === parsed).toBeTruthy();
+
+    const value1 = BigInt("123");
+    expect(parseTokenAmount(value1, 3) === BigInt(123000)).toBeTruthy();
   });
 });
