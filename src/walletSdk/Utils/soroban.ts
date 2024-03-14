@@ -159,6 +159,8 @@ export const parseTokenAmount = (
   const wholeValue = new BigNumber(whole);
   const fractionValue = new BigNumber(fraction);
 
+  // This basically appends the 'whole' and 'fraction' values into
+  // an integer value
   const parsed = wholeValue.shiftedBy(decimals).plus(fractionValue);
 
   return BigInt(parsed.toString());
