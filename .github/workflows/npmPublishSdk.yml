@@ -1,7 +1,7 @@
 name: npm publish wallet sdk
 on:
   release:
-    types: [published]
+    types: [workflow_dispatch]
 jobs:
   npm-publish:
     name: npm-publish
