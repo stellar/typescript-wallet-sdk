@@ -11,10 +11,18 @@ import {
 } from "@stellar/stellar-sdk";
 
 import { parseToml } from "../Utils";
-import { SignChallengeTxnParams, SignChallengeTxnResponse } from "../Types";
+import {
+  SignChallengeTxnParams,
+  SignChallengeTxnResponse,
+  AnchorTransaction,
+  WithdrawTransaction,
+  DepositTransaction,
+  ErrorTransaction,
+} from "../Types";
 import {
   ChallengeTxnIncorrectSequenceError,
   ChallengeTxnInvalidSignatureError,
+  UnknownAnchorTransactionError,
 } from "../Exceptions";
 
 /**
@@ -57,4 +65,32 @@ export const signChallengeTransaction = async ({
     transaction: tx.toXDR(),
     networkPassphrase,
   };
+};
+
+/**
+ * Helper method for parsing a JSON string into an AnchorTransaction.
+ * @param {string} transaction - The json string of an anchor transaction.
+ * @returns {AnchorTransaction} The transaction object.
+ */
+export const parseAnchorTransaction = (
+  transaction: string,
+): AnchorTransaction => {
+  const parsed = JSON.parse(transaction);
+  if (
+    "withdraw_memo_type" in parsed ||
+    "withdraw_memo" in parsed ||
+    "withdraw_anchor_account" in parsed
+  ) {
+    return parsed as WithdrawTransaction;
+  } else if (
+    "deposit_memo" in parsed ||
+    "deposit_memo_type" in parsed ||
+    "claimable_balance_id" in parsed
+  ) {
+    return parsed as DepositTransaction;
+  } else if (parsed.status === "error") {
+    return parsed as ErrorTransaction;
+  } else {
+    throw new UnknownAnchorTransactionError();
+  }
 };
