@@ -1,8 +1,5 @@
 import { AxiosInstance } from "axios";
-import {
-  TransactionBuilder as StellarTransactionBuilder,
-  Transaction,
-} from "@stellar/stellar-sdk";
+import { TransactionBuilder, Transaction } from "@stellar/stellar-sdk";
 import { decode } from "jws";
 
 import { Config } from "walletSdk";
@@ -121,10 +118,10 @@ export class Sep10 {
     challengeResponse,
     walletSigner,
   }: SignParams): Promise<Transaction> {
-    let transaction: Transaction = StellarTransactionBuilder.fromXDR(
+    let transaction: Transaction = TransactionBuilder.fromXDR(
       challengeResponse.transaction,
       challengeResponse.network_passphrase,
-    );
+    ) as Transaction;
 
     // check if verifying client domain as well
     for (const op of transaction.operations) {
