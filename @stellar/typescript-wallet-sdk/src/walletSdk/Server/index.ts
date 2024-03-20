@@ -76,17 +76,9 @@ export const parseAnchorTransaction = (
   transaction: string,
 ): AnchorTransaction => {
   const parsed = JSON.parse(transaction);
-  if (
-    "withdraw_memo_type" in parsed ||
-    "withdraw_memo" in parsed ||
-    "withdraw_anchor_account" in parsed
-  ) {
+  if (parsed.kind === "withdrawal") {
     return parsed as WithdrawTransaction;
-  } else if (
-    "deposit_memo" in parsed ||
-    "deposit_memo_type" in parsed ||
-    "claimable_balance_id" in parsed
-  ) {
+  } else if (parsed.kind === "deposit") {
     return parsed as DepositTransaction;
   } else if (parsed.status === "error") {
     return parsed as ErrorTransaction;
