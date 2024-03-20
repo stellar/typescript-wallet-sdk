@@ -1,5 +1,8 @@
 import { AxiosInstance } from "axios";
-import StellarSdk, { Transaction } from "@stellar/stellar-sdk";
+import {
+  TransactionBuilder as StellarTransactionBuilder,
+  Transaction,
+} from "@stellar/stellar-sdk";
 import { decode } from "jws";
 
 import { Config } from "walletSdk";
@@ -118,7 +121,7 @@ export class Sep10 {
     challengeResponse,
     walletSigner,
   }: SignParams): Promise<Transaction> {
-    let transaction: Transaction = StellarSdk.TransactionBuilder.fromXDR(
+    let transaction: Transaction = StellarTransactionBuilder.fromXDR(
       challengeResponse.transaction,
       challengeResponse.network_passphrase,
     );

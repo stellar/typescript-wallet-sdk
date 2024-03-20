@@ -1,4 +1,4 @@
-import StellarSdk, { xdr } from "@stellar/stellar-sdk";
+import { Operation, xdr } from "@stellar/stellar-sdk";
 import { IssuedAssetId } from "../../Asset";
 import { AccountKeypair } from "../Account";
 
@@ -19,7 +19,7 @@ export abstract class CommonTransactionBuilder<T> {
    */
   addAssetSupport(asset: IssuedAssetId, trustLimit?: string): T {
     this.operations.push(
-      StellarSdk.Operation.changeTrust({
+      Operation.changeTrust({
         asset: asset.toAsset(),
         limit: trustLimit,
         source: this.sourceAddress,
@@ -46,7 +46,7 @@ export abstract class CommonTransactionBuilder<T> {
    */
   addAccountSigner(signerAddress: AccountKeypair, signerWeight: number): T {
     this.operations.push(
-      StellarSdk.Operation.setOptions({
+      Operation.setOptions({
         source: this.sourceAddress,
         signer: {
           ed25519PublicKey: signerAddress.publicKey,
@@ -75,7 +75,7 @@ export abstract class CommonTransactionBuilder<T> {
    */
   lockAccountMasterKey(): T {
     this.operations.push(
-      StellarSdk.Operation.setOptions({
+      Operation.setOptions({
         source: this.sourceAddress,
         masterWeight: 0,
       }),
@@ -102,7 +102,7 @@ export abstract class CommonTransactionBuilder<T> {
     high?: number;
   }): T {
     this.operations.push(
-      StellarSdk.Operation.setOptions({
+      Operation.setOptions({
         source: this.sourceAddress,
         lowThreshold: low,
         medThreshold: medium,

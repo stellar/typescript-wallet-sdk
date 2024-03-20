@@ -1,4 +1,4 @@
-import StellarSdk, { xdr } from "@stellar/stellar-sdk";
+import { Operation, xdr } from "@stellar/stellar-sdk";
 
 import { CommonTransactionBuilder } from "./CommonTransactionBuilder";
 import { AccountKeypair } from "../Account";
@@ -45,7 +45,7 @@ export class SponsoringBuilder extends CommonTransactionBuilder<SponsoringBuilde
     startingBalance: number = 0,
   ): SponsoringBuilder {
     this.operations.push(
-      StellarSdk.Operation.createAccount({
+      Operation.createAccount({
         destination: newAccount.publicKey,
         startingBalance: startingBalance.toString(),
         source: this.sponsorAccount.publicKey,
@@ -60,7 +60,7 @@ export class SponsoringBuilder extends CommonTransactionBuilder<SponsoringBuilde
    */
   startSponsoring() {
     this.operations.push(
-      StellarSdk.Operation.beginSponsoringFutureReserves({
+      Operation.beginSponsoringFutureReserves({
         sponsoredId: this.sourceAddress,
         source: this.sponsorAccount.publicKey,
       }),
@@ -73,7 +73,7 @@ export class SponsoringBuilder extends CommonTransactionBuilder<SponsoringBuilde
    */
   stopSponsoring() {
     this.operations.push(
-      StellarSdk.Operation.endSponsoringFutureReserves({
+      Operation.endSponsoringFutureReserves({
         source: this.sourceAddress,
       }),
     );
