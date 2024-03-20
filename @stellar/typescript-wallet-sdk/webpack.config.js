@@ -36,10 +36,10 @@ module.exports = (env = { NODE: false }) => {
       library: "WalletSDK",
       libraryTarget: "umd",
       globalObject: "this",
-      filename: `bundle${!env.NODE ? "_browser" : ""}.js`,
+      filename: `bundle${isBrowser ? "_browser" : ""}.js`,
       path: path.resolve(__dirname, "lib"),
     },
-    target: env.NODE ? "node" : "web",
+    target: isBrowser ? "web" : "node",
     plugins: isBrowser
       ? [
           new webpack.ProvidePlugin({
