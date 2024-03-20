@@ -1,4 +1,5 @@
 const path = require("path");
+const webpack = require("webpack");
 
 module.exports = (env = { NODE: false }) => ({
   mode: "development",
@@ -22,6 +23,8 @@ module.exports = (env = { NODE: false }) => ({
       stream: require.resolve("stream-browserify"),
       url: require.resolve("url"),
       util: require.resolve("util"),
+      vm: require.resolve("vm-browserify"),
+      "process/browser": require.resolve("process/browser"),
     },
   },
   output: {
@@ -32,4 +35,9 @@ module.exports = (env = { NODE: false }) => ({
     path: path.resolve(__dirname, "lib"),
   },
   target: env.NODE ? "node" : "web",
+  plugins: [
+    new webpack.ProvidePlugin({
+      process: "process/browser",
+    }),
+  ],
 });
