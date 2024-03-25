@@ -23,6 +23,7 @@ import {
   ChallengeTxnIncorrectSequenceError,
   ChallengeTxnInvalidSignatureError,
   UnknownAnchorTransactionError,
+  InvalidJsonError,
 } from "../Exceptions";
 
 /**
@@ -75,7 +76,13 @@ export const signChallengeTransaction = async ({
 export const parseAnchorTransaction = (
   transaction: string,
 ): AnchorTransaction => {
-  const parsed = JSON.parse(transaction);
+  let parsed;
+  try {
+    parsed = JSON.parse(transaction);
+  } catch (e) {
+    throw new InvalidJsonError();
+  }
+
   if (parsed.kind === "withdrawal") {
     return parsed as WithdrawTransaction;
   } else if (parsed.kind === "deposit") {

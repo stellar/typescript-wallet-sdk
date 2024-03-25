@@ -298,3 +298,10 @@ export class UnknownAnchorTransactionError extends Error {
     Object.setPrototypeOf(this, UnknownAnchorTransactionError.prototype);
   }
 }
+
+export class InvalidJsonError extends Error {
+  constructor() {
+    super("Invalid Json given");
+    Object.setPrototypeOf(this, InvalidJsonError.prototype);
+  }
+}
