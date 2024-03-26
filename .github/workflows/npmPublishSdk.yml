@@ -1,5 +1,5 @@
 name: npm publish wallet sdk
-on: workflow_dispatch
+on: [workflow_dispatch]
 jobs:
   npm-publish:
     name: npm-publish
