@@ -44,7 +44,6 @@
     "tweetnacl-util": "^0.15.1"
   },
   "scripts": {
-    "prepare": "husky install",
     "test": "jest --watchAll",
     "test:ci": "jest --ci",
     "build:web": "webpack --config webpack.config.js",
