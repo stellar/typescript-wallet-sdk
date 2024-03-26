@@ -291,3 +291,17 @@ export class AllowHttpOnNonTestnetError extends Error {
     Object.setPrototypeOf(this, AllowHttpOnNonTestnetError.prototype);
   }
 }
+
+export class UnknownAnchorTransactionError extends Error {
+  constructor() {
+    super("Unknown AnchorTransaction type parse failed");
+    Object.setPrototypeOf(this, UnknownAnchorTransactionError.prototype);
+  }
+}
+
+export class InvalidJsonError extends Error {
+  constructor() {
+    super("Invalid Json given");
+    Object.setPrototypeOf(this, InvalidJsonError.prototype);
+  }
+}
