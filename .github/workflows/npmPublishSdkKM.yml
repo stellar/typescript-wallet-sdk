@@ -15,7 +15,8 @@ jobs:
       - run: yarn test:ci
 
       - name: Publish to NPM
-        run:
-          cd @stellar/typescript-wallet-sdk-km && yarn publish --access public
+        run: |
+          cd @stellar/typescript-wallet-sdk-km
+          yarn publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

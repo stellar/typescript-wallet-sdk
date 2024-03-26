@@ -6,6 +6,7 @@
     "@stellar/typescript-wallet-sdk-km"
   ],
   "scripts": {
+    "prepare": "husky install",
     "lint": "eslint . --ext .ts",
     "test": "jest --watchAll",
     "test:ci": "jest --ci",
