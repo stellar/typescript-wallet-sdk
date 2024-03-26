@@ -1,7 +1,5 @@
 name: npm publish wallet sdk Key Manager
-on:
-  release:
-    types: [workflow_dispatch]
+on: [workflow_dispatch]
 jobs:
   npm-publish:
     name: npm-publish
