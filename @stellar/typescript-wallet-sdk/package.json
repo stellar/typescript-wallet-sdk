@@ -56,7 +56,6 @@
     "vm-browserify": "^1.1.2"
   },
   "scripts": {
-    "prepare": "husky install",
     "test": "jest --watchAll",
     "test:ci": "jest --ci",
     "test:recovery:ci": "jest --config jest.integration.config.js recovery.test.ts --ci",

@@ -1,6 +1,6 @@
 {
   "name": "@stellar/typescript-wallet-sdk-km",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "engines": {
     "node": ">=18"
   },
@@ -44,7 +44,6 @@
     "tweetnacl-util": "^0.15.1"
   },
   "scripts": {
-    "prepare": "husky install",
     "test": "jest --watchAll",
     "test:ci": "jest --ci",
     "build:web": "webpack --config webpack.config.js",
