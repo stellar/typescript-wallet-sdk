@@ -8,6 +8,8 @@ module.exports = {
       "@stellar/typescript-wallet-sdk/test/tsconfig.json",
       "@stellar/typescript-wallet-sdk-km/tsconfig.json",
       "@stellar/typescript-wallet-sdk-km/test/tsconfig.json",
+      "@stellar/typescript-wallet-sdk-soroban/tsconfig.json",
+      "@stellar/typescript-wallet-sdk-soroban/test/tsconfig.json",
     ],
     sourceType: "module",
   },
