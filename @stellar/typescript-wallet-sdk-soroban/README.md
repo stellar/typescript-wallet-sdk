@@ -44,15 +44,15 @@ const op = transaction.operations[0];
 
 const args = getTokenInvocationArgs(op);
 /*
-    extracts args from the invoke host function operation:
-    args = {
-        fnName: "transfer,
-        contractId: "CAPECFLUT6KHYOOWUQNP7KC6PTMICKANBURFWRMPZTXUEEKHN67B7UI2",
-        from: "GCGORBD5DB4JDIKVIA536CJE3EWMWZ6KBUBWZWRQM7Y3NHFRCLOKYVAL",
-        to: "GDUBMXMABE7UOZSGYJ5ONE7UYAEHKK3JOX7HZQGNZ7NYTZPPP4AJ2GQJ",
-        amount: 5
-      }
-  */
+  extracts args from the invoke host function operation:
+  args = {
+      fnName: "transfer,
+      contractId: "CAPECFLUT6KHYOOWUQNP7KC6PTMICKANBURFWRMPZTXUEEKHN67B7UI2",
+      from: "GCGORBD5DB4JDIKVIA536CJE3EWMWZ6KBUBWZWRQM7Y3NHFRCLOKYVAL",
+      to: "GDUBMXMABE7UOZSGYJ5ONE7UYAEHKK3JOX7HZQGNZ7NYTZPPP4AJ2GQJ",
+      amount: 5
+    }
+*/
 
 const formattedAmount = formatTokenAmount("10000123", 3);
 // converts smart contract token amount into a displayable amount that can be
