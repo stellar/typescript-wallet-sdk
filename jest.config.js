@@ -18,5 +18,11 @@ module.exports = {
       testPathIgnorePatterns: ["/node_modules/"],
       ...commonConfigs,
     },
+    {
+      displayName: "Wallet SDK Soroban",
+      roots: ["./@stellar/typescript-wallet-sdk-soroban"],
+      testPathIgnorePatterns: ["/node_modules/"],
+      ...commonConfigs,
+    },
   ],
 };
