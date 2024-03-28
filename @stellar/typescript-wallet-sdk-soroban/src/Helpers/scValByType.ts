@@ -20,7 +20,8 @@ import { StrKey, scValToNative, xdr } from "@stellar/stellar-sdk";
  *
  *   scValByType(accountAddress) returns "GBBM6BKZPEHWYO3E3YKREDPQXMS4VK35YLNU7NFBRI26RAN7GI5POFBB"
  */
-export const scValByType = (scVal: xdr.ScVal) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const scValByType = (scVal: xdr.ScVal): any => {
   switch (scVal.switch()) {
     case xdr.ScValType.scvAddress(): {
       const address = scVal.address();
