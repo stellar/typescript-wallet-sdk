@@ -43,11 +43,9 @@ const transaction = TransactionBuilder.fromXDR(
 const op = transaction.operations[0];
 
 const args = getTokenInvocationArgs(op);
-
-console.log(args);
 /*
-    prints:
-      {
+    extracts args from the invoke host function operation:
+    args = {
         fnName: "transfer,
         contractId: "CAPECFLUT6KHYOOWUQNP7KC6PTMICKANBURFWRMPZTXUEEKHN67B7UI2",
         from: "GCGORBD5DB4JDIKVIA536CJE3EWMWZ6KBUBWZWRQM7Y3NHFRCLOKYVAL",
@@ -57,9 +55,13 @@ console.log(args);
   */
 
 const formattedAmount = formatTokenAmount("10000123", 3);
+// converts smart contract token amount into a displayable amount that can be
+// used on client UI
 // formattedAmount = "10000.123"
 
 const parsedAmount = parseTokenAmount("10000.123", 3);
+// converts an amount to a whole (bigint) number that can be used on
+// smart contracts operations
 // parsedAmount = 10000123
 
 const accountAddress = xdr.ScVal.scvAddress(
@@ -73,5 +75,6 @@ const accountAddress = xdr.ScVal.scvAddress(
 );
 
 const addressString = scValByType(accountAddress);
+// converts smart contract complex value into a simple string
 // addressString = "GBBM6BKZPEHWYO3E3YKREDPQXMS4VK35YLNU7NFBRI26RAN7GI5POFBB"
 ```
