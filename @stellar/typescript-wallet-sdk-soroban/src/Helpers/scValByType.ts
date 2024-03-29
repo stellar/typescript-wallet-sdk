@@ -1,12 +1,14 @@
 import { StrKey, scValToNative, xdr } from "@stellar/stellar-sdk";
 
+/* eslint-disable jsdoc/require-returns-type */
 /**
  * This function attempts to convert smart contract (complex) value types
  * to common/simpler types like string, array, buffer, JSON string, etc.
  *
  * @param {xdr.ScVal} scVal  the smart contract (complex) value
  *
- * @returns {any}  the smart contract value converted to a common/simpler
+ *
+ * @returns the smart contract value converted to a common/simpler
  *     value like string, array, buffer, JSON string, etc.
  *
  * @example
@@ -20,8 +22,7 @@ import { StrKey, scValToNative, xdr } from "@stellar/stellar-sdk";
  *
  *   scValByType(accountAddress) returns "GBBM6BKZPEHWYO3E3YKREDPQXMS4VK35YLNU7NFBRI26RAN7GI5POFBB"
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const scValByType = (scVal: xdr.ScVal): any => {
+export const scValByType = (scVal: xdr.ScVal) => {
   switch (scVal.switch()) {
     case xdr.ScValType.scvAddress(): {
       const address = scVal.address();
@@ -88,10 +89,6 @@ export const scValByType = (scVal: xdr.ScVal): any => {
         return native.toString();
       }
       return native;
-    }
-
-    case xdr.ScValType.scvVoid(): {
-      return null;
     }
 
     default:
