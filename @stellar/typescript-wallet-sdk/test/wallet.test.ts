@@ -1876,7 +1876,7 @@ describe("Http client", () => {
     const accountKp = Keypair.fromSecret(
       "SDXC3OHSJZEQIXKEWFDNEZEQ7SW5DWBPW7RKUWI36ILY3QZZ6VER7TXV",
     );
-    const client = axios.create();
+    const client = DefaultClient;
 
     const resp = await client.get(
       `http://testanchor.stellar.org/auth?account=${accountKp.publicKey()}`,
@@ -1887,7 +1887,7 @@ describe("Http client", () => {
 
 describe("AuthHeaderSigner", () => {
   beforeAll(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
   it("full sep-10 auth using header token should work", async () => {
     const wallet = Wallet.TestNet();
