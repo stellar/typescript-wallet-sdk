@@ -170,6 +170,7 @@ export class Sep10 {
       const resp = await this.httpClient.post(this.webAuthEndpoint, {
         transaction: signedTransaction.toXDR(),
       });
+      console.log({ resp }); // ALEC TODO - remove
       if (!resp.data.token) {
         throw new MissingTokenError();
       }
@@ -178,6 +179,7 @@ export class Sep10 {
 
       return AuthToken.from(resp.data.token);
     } catch (e) {
+      console.log({ e }); // ALEC TODO - remove
       throw new ServerRequestFailedError(e);
     }
   }
