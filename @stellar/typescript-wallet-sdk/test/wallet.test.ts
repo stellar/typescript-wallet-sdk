@@ -1886,6 +1886,9 @@ describe("Http client", () => {
 });
 
 describe("AuthHeaderSigner", () => {
+  beforeAll(() => {
+    jest.clearAllMocks();
+  });
   it("full sep-10 auth using header token should work", async () => {
     const wallet = Wallet.TestNet();
     const accountKp = wallet.stellar().account().createKeypair();
