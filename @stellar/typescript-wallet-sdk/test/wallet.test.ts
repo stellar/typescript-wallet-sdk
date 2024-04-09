@@ -20,6 +20,10 @@ import {
   WalletSigner,
   DefaultSigner,
 } from "../src/walletSdk/Auth/WalletSigner";
+import {
+  DefaultAuthHeaderSigner,
+  DomainAuthHeaderSigner,
+} from "../src/walletSdk/Auth/AuthHeaderSigner";
 import { SigningKeypair } from "../src/walletSdk/Horizon/Account";
 import { Sep24 } from "../src/walletSdk/Anchor/Sep24";
 import { DomainSigner } from "../src/walletSdk/Auth/WalletSigner";
@@ -1878,5 +1882,58 @@ describe("Http client", () => {
       `http://testanchor.stellar.org/auth?account=${accountKp.publicKey()}`,
     );
     expect(resp.data.transaction).toBeTruthy();
+  });
+});
+
+describe("AuthHeaderSigner", () => {
+  it("full sep-10 auth using header token should work", async () => {
+    const wallet = Wallet.TestNet();
+    const accountKp = wallet.stellar().account().createKeypair();
+    wallet.stellar().fundTestnetAccount(accountKp.publicKey);
+
+    const anchor = wallet.anchor({ homeDomain: "testanchor.stellar.org" });
+    const auth = await anchor.sep10();
+
+    const authHeaderSigner = new DefaultAuthHeaderSigner();
+    const authToken = await auth.authenticate({
+      accountKp,
+      authHeaderSigner,
+    });
+
+    expect(authToken).toBeTruthy();
+  }, 15000);
+
+  it("DefaultAuthHeaderSigner should work", async () => {
+    const accountKp = SigningKeypair.fromSecret(
+      "SAFXVNFRZQAC66RUZ2IJKMSNQCPXTKXVRX356COUKJJKJXBSLRX43DEZ",
+    );
+
+    const signer = new DefaultAuthHeaderSigner();
+    const token = await signer.createToken({
+      claims: {},
+      clientDomain: "test-domain",
+      issuer: accountKp,
+    });
+    expect(token).toBeTruthy();
+  });
+
+  it("DomainAuthHeaderSigner should work", async () => {
+    const accountKp = SigningKeypair.fromSecret(
+      "SAFXVNFRZQAC66RUZ2IJKMSNQCPXTKXVRX356COUKJJKJXBSLRX43DEZ",
+    );
+
+    const signer = new DomainAuthHeaderSigner("some-url.com");
+
+    const data = { account: "dummy-account" };
+
+    jest.spyOn(signer, "signTokenRemote").mockResolvedValue("success-token");
+
+    const token = await signer.createToken({
+      authTokenData: data,
+      clientDomain: "test-domain",
+      issuer: accountKp,
+    });
+
+    expect(token).toBe("success-token");
   });
 });
