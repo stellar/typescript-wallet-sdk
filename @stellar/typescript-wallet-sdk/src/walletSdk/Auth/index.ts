@@ -116,7 +116,7 @@ export class Sep10 {
       home_domain: this.homeDomain,
       memo: memoId,
       client_domain: clientDomain,
-      webAuthEndpoint: this.webAuthEndpoint,
+      web_auth_endpoint: this.webAuthEndpoint,
     };
 
     const token = await createAuthSignToken(

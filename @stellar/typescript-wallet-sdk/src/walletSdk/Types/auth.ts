@@ -98,7 +98,7 @@ export type SignChallengeTxnResponse = {
 export type AuthHeaderClaims = {
   account: string;
   home_domain: string;
-  webAuthEndpoint: string;
+  web_auth_endpoint: string;
   memo?: string;
   client_domain?: string;
 };
