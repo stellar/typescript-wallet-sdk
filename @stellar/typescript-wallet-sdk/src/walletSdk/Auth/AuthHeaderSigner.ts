@@ -66,7 +66,7 @@ export class DefaultAuthHeaderSigner implements AuthHeaderSigner {
       JSON.stringify({ ...claims, exp: timeExp, iat: issuedAt }),
     );
 
-    // sign JWT and create siganture
+    // sign JWT and create signature
     const signature = nacl.sign.detached(
       naclUtil.decodeUTF8(`${encodedHeader}.${encodedPayload}`),
       naclKP.secretKey,
