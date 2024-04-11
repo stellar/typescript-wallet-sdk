@@ -2,7 +2,7 @@ import { AxiosInstance } from "axios";
 import { TransactionBuilder, Transaction } from "@stellar/stellar-sdk";
 import { decode } from "jws";
 
-import { Config } from "walletSdk";
+import { Config } from "../";
 import {
   InvalidMemoError,
   ClientDomainWithMemoError,

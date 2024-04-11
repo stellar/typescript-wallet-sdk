@@ -1,7 +1,7 @@
 import { Transaction } from "@stellar/stellar-sdk";
 
-import { WalletSigner } from "walletSdk/Auth";
-import { AccountKeypair, PublicKeypair } from "walletSdk/Horizon";
+import { WalletSigner } from "../Auth";
+import { AccountKeypair, PublicKeypair } from "../Horizon";
 import { AuthToken } from "./auth";
 import { CommonBuilder } from "./horizon";
 

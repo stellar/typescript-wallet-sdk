@@ -8,7 +8,7 @@ import {
   xdr,
 } from "@stellar/stellar-sdk";
 
-import { Config } from "walletSdk";
+import { Config } from "../../";
 import { AccountKeypair } from "../Account";
 import {
   InsufficientStartingBalanceError,

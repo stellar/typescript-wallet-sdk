@@ -9,6 +9,7 @@ import {
   Types,
   IssuedAssetId,
   DefaultSigner,
+  Wallet,
 } from "../../src";
 import {
   Memo,
@@ -34,7 +35,7 @@ const clientSecret = process.env.CLIENT_SECRET;
 
 // Running example
 
-let wallet;
+let wallet: Wallet;
 if (runMainnet === "true") {
   console.log("Warning: you are running this script on the public network.");
   wallet = walletSdk.Wallet.MainNet();
@@ -123,7 +124,6 @@ export let depositDone = false;
 export const runDepositWatcher = (anchor: Anchor) => {
   console.log("\nstarting watcher ...");
 
-  const stop: Types.WatcherStopFunction;
   const onMessage = (m: Types.AnchorTransaction) => {
     console.log({ m });
     if (m.status === Types.TransactionStatus.completed) {
@@ -138,7 +138,7 @@ export const runDepositWatcher = (anchor: Anchor) => {
   };
 
   const watcher = anchor.sep24().watcher();
-  const resp = watcher.watchAllTransactions({
+  const { stop } = watcher.watchAllTransactions({
     authToken: authToken,
     assetCode: asset.code,
     onMessage,
@@ -146,8 +146,6 @@ export const runDepositWatcher = (anchor: Anchor) => {
     timeout: 5000,
     lang: "en-US",
   });
-
-  stop = resp.stop;
 };
 
 // Create Withdrawal
@@ -188,7 +186,6 @@ const sendWithdrawalTransaction = async (withdrawalTxn, kp) => {
 export const runWithdrawWatcher = (anchor, kp) => {
   console.log("\nstarting watcher ...");
 
-  const stop;
   const onMessage = (m) => {
     console.log({ m });
 
@@ -208,7 +205,7 @@ export const runWithdrawWatcher = (anchor, kp) => {
   };
 
   const watcher = anchor.sep24().watcher();
-  const resp = watcher.watchAllTransactions({
+  const { stop } = watcher.watchAllTransactions({
     authToken: authToken,
     assetCode: asset.code,
     onMessage,
@@ -216,8 +213,6 @@ export const runWithdrawWatcher = (anchor, kp) => {
     timeout: 5000,
     lang: "en-US",
   });
-
-  stop = resp.stop;
 };
 
 const walletSigner = DefaultSigner;

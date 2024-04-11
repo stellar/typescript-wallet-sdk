@@ -1,6 +1,6 @@
 import { Keypair, Networks, Horizon } from "@stellar/stellar-sdk";
 
-import { Config } from "walletSdk";
+import { Config } from "../";
 import { SigningKeypair } from "./Account";
 import {
   HORIZON_LIMIT_DEFAULT,
