@@ -1,6 +1,6 @@
 import { Memo, Horizon, Transaction } from "@stellar/stellar-sdk";
 import { AccountKeypair } from "../Horizon/Account";
-import { SponsoringBuilder, TransactionBuilder } from "walletSdk/Horizon";
+import { SponsoringBuilder, TransactionBuilder } from "../Horizon";
 import { StellarAssetId } from "../Asset";
 
 export enum NETWORK_URLS {
