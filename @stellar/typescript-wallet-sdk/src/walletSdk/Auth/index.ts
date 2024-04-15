@@ -17,7 +17,10 @@ import {
   ChallengeParams,
   ChallengeResponse,
   SignParams,
+  AuthHeaderClaims,
 } from "../Types";
+import { AccountKeypair } from "../Horizon/Account";
+import { AuthHeaderSigner } from "./AuthHeaderSigner";
 
 export { WalletSigner, DefaultSigner } from "./WalletSigner";
 
@@ -71,11 +74,13 @@ export class Sep10 {
     walletSigner,
     memoId,
     clientDomain,
+    authHeaderSigner,
   }: AuthenticateParams): Promise<AuthToken> {
     const challengeResponse = await this.challenge({
       accountKp,
       memoId,
       clientDomain: clientDomain || this.cfg.app.defaultClientDomain,
+      authHeaderSigner,
     });
     const signedTransaction = await this.sign({
       accountKp,
@@ -90,6 +95,7 @@ export class Sep10 {
     accountKp,
     memoId,
     clientDomain,
+    authHeaderSigner,
   }: ChallengeParams): Promise<ChallengeResponse> {
     if (memoId && parseInt(memoId) < 0) {
       throw new InvalidMemoError();
@@ -104,8 +110,29 @@ export class Sep10 {
     }${clientDomain ? `&client_domain=${clientDomain}` : ""}${
       this.homeDomain ? `&home_domain=${this.homeDomain}` : ""
     }`;
+
+    const claims = {
+      account: accountKp.publicKey,
+      home_domain: this.homeDomain,
+      memo: memoId,
+      client_domain: clientDomain,
+      web_auth_endpoint: this.webAuthEndpoint,
+    };
+
+    const token = await createAuthSignToken(
+      accountKp,
+      claims,
+      clientDomain,
+      authHeaderSigner,
+    );
+
+    let headers = {};
+    if (token) {
+      headers = { Authorization: `Bearer ${token}` };
+    }
+
     try {
-      const resp = await this.httpClient.get(url);
+      const resp = await this.httpClient.get(url, { headers });
       const challengeResponse: ChallengeResponse = resp.data;
       return challengeResponse;
     } catch (e) {
@@ -164,4 +191,23 @@ const validateToken = (token: string) => {
   if (parsedToken.expiresAt < Math.floor(Date.now() / 1000)) {
     throw new ExpiredTokenError(parsedToken.expiresAt);
   }
+};
+
+const createAuthSignToken = async (
+  account: AccountKeypair,
+  claims: AuthHeaderClaims,
+  clientDomain?: string,
+  authHeaderSigner?: AuthHeaderSigner,
+) => {
+  if (!authHeaderSigner) {
+    return null;
+  }
+
+  const issuer = clientDomain ? null : account;
+
+  return authHeaderSigner.createToken({
+    claims,
+    clientDomain,
+    issuer,
+  });
 };

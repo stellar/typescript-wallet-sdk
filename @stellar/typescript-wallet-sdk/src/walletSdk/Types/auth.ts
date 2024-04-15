@@ -3,12 +3,14 @@ import { decode } from "jws";
 
 import { WalletSigner } from "../Auth/WalletSigner";
 import { AccountKeypair, SigningKeypair } from "../Horizon/Account";
+import { AuthHeaderSigner } from "../Auth/AuthHeaderSigner";
 
 export type AuthenticateParams = {
   accountKp: AccountKeypair;
   walletSigner?: WalletSigner;
   memoId?: string;
   clientDomain?: string;
+  authHeaderSigner?: AuthHeaderSigner;
 };
 
 export class AuthToken {
@@ -49,6 +51,7 @@ export type ChallengeParams = {
   accountKp: AccountKeypair;
   memoId?: string;
   clientDomain?: string;
+  authHeaderSigner?: AuthHeaderSigner;
 };
 
 export type XdrEncodedTransaction = string;
@@ -90,4 +93,20 @@ export type SignChallengeTxnParams = {
 export type SignChallengeTxnResponse = {
   transaction: XdrEncodedTransaction;
   networkPassphrase: NetworkPassphrase;
+};
+
+export type AuthHeaderClaims = {
+  account: string;
+  home_domain: string;
+  web_auth_endpoint: string;
+  memo?: string;
+  client_domain?: string;
+  exp?: number;
+  iat?: number;
+};
+
+export type AuthHeaderCreateTokenParams = {
+  claims: AuthHeaderClaims;
+  clientDomain?: string;
+  issuer?: AccountKeypair;
 };
