@@ -52,15 +52,16 @@ export class DefaultAuthHeaderSigner implements AuthHeaderSigner {
       throw new AuthHeaderSigningKeypairRequiredError();
     }
 
-    const issuedAt = Math.floor(Date.now() / 1000);
-    const timeExp = Math.floor(Date.now() / 1000) + this.expiration;
+    const issuedAt = claims.iat || Math.floor(Date.now() / 1000);
+    const timeExp =
+      claims.exp || Math.floor(Date.now() / 1000) + this.expiration;
 
     // turn stellar kp into nacl kp for creating JWT
     const rawSeed = StrKey.decodeEd25519SecretSeed(issuer.secretKey);
     const naclKP = nacl.sign.keyPair.fromSeed(rawSeed);
 
     // encode JWT message
-    const header = { alg: "EdDSA", typ: "JWT" };
+    const header = { alg: "EdDSA" };
     const encodedHeader = base64url(JSON.stringify(header));
     const encodedPayload = base64url(
       JSON.stringify({ ...claims, exp: timeExp, iat: issuedAt }),

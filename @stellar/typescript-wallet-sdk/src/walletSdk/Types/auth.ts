@@ -101,6 +101,8 @@ export type AuthHeaderClaims = {
   web_auth_endpoint: string;
   memo?: string;
   client_domain?: string;
+  exp?: number;
+  iat?: number;
 };
 
 export type AuthHeaderCreateTokenParams = {
