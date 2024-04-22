@@ -1,41 +1,53 @@
-import { chromium } from "playwright";
+import { chromium, firefox, webkit } from "playwright";
 
 describe("Test browser build", () => {
-  it("works", async () => {
-    await (async () => {
-      const browser = await chromium.launch();
-      const page = await browser.newPage();
+  const browsers = [
+    { name: "Chrome", instance: chromium },
+    { name: "Firefox", instance: firefox },
+    { name: "Safari", instance: webkit },
+  ];
 
-      await page.goto("https://stellar.org");
+  for (const b of browsers) {
+    it(
+      "works on " + b.name,
+      async () => {
+        await (async () => {
+          const browser = await b.instance.launch();
+          const page = await browser.newPage();
 
-      await page.addScriptTag({
-        path: "./lib/bundle_browser.js",
-      });
+          await page.goto("https://stellar.org");
 
-      // Use the Stellar SDK in the website's context
-      const result = await page.evaluate(() => {
-        let kp;
-        try {
-          const wal = (window as any).WalletSDK.Wallet.TestNet();
-          const account = wal.stellar().account();
+          await page.addScriptTag({
+            path: "./lib/bundle_browser.js",
+          });
 
-          kp = account.createKeypair();
-        } catch (e) {
-          return { success: false };
-        }
+          // Use the Stellar SDK in the website's context
+          const result = await page.evaluate(() => {
+            let kp;
+            try {
+              const wal = (window as any).WalletSDK.Wallet.TestNet();
+              const account = wal.stellar().account();
 
-        return {
-          publicKey: kp.publicKey,
-          secretKey: kp.secretKey,
-          success: true,
-        };
-      });
+              kp = account.createKeypair();
+            } catch (e) {
+              return { success: false };
+            }
 
-      expect(result.publicKey).toBeTruthy();
-      expect(result.secretKey).toBeTruthy();
-      expect(result.success).toBeTruthy();
+            return {
+              publicKey: kp.publicKey,
+              secretKey: kp.secretKey,
+              success: true,
+            };
+          });
 
-      await browser.close();
-    })();
-  }, 15000);
+          expect(result.publicKey).toBeTruthy();
+          expect(result.secretKey).toBeTruthy();
+          expect(result.success).toBeTruthy();
+
+          await browser.close();
+        })();
+      },
+      15000,
+    );
+  }
 });
