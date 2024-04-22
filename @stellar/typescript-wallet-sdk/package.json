@@ -62,6 +62,7 @@
   "scripts": {
     "test": "jest --watchAll",
     "test:ci": "jest --ci",
+    "test:e2e:ci": "jest --config jest.e2e.config.js --ci",
     "test:recovery:ci": "jest --config jest.integration.config.js recovery.test.ts --ci",
     "test:anchorplatform:ci": "yarn jest --config jest.integration.config.js anchorplatform.test.ts --ci",
     "build:web": "webpack --config webpack.config.js",

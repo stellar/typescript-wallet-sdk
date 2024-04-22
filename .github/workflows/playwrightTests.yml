@@ -1,0 +1,16 @@
+name: Playwright Tests
+on: [pull_request]
+jobs:
+  playwright:
+    name: "Playwright e2e Tests"
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.43.0-jammy
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 18
+      - run: yarn install
+      - run: yarn build
+      - run: yarn test:e2e:ci

@@ -9,7 +9,7 @@ module.exports = {
     {
       displayName: "Wallet SDK",
       roots: ["./@stellar/typescript-wallet-sdk"],
-      testPathIgnorePatterns: ["/node_modules/", "/integration/"],
+      testPathIgnorePatterns: ["/node_modules/", "/integration/", "/e2e/"],
       ...commonConfigs,
     },
     {
