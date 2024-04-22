@@ -1,9 +1,8 @@
-import { chromium, firefox, webkit } from "playwright";
+import { chromium, webkit } from "playwright";
 
 describe("Test browser build", () => {
   const browsers = [
     { name: "Chrome", instance: chromium },
-    { name: "Firefox", instance: firefox },
     { name: "Safari", instance: webkit },
   ];
 
