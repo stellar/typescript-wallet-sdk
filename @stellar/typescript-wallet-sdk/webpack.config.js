@@ -2,8 +2,6 @@ const path = require("path");
 const webpack = require("webpack");
 
 module.exports = (env = { NODE: false }) => {
-  console.log("webpack env:", { env }); // ALEC TODO - remove
-
   const isBrowser = !env.NODE;
 
   return {
