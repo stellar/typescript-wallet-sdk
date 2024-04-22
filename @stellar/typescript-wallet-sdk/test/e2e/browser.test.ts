@@ -9,16 +9,14 @@ describe("Test browser build", () => {
       await page.goto("https://stellar.org");
 
       await page.addScriptTag({
-        path: "@stellar/typescript-wallet-sdk/lib/bundle_browser.js",
+        path: "./lib/bundle_browser.js",
       });
 
       // Use the Stellar SDK in the website's context
       const result = await page.evaluate(() => {
         let kp;
         try {
-          console.log(window.WalletSDK);
-
-          const wal = window.WalletSDK.Wallet.TestNet();
+          const wal = (window as any).WalletSDK.Wallet.TestNet();
           const account = wal.stellar().account();
 
           kp = account.createKeypair();
