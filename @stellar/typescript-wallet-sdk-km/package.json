@@ -16,6 +16,7 @@
     "@stellar/tsconfig": "^1.0.2",
     "@types/jest": "^29.5.12",
     "@typescript-eslint/parser": "^7.1.1",
+    "@stellar/typescript-wallet-sdk": "*",
     "babel-jest": "^29.7.0",
     "husky": "^9.0.11",
     "jest": "^29.7.0",
