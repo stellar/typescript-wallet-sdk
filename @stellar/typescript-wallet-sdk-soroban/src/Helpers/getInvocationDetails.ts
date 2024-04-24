@@ -17,7 +17,7 @@ const isInvocationArg = (
   invocation: InvocationArgs | undefined,
 ): invocation is InvocationArgs => !!invocation;
 
-function getInvocationArgs(
+export function getInvocationArgs(
   invocation: xdr.SorobanAuthorizedInvocation,
 ): InvocationArgs | undefined {
   const fn = invocation.function();
