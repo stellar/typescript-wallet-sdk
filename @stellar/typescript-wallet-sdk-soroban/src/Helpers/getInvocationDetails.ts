@@ -2,24 +2,31 @@ import { Address, Asset, StrKey, xdr } from "@stellar/stellar-sdk";
 
 import { InvocationArgs } from "Types";
 
-// TODO: add jsdoc description
-export function getInvocationDetails(
-  invocation: xdr.SorobanAuthorizedInvocation,
-): InvocationArgs[] {
+/**
+ * Extract invocation args and params from a Soroban authorized invocation
+ * tree up to its immediate sub invocations.
+ *
+ * @param {xdr.SorobanAuthorizedInvocation} invocationTree - The invocation tree.
+ *
+ * @returns {InvocationArgs[]} A list of user friendly invocation args and params.
+ */
+export const getInvocationDetails = (
+  invocationTree: xdr.SorobanAuthorizedInvocation,
+): InvocationArgs[] => {
   const invocations = [
-    getInvocationArgs(invocation),
-    ...invocation.subInvocations().map(getInvocationArgs),
+    getInvocationArgs(invocationTree),
+    ...invocationTree.subInvocations().map(getInvocationArgs),
   ];
   return invocations.filter(isInvocationArg);
-}
+};
 
 const isInvocationArg = (
   invocation: InvocationArgs | undefined,
 ): invocation is InvocationArgs => !!invocation;
 
-export function getInvocationArgs(
+export const getInvocationArgs = (
   invocation: xdr.SorobanAuthorizedInvocation,
-): InvocationArgs | undefined {
+): InvocationArgs | undefined => {
   const fn = invocation.function();
 
   switch (fn.switch().value) {
@@ -71,4 +78,4 @@ export function getInvocationArgs(
       return undefined;
     }
   }
-}
+};
