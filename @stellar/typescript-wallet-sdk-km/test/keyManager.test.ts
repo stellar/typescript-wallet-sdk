@@ -504,6 +504,7 @@ describe("fetchAuthToken", () => {
       "https://www.stellar.org/auth?account=" +
         "GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H" +
         "&client_domain=example.com",
+      { headers: {} },
     );
   });
 
