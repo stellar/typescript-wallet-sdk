@@ -1,8 +1,6 @@
 import {
   Address,
   Asset,
-  Contract,
-  Keypair,
   Memo,
   MemoType,
   Networks,
@@ -10,8 +8,6 @@ import {
   StrKey,
   Transaction,
   TransactionBuilder,
-  hash,
-  nativeToScVal,
   xdr,
 } from "@stellar/stellar-sdk";
 import BigNumber from "bignumber.js";
@@ -24,6 +20,7 @@ import {
   parseTokenAmount,
   scValByType,
 } from "../src";
+import { makeInvocation, randomContracts, randomKey } from "./utils";
 
 const transactions = {
   classic:
@@ -332,37 +329,12 @@ describe("scValByType should render expected common types", () => {
 });
 
 describe("getInvocationDetails for a Soroban Authorized Invocation tree", () => {
-  const randomKey = (): string => {
-    return Keypair.random().publicKey();
-  };
-
-  const makeInvocation = (
-    contract: Contract,
-    name: string,
-    ...args: any[]
-  ): xdr.SorobanAuthorizedFunction => {
-    return xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeContractFn(
-      new xdr.InvokeContractArgs({
-        contractAddress: contract.address().toScAddress(),
-        functionName: name,
-        args: args.map((arg) => nativeToScVal(arg)),
-      }),
-    );
-  };
-
-  const invoker = randomKey();
-
-  const [nftContract, swapContract, xlmContract, usdcContract] = [
-    1, 2, 3, 4,
-  ].map(() => {
-    // ezpz method to generate random contract IDs
-    const buf = hash(Buffer.from(randomKey()));
-    const contractId = StrKey.encodeContract(buf);
-    return new Contract(contractId);
-  });
+  const [nftContract, swapContract, xlmContract, usdcContract] =
+    randomContracts(4);
 
   const nftId = randomKey();
   const usdcId = randomKey();
+  const invoker = randomKey();
   const dest = randomKey();
 
   const rootSubInvocations = [
