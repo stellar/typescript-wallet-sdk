@@ -1,4 +1,6 @@
 import {
+  Address,
+  Asset,
   Memo,
   MemoType,
   Networks,
@@ -13,10 +15,12 @@ import BigNumber from "bignumber.js";
 import {
   SorobanTokenInterface,
   formatTokenAmount,
+  getInvocationDetails,
   getTokenInvocationArgs,
   parseTokenAmount,
   scValByType,
 } from "../src";
+import { makeInvocation, randomContracts, randomKey } from "./utils";
 
 const transactions = {
   classic:
@@ -321,5 +325,231 @@ describe("scValByType should render expected common types", () => {
     const scvVoid = xdr.ScVal.scvVoid();
     const parsedVoid = scValByType(scvVoid);
     expect(parsedVoid).toEqual(null);
+  });
+});
+
+describe("getInvocationDetails for a Soroban Authorized Invocation tree", () => {
+  const [nftContract, swapContract, xlmContract, usdcContract] =
+    randomContracts(4);
+
+  const nftId = randomKey();
+  const usdcId = randomKey();
+  const invoker = randomKey();
+  const dest = randomKey();
+
+  const rootSubInvocations = [
+    new xdr.SorobanAuthorizedInvocation({
+      function:
+        xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeCreateContractHostFn(
+          new xdr.CreateContractArgs({
+            contractIdPreimage:
+              xdr.ContractIdPreimage.contractIdPreimageFromAsset(
+                new Asset("TEST", nftId).toXDRObject(),
+              ),
+            executable: xdr.ContractExecutable.contractExecutableStellarAsset(),
+          }),
+        ),
+      subInvocations: [],
+    }),
+    new xdr.SorobanAuthorizedInvocation({
+      function: makeInvocation(
+        swapContract,
+        "swap",
+        "native",
+        `USDC:${usdcId}`,
+        new Address(invoker).toScVal(),
+        new Address(dest).toScVal(),
+      ),
+      subInvocations: [
+        new xdr.SorobanAuthorizedInvocation({
+          function: makeInvocation(
+            xlmContract,
+            "transfer",
+            new Address(invoker).toScVal(),
+            "7",
+          ),
+          subInvocations: [],
+        }),
+        new xdr.SorobanAuthorizedInvocation({
+          function: makeInvocation(
+            usdcContract,
+            "transfer",
+            new Address(invoker).toScVal(),
+            "1",
+          ),
+          subInvocations: [],
+        }),
+      ],
+    }),
+    new xdr.SorobanAuthorizedInvocation({
+      function: makeInvocation(
+        nftContract,
+        "transfer",
+        nftContract.address().toScVal(),
+        "2",
+      ),
+      subInvocations: [],
+    }),
+    new xdr.SorobanAuthorizedInvocation({
+      function:
+        xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeCreateContractHostFn(
+          new xdr.CreateContractArgs({
+            contractIdPreimage:
+              xdr.ContractIdPreimage.contractIdPreimageFromAddress(
+                new xdr.ContractIdPreimageFromAddress({
+                  address: nftContract.address().toScAddress(),
+                  salt: Buffer.alloc(32, 0),
+                }),
+              ),
+            executable: xdr.ContractExecutable.contractExecutableWasm(
+              Buffer.alloc(32, "\x20"),
+            ),
+          }),
+        ),
+      subInvocations: [],
+    }),
+  ];
+
+  const rootInvocation = new xdr.SorobanAuthorizedInvocation({
+    function: makeInvocation(nftContract, "purchase", `SomeNft:${nftId}`, 7),
+    subInvocations: rootSubInvocations,
+  });
+
+  it("get invocation details for a single Soroban Authorized Invocation of 'invoke' type", () => {
+    const detailsList = getInvocationDetails(rootInvocation);
+
+    const rootDetail = detailsList[0];
+
+    /*
+      rootDetails prints: 
+
+      {
+        fnName: 'purchase',
+        contractId: 'CDG44CP4LWYVRELBCICJYWUJ6B3NCKAOOIAX3MR5HGLFFK3ZWPSZJLMV',
+        args: [
+          ChildUnion {
+            _switch: [ChildEnum],
+            _arm: 'str',
+            _armType: [String],
+            _value: 'SomeNft:GDASJXL2RYFJCRHXRZQ3ADPEXS5KVXKTOR3FCRCBFCQ77YZXDXMPV7D3'
+          },
+          ChildUnion {
+            _switch: [ChildEnum],
+            _arm: 'u64',
+            _armType: [Function],
+            _value: [UnsignedHyper]
+          }
+        ],
+        type: 'invoke'
+      }
+     */
+
+    expect(rootDetail.type).toBe("invoke");
+    expect(rootDetail.fnName).toBe("purchase");
+    expect(rootDetail.contractId).toBe(nftContract.contractId());
+    expect(rootDetail.args.length).toBe(2);
+    expect(scValByType(rootDetail.args[0])).toBe(`SomeNft:${nftId}`);
+    expect(Number(scValByType(rootDetail.args[1]))).toBe(7);
+  });
+
+  it("get invocation details for the main invocation and its immediate sub invocations", () => {
+    const detailsList = getInvocationDetails(rootInvocation);
+
+    expect(detailsList.length).toBe(5);
+
+    const [rootDetail, subDetail1, subDetail2, subDetail3, subDetail4] =
+      detailsList;
+
+    /*
+      detailsList prints:
+
+      [
+        {
+          fnName: 'purchase',
+          contractId: 'CDG44CP4LWYVRELBCICJYWUJ6B3NCKAOOIAX3MR5HGLFFK3ZWPSZJLMV',
+          args: [ [ChildUnion], [ChildUnion] ],
+          type: 'invoke'
+        },
+        {
+          type: 'sac',
+          asset: 'TEST:GDASJXL2RYFJCRHXRZQ3ADPEXS5KVXKTOR3FCRCBFCQ77YZXDXMPV7D3'
+        },
+        {
+          fnName: 'swap',
+          contractId: 'CAY4K3IKHRPQUZARUFQ2QB7UZAIS2CGAMA3OUE7UUWDX3FDGE7DTOYF7',
+          args: [ [ChildUnion], [ChildUnion], [ChildUnion], [ChildUnion] ],
+          type: 'invoke'
+        },
+        {
+          fnName: 'transfer',
+          contractId: 'CDG44CP4LWYVRELBCICJYWUJ6B3NCKAOOIAX3MR5HGLFFK3ZWPSZJLMV',
+          args: [ [ChildUnion], [ChildUnion] ],
+          type: 'invoke'
+        },
+        {
+          type: 'wasm',
+          salt: '0000000000000000000000000000000000000000000000000000000000000000',
+          hash: '2020202020202020202020202020202020202020202020202020202020202020',
+          address: 'CDG44CP4LWYVRELBCICJYWUJ6B3NCKAOOIAX3MR5HGLFFK3ZWPSZJLMV'
+        }
+      ]
+     */
+
+    expect(rootDetail.type).toBe("invoke");
+    expect(rootDetail.fnName).toBe("purchase");
+    expect(rootDetail.contractId).toBe(nftContract.contractId());
+    expect(rootDetail.args.length).toBe(2);
+    expect(scValByType(rootDetail.args[0])).toBe(`SomeNft:${nftId}`);
+    expect(Number(scValByType(rootDetail.args[1]))).toBe(7);
+    expect(rootDetail.salt).toBeUndefined();
+    expect(rootDetail.hash).toBeUndefined();
+    expect(rootDetail.address).toBeUndefined();
+    expect(rootDetail.asset).toBeUndefined();
+
+    expect(subDetail1.type).toBe("sac");
+    expect(subDetail1.fnName).toBeUndefined();
+    expect(subDetail1.contractId).toBeUndefined();
+    expect(subDetail1.args).toBeUndefined();
+    expect(subDetail1.salt).toBeUndefined();
+    expect(subDetail1.hash).toBeUndefined();
+    expect(subDetail1.address).toBeUndefined();
+    expect(subDetail1.asset).toBe(`TEST:${nftId}`);
+
+    expect(subDetail2.type).toBe("invoke");
+    expect(subDetail2.fnName).toBe("swap");
+    expect(subDetail2.contractId).toBe(swapContract.contractId());
+    expect(subDetail2.args.length).toBe(4);
+    expect(scValByType(subDetail2.args[0])).toBe("native");
+    expect(scValByType(subDetail2.args[1])).toBe(`USDC:${usdcId}`);
+    expect(scValByType(subDetail2.args[2])).toBe(invoker);
+    expect(scValByType(subDetail2.args[3])).toBe(dest);
+    expect(subDetail2.salt).toBeUndefined();
+    expect(subDetail2.hash).toBeUndefined();
+    expect(subDetail2.address).toBeUndefined();
+    expect(subDetail2.asset).toBeUndefined();
+
+    expect(subDetail3.type).toBe("invoke");
+    expect(subDetail3.fnName).toBe("transfer");
+    expect(subDetail3.contractId).toBe(nftContract.contractId());
+    expect(subDetail3.args.length).toBe(2);
+    expect(scValByType(subDetail3.args[0])).toBe(
+      scValByType(nftContract.address().toScVal()),
+    );
+    expect(scValByType(subDetail3.args[1])).toBe("2");
+    expect(subDetail3.salt).toBeUndefined();
+    expect(subDetail3.hash).toBeUndefined();
+    expect(subDetail3.address).toBeUndefined();
+    expect(subDetail3.asset).toBeUndefined();
+
+    expect(subDetail4.type).toBe("wasm");
+    expect(subDetail4.fnName).toBeUndefined();
+    expect(subDetail4.contractId).toBeUndefined();
+    expect(subDetail4.args).toBeUndefined();
+    expect(subDetail4.salt).toBe(Buffer.alloc(32, 0).toString("hex"));
+    expect(subDetail4.hash).toBe(Buffer.alloc(32, "\x20").toString("hex"));
+    expect(subDetail4.address).toBe(
+      Address.fromScAddress(nftContract.address().toScAddress()).toString(),
+    );
+    expect(subDetail4.asset).toBeUndefined();
   });
 });
