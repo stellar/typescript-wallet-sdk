@@ -6,7 +6,7 @@ applications on the Stellar network faster. To learn more go to the
 
 ## Yarn Workspaces
 
-This repo uses yarn worspace to create a monorepo with 4 submodules:
+This repo uses yarn worspace to create a monorepo with 3 submodules:
 
 - [typescript-wallet-sdk](./@stellar/typescript-wallet-sdk/README.md) - the main
   sdk
@@ -28,7 +28,7 @@ You will need
 yarn build
 ```
 
-- this will build for all the sub modules
+- this will build for all sub modules
 
 ## Testing
 
@@ -38,7 +38,7 @@ yarn test
 
 - this will run all jest unit tests for each submodule
 
-Some tests that are not ran as part of that suite (but run during ci):
+Some tests that are not ran as part of that suite (but run during ci/cd):
 
 - [integration tests](./@stellar/typescript-wallet-sdk/test/integration/README.md)
 - [e2e tests](./@stellar/typescript-wallet-sdk/test/e2e/README.md)
