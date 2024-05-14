@@ -1,15 +1,17 @@
 # Typescript Wallet SDK Monorepo
 
 Typescript Wallet SDK is a library that allows developers to build wallet
-applications on the Stellar network faster. To learn more go to the
-[typescript-wallet-sdk module](./@stellar/typescript-wallet-sdk/README.md).
+applications on the Stellar network faster. To jump right into how the main
+typescript-wallet-sdk module works you can
+[go here](./@stellar/typescript-wallet-sdk/README.md).
 
 ## Yarn Workspaces
 
-This repo uses yarn worspace to create a monorepo with 3 submodules:
+This repo uses yarn worspace to create a monorepo with the main wallet sdk, and
+two modules for extending functionality:
 
 - [typescript-wallet-sdk](./@stellar/typescript-wallet-sdk/README.md) - the main
-  sdk
+  sdk for building wallets on stellar
 - [typescript-wallet-sdk-km](./@stellar/typescript-wallet-sdk-km/README.md) -
   functionality for key managing
 - [typescript-wallet-sdk-soroban](./@stellar/typescript-wallet-sdk-soroban/README.md) -
