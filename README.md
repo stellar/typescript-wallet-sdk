@@ -2,7 +2,7 @@
 
 Typescript Wallet SDK is a library that allows developers to build wallet
 applications on the Stellar network faster. To learn more go to the
-[SDK package](./@stellar/typescript-wallet-sdk/README.md).
+[typescript-wallet-sdk module](./@stellar/typescript-wallet-sdk/README.md).
 
 ## Yarn Workspaces
 
