@@ -7,8 +7,8 @@ typescript-wallet-sdk module works you can
 
 ## Yarn Workspaces
 
-This repo uses yarn worspace to create a monorepo with the main wallet sdk, and
-two modules for extending functionality:
+This repo uses a yarn worspace to create a monorepo that includes the main
+wallet sdk, and two modules for extending functionality:
 
 - [typescript-wallet-sdk](./@stellar/typescript-wallet-sdk/README.md) - the main
   sdk for building wallets on stellar
