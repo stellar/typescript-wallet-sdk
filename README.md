@@ -24,13 +24,14 @@ You will need
 - Node (>=18): https://nodejs.org/en/download/
 - Yarn (v1.22.5 or newer): https://classic.yarnpkg.com/en/docs/install
 
-## Build the Project
+## Install and Build the Project
 
 ```
+yarn install
 yarn build
 ```
 
-- this will build for all sub modules
+- this will install and build for all sub modules
 
 ## Testing
 
