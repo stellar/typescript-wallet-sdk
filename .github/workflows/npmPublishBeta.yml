@@ -1,0 +1,38 @@
+name: typescript-wallet-sdk beta build
+on:
+  push:
+    branches:
+      - develop
+jobs:
+  npm-beta:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 18
+
+      - run: yarn install
+      - run: yarn build
+      - run: yarn test:ci
+
+      - name: Create beta package version
+        run: |
+          timestamp=$(date +%s%3N)
+          current_version=$(jq -r '.version' @stellar/typescript-wallet-sdk/package.json)
+          echo "new_version=${current_version}-beta.${timestamp}" >> $GITHUB_ENV
+
+      - name: Update package.json version
+        uses: jossef/action-set-json-field@6e6d7e639f24b3955ef682815317b5613ac6ca12 # v1
+        with:
+          file: ./@stellar/typescript-wallet-sdk/package.json
+          field: version
+          value: ${{ env.new_version }}
+
+      - name: Publish beta build
+        run: |
+          cd @stellar/typescript-wallet-sdk
+          yarn publish --tag beta --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
