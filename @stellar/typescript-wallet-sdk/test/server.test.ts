@@ -68,4 +68,17 @@ describe("Server helpers", () => {
     parsed = Server.parseAnchorTransaction(withdrawJson);
     expect(parsed.kind).toBe("withdrawal");
   });
+  it("should parse moneygram JSON transactions", () => {
+    const d1 = `{"id":"19489958-c0c4-4090-a272-a51fc851f524","kind":"deposit","status":"incomplete","amount_in":"3.00","amount_in_asset":"USD","amount_out":"3.00","amount_out_asset":"USD","amount_fee":"0.00","amount_fee_asset":"USD","started_at":"2024-03-28T16:20:09Z","stellar_transaction_id":"","refunded":false,"from":"","to":""}`;
+    let parsed = Server.parseAnchorTransaction(d1);
+    expect(parsed.kind).toBe("deposit");
+
+    const w1 = `{"withdraw_anchor_account":"GAYF33NNNMI2Z6VNRFXQ64D4E4SF77PM46NW3ZUZEEU5X7FCHAZCMHKU","withdraw_memo":"639496083328800102","withdraw_memo_type":"id","id":"d64c5d56-de6d-492e-95dd-412fb86c1c14","kind":"withdrawal","status":"pending_user_transfer_start","more_info_url":"https://extstellar.moneygram.com/transaction-status?transaction_id\u003dd64c5d56-de6d-492e-95dd-412fb86c1c14\u0026token\u003deyJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJkNjRjNWQ1Ni1kZTZkLTQ5MmUtOTVkZC00MTJmYjg2YzFjMTQiLCJpc3MiOiJtb3JlSW5mb1VybCIsInN1YiI6IkdBWkRVRlIyTDQ3S0hBS1g0V1NVWDNJUFo3NDYyVDVFNzNNQVpIWE9XT0NFQlBBUVlIVDdFNjJGIiwiaWF0IjoxNzExNjQyNzU0LCJleHAiOjE3MTE3MjkxNTQsImNsaWVudF9kb21haW4iOiJhcGktZGV2LnZpYnJhbnRhcHAuY29tIn0.CNjnMzXYA9aSU0ZA9Gd-P5bDWmpnaoAen8SnGz6PlHQ\u0026lang\u003den-US\u0026refNumber\u003d89445520","amount_in":"3.0","amount_in_asset":"USDC","amount_out":"4.02","amount_out_asset":"CAD","amount_fee":"0.0","amount_fee_asset":"USDC","started_at":"2024-03-28T16:18:02Z","stellar_transaction_id":"","external_transaction_id":"89445520","refunded":false,"from":"GAZDUFR2L47KHAKX4WSUX3IPZ7462T5E73MAZHXOWOCEBPAQYHT7E62F","to":"GAYF33NNNMI2Z6VNRFXQ64D4E4SF77PM46NW3ZUZEEU5X7FCHAZCMHKU"}`;
+    parsed = Server.parseAnchorTransaction(w1);
+    expect(parsed.kind).toBe("withdrawal");
+
+    const w2 = `{"id":"d64c5d56-de6d-492e-95dd-412fb86c1c14","kind":"withdrawal","status":"incomplete","amount_in":"0","amount_out":"0","amount_fee":"0","started_at":"2024-03-28T16:18:02Z","stellar_transaction_id":"","refunded":false,"from":"GAZDUFR2L47KHAKX4WSUX3IPZ7462T5E73MAZHXOWOCEBPAQYHT7E62F"}`;
+    parsed = Server.parseAnchorTransaction(w2);
+    expect(parsed.kind).toBe("withdrawal");
+  });
 });

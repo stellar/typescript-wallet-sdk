@@ -1,6 +1,6 @@
 import { RawAxiosRequestHeaders } from "axios";
 import { Networks } from "@stellar/stellar-sdk";
-import { ApplicationConfiguration, StellarConfiguration } from "walletSdk";
+import { ApplicationConfiguration, StellarConfiguration } from "../";
 import { RecoveryServerMap } from "./recovery";
 
 // Export types from root walletSdk/index.ts

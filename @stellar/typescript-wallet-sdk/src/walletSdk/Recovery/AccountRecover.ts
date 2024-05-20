@@ -7,7 +7,7 @@ import {
   RecoveryServerMap,
   RecoveryServerSigning,
   RecoveryServerSigningMap,
-} from "walletSdk/Types";
+} from "../Types";
 import {
   LostSignerKeyNotFound,
   NoDeviceKeyForAccountError,

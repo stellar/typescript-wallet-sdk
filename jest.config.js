@@ -9,12 +9,18 @@ module.exports = {
     {
       displayName: "Wallet SDK",
       roots: ["./@stellar/typescript-wallet-sdk"],
-      testPathIgnorePatterns: ["/node_modules/", "/integration/"],
+      testPathIgnorePatterns: ["/node_modules/", "/integration/", "/e2e/"],
       ...commonConfigs,
     },
     {
       displayName: "Wallet SDK KM",
       roots: ["./@stellar/typescript-wallet-sdk-km"],
+      testPathIgnorePatterns: ["/node_modules/"],
+      ...commonConfigs,
+    },
+    {
+      displayName: "Wallet SDK Soroban",
+      roots: ["./@stellar/typescript-wallet-sdk-soroban"],
       testPathIgnorePatterns: ["/node_modules/"],
       ...commonConfigs,
     },

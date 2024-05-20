@@ -1,5 +1,6 @@
 import { Wallet } from "../../src";
 import { IssuedAssetId } from "../../src/walletSdk/Asset";
+import { DefaultAuthHeaderSigner } from "../../src/walletSdk/Auth/AuthHeaderSigner";
 
 let wallet;
 let stellar;
@@ -20,6 +21,14 @@ describe("Anchor Platform Integration Tests", () => {
   it("SEP-10 auth should work", async () => {
     const auth = await anchor.sep10();
     const authToken = await auth.authenticate({ accountKp });
+    expect(authToken.token).toBeTruthy();
+  });
+
+  it("using DefaultAuthHeaderSigner should work", async () => {
+    const auth = await anchor.sep10();
+
+    const authHeaderSigner = new DefaultAuthHeaderSigner();
+    const authToken = await auth.authenticate({ accountKp, authHeaderSigner });
     expect(authToken.token).toBeTruthy();
   });
 

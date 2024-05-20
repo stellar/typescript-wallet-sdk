@@ -1,7 +1,7 @@
 import { AxiosInstance } from "axios";
 import { Transaction } from "@stellar/stellar-sdk";
 
-import { Config } from "walletSdk";
+import { Config } from "../";
 import {
   AccountSigner,
   AccountThreshold,
@@ -16,7 +16,7 @@ import {
   RecoveryIdentityMap,
   RecoveryServerKey,
   RecoveryServerMap,
-} from "walletSdk/Types";
+} from "../Types";
 import { AccountRecover } from "./AccountRecover";
 import { Sep10 } from "../Auth";
 import {

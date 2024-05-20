@@ -20,6 +20,10 @@ import {
   WalletSigner,
   DefaultSigner,
 } from "../src/walletSdk/Auth/WalletSigner";
+import {
+  DefaultAuthHeaderSigner,
+  DomainAuthHeaderSigner,
+} from "../src/walletSdk/Auth/AuthHeaderSigner";
 import { SigningKeypair } from "../src/walletSdk/Horizon/Account";
 import { Sep24 } from "../src/walletSdk/Anchor/Sep24";
 import { DomainSigner } from "../src/walletSdk/Auth/WalletSigner";
@@ -1878,5 +1882,86 @@ describe("Http client", () => {
       `http://testanchor.stellar.org/auth?account=${accountKp.publicKey()}`,
     );
     expect(resp.data.transaction).toBeTruthy();
+  });
+});
+
+describe("AuthHeaderSigner", () => {
+  beforeAll(() => {
+    jest.resetAllMocks();
+  });
+  it("full sep-10 auth using header token should work", async () => {
+    const wallet = Wallet.TestNet();
+    const accountKp = wallet.stellar().account().createKeypair();
+    wallet.stellar().fundTestnetAccount(accountKp.publicKey);
+
+    const anchor = wallet.anchor({ homeDomain: "testanchor.stellar.org" });
+    const auth = await anchor.sep10();
+
+    const authHeaderSigner = new DefaultAuthHeaderSigner();
+    const authToken = await auth.authenticate({
+      accountKp,
+      authHeaderSigner,
+    });
+
+    expect(authToken).toBeTruthy();
+  }, 15000);
+
+  it("should match example implementation generated JWT", async () => {
+    const generatedAuthToken =
+      "eyJhbGciOiJFZERTQSJ9.eyJpYXQiOjE3MTE2NDg0ODYsImV4cCI6MTcxMTY0OTM4NiwiYWNjb3VudCI6IkdDNlVDWFZUQU1ORzVKTE9NWkJTQ05ZWFZTTk5GSEwyM1NKUFlPT0ZKRTJBVllERFMyRkZUNDVDIiwiY2xpZW50X2RvbWFpbiI6ImV4YW1wbGUtd2FsbGV0LnN0ZWxsYXIub3JnIiwid2ViX2F1dGhfZW5kcG9pbnQiOiJodHRwczovL2V4YW1wbGUuY29tL3NlcDEwL2F1dGgifQ.UQt8FpUK-BlnFw35o8Ke4GDOoCrMe9ztEx4_TGQ06XhMgUbn_b7EMPMVLWJ8RRNgSk2dNhyGUgIbhKzKtWtBBw";
+    const issuer = SigningKeypair.fromSecret(
+      "SCYVDFYEHNDNTB2UER2FCYSZAYQFAAZ6BDYXL3BWRQWNL327GZUXY7D7",
+    );
+
+    const claims = {
+      iat: 1711648486,
+      exp: 1711649386,
+      account: "GC6UCXVTAMNG5JLOMZBSCNYXVSNNFHL23SJPYOOFJE2AVYDDS2FFT45C",
+      client_domain: "example-wallet.stellar.org",
+      web_auth_endpoint: "https://example.com/sep10/auth",
+    };
+
+    const signer = new DefaultAuthHeaderSigner();
+    const token = await signer.createToken({
+      claims,
+      clientDomain: "",
+      issuer,
+    });
+
+    expect(token).toBe(generatedAuthToken);
+  });
+
+  it("DefaultAuthHeaderSigner should work", async () => {
+    const accountKp = SigningKeypair.fromSecret(
+      "SAFXVNFRZQAC66RUZ2IJKMSNQCPXTKXVRX356COUKJJKJXBSLRX43DEZ",
+    );
+
+    const signer = new DefaultAuthHeaderSigner();
+    const token = await signer.createToken({
+      claims: {},
+      clientDomain: "test-domain",
+      issuer: accountKp,
+    });
+    expect(token).toBeTruthy();
+  });
+
+  it("DomainAuthHeaderSigner should work", async () => {
+    const accountKp = SigningKeypair.fromSecret(
+      "SAFXVNFRZQAC66RUZ2IJKMSNQCPXTKXVRX356COUKJJKJXBSLRX43DEZ",
+    );
+
+    const signer = new DomainAuthHeaderSigner("some-url.com");
+
+    const data = { account: "dummy-account" };
+
+    jest.spyOn(signer, "signTokenRemote").mockResolvedValue("success-token");
+
+    const token = await signer.createToken({
+      authTokenData: data,
+      clientDomain: "test-domain",
+      issuer: accountKp,
+    });
+
+    expect(token).toBe("success-token");
   });
 });

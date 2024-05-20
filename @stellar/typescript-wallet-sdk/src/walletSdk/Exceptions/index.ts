@@ -305,3 +305,22 @@ export class InvalidJsonError extends Error {
     Object.setPrototypeOf(this, InvalidJsonError.prototype);
   }
 }
+
+export class AuthHeaderSigningKeypairRequiredError extends Error {
+  constructor() {
+    super("Must be SigningKeypair to sign auth header");
+    Object.setPrototypeOf(
+      this,
+      AuthHeaderSigningKeypairRequiredError.prototype,
+    );
+  }
+}
+
+export class AuthHeaderClientDomainRequiredError extends Error {
+  constructor() {
+    super(
+      "This class should only be used for remote signing. For local signing use DefaultAuthHeaderSigner.",
+    );
+    Object.setPrototypeOf(this, AuthHeaderClientDomainRequiredError.prototype);
+  }
+}

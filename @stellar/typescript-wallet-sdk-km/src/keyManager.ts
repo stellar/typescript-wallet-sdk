@@ -251,6 +251,7 @@ export class KeyManager {
       password,
       authServer,
       authServerKey,
+      challengeToken,
       authServerHomeDomains,
       clientDomain,
       onChallengeTransactionSignature = (tx: Transaction) =>
@@ -302,7 +303,12 @@ export class KeyManager {
       challengeUrl += `&client_domain=${encodeURIComponent(clientDomain)}`;
     }
 
-    const challengeRes = await fetch(challengeUrl);
+    let headers = {};
+    if (challengeToken) {
+      headers = { Authorization: `Bearer ${challengeToken}` };
+    }
+
+    const challengeRes = await fetch(challengeUrl, { headers });
 
     if (challengeRes.status !== 200) {
       const challengeText = await challengeRes.text();

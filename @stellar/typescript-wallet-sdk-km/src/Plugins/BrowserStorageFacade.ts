@@ -3,9 +3,11 @@ import { EncryptedKey } from "../Types";
 export interface BrowserStorageConfigParams {
   prefix?: string;
   storage: {
-    get: (key?: string | string[] | object) => Promise<object>;
+    get: (
+      key?: null | string | string[] | Record<string, unknown>,
+    ) => Promise<Record<string, unknown>>;
     remove: (key: string | string[]) => Promise<void>;
-    set: (items: object) => Promise<object>;
+    set: (items: Record<string, unknown>) => Promise<void>;
   };
 }
 

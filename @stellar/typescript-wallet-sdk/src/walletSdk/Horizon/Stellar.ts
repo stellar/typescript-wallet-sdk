@@ -7,7 +7,7 @@ import {
 } from "@stellar/stellar-sdk";
 import axios from "axios";
 
-import { Config } from "walletSdk";
+import { Config } from "../";
 import { AccountService } from "./AccountService";
 import { TransactionBuilder } from "./Transaction/TransactionBuilder";
 import {
