@@ -45,3 +45,8 @@ Some tests that are not ran as part of that suite (but run during ci/cd):
 
 - [integration tests](./@stellar/typescript-wallet-sdk/test/integration/README.md)
 - [e2e tests](./@stellar/typescript-wallet-sdk/test/e2e/README.md)
+
+## Example code
+
+Example code can be found in the main sdk
+[examples directory](./@stellar/typescript-wallet-sdk/examples)
