@@ -1,7 +1,7 @@
 # Release notes - Typescript Wallet SDK Key Manager - 1.5.0
 
 ### Added
-* Challenge token to parap to auth header
+* Challenge token to param to auth header
 
 ### Fixed
 * Update BrowserStorageConfigParams method types
