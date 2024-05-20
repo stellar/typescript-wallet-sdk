@@ -1,3 +1,10 @@
+# Release notes - Typescript Wallet SDK - 1.5.0
+
+# Added
+* AuthHeaderSigner to Authentication Flow
+* End to end tests for testing browser build 
+* Beta builds on merges to develop branch
+
 # Release notes - Typescript Wallet SDK - 1.4.0
 
 ### Added
