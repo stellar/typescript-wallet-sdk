@@ -14,7 +14,9 @@ Then please
 
 2. Update CHANGELOG.md in submodules that are updated
 3. Commit changes
-4. Trigger a release using Github action for each updated submodule
+4. Trigger an npm publish using Github action for each updated submodule
+5. Add a new release at:
+   https://github.com/stellar/typescript-wallet-sdk/releases
 
 ## Npm Pipelines
 
