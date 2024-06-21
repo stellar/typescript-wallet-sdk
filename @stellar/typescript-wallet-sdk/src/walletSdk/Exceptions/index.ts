@@ -308,6 +308,20 @@ export class InvalidJsonError extends Error {
   }
 }
 
+export class SigningKeypairMissingSecretError extends Error {
+  constructor() {
+    super("This keypair doesn't have a secret key and can't sign");
+    Object.setPrototypeOf(this, SigningKeypairMissingSecretError.prototype);
+  }
+}
+
+export class DefaultSignerDomainAccountError extends Error {
+  constructor() {
+    super("The DefaultSigner can't sign transactions with domain account");
+    Object.setPrototypeOf(this, DefaultSignerDomainAccountError.prototype);
+  }
+}
+
 export class AuthHeaderSigningKeypairRequiredError extends Error {
   constructor() {
     super("Must be SigningKeypair to sign auth header");
