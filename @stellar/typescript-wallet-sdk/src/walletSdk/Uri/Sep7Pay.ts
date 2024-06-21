@@ -26,7 +26,7 @@ export class Sep7Pay extends Sep7Base {
    * Creates a new instance of the Sep7Pay class.
    *
    * @constructor
-   * @param {URL | string} uri - uri to initialize the Sep7 instance.
+   * @param {URL | string} [uri] - uri to initialize the Sep7 instance.
    */
   constructor(uri?: URL | string) {
     super(uri ?? new URL(WEB_STELLAR_PAY_SCHEME));

@@ -341,12 +341,12 @@ export class AuthHeaderClientDomainRequiredError extends Error {
   }
 }
 
-export class InvalidSep7UriError extends Error {
+export class Sep7InvalidUriError extends Error {
   constructor() {
     super(
       `Invalid Stellar Sep-7 URI: it must either start with '${WEB_STELLAR_TX_SCHEME}' and have a 'xdr' param or start with '${WEB_STELLAR_PAY_SCHEME}' and have a 'destination' param`,
     );
-    Object.setPrototypeOf(this, InvalidSep7UriError.prototype);
+    Object.setPrototypeOf(this, Sep7InvalidUriError.prototype);
   }
 }
 

@@ -13,7 +13,7 @@ import {
 } from "../src";
 import { Sep7OperationType } from "../src/walletSdk/Types";
 import {
-  InvalidSep7UriError,
+  Sep7InvalidUriError,
   Sep7LongMsgError,
 } from "../src/walletSdk/Exceptions";
 
@@ -551,7 +551,7 @@ describe("sep7Parser", () => {
       const sep7Uri = parseSep7Uri(uri);
       expect(sep7Uri).toBeUndefined();
     } catch (error) {
-      expect(error).toBeInstanceOf(InvalidSep7UriError);
+      expect(error).toBeInstanceOf(Sep7InvalidUriError);
     }
   });
 
