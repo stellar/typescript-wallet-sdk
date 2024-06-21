@@ -1,4 +1,6 @@
 import { Anchor } from "../Anchor";
+import { Sep6 } from "../Anchor/Sep6";
+import { Sep24 } from "../Anchor/Sep24";
 import {
   AnchorTransaction,
   TransactionStatus,
@@ -329,7 +331,7 @@ export class Watcher {
       };
     }
 
-    let sepObj;
+    let sepObj: Sep6 | Sep24;
     switch (this.sepType) {
       case WatcherSepType.SEP6:
         sepObj = this.anchor.sep6();

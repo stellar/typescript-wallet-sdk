@@ -17,10 +17,10 @@ import {
  * @class
  */
 export class Sep12 {
-  private authToken;
-  private baseUrl;
-  private httpClient;
-  private headers;
+  private authToken: AuthToken;
+  private baseUrl: string;
+  private httpClient: AxiosInstance;
+  private headers: { [key: string]: string };
 
   /**
    * Creates a new instance of the Sep12 class.
