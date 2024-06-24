@@ -35,18 +35,18 @@ describe("Customer", () => {
         type: customerType,
       },
     });
-    expect(resp.data.id).toBeTruthy();
-    const { id } = resp.data;
+    expect(resp.id).toBeTruthy();
+    const { id } = resp;
 
     // Get
     resp = await sep12.getCustomer({ id, type: customerType });
-    expect(Object.keys(resp.data).sort()).toEqual(
+    expect(Object.keys(resp).sort()).toEqual(
       ["id", "provided_fields", "fields", "status"].sort(),
     );
-    expect(Object.keys(resp.data?.provided_fields).sort()).toEqual(
+    expect(Object.keys(resp?.provided_fields).sort()).toEqual(
       ["first_name", "last_name", "email_address"].sort(),
     );
-    expect(Object.keys(resp.data?.fields).sort()).toEqual(
+    expect(Object.keys(resp?.fields).sort()).toEqual(
       [
         "bank_account_number",
         "bank_number",
@@ -70,11 +70,11 @@ describe("Customer", () => {
       },
       id,
     });
-    expect(resp.data.id).toBeTruthy();
+    expect(resp.id).toBeTruthy();
 
     // Get again, check that the provided fields updated
     resp = await sep12.getCustomer({ id, type: customerType });
-    expect(Object.keys(resp.data.fields).length).toBe(0);
+    expect(Object.keys(resp.fields).length).toBe(0);
 
     // Delete
     await sep12.delete();

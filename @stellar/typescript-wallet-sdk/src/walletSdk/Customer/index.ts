@@ -64,7 +64,7 @@ export class Sep12 {
     if (!resp.data.id) {
       throw new CustomerNotFoundError(params);
     }
-    return resp;
+    return resp.data;
   }
 
   /**
@@ -104,7 +104,7 @@ export class Sep12 {
           : this.headers,
       },
     );
-    return resp;
+    return resp.data;
   }
 
   /**
@@ -154,7 +154,7 @@ export class Sep12 {
           : this.headers,
       },
     );
-    return resp;
+    return resp.data;
   }
 
   /**
