@@ -60,7 +60,7 @@ describe("Anchor Platform Integration Tests", () => {
         bank_account_number: "12345",
       },
     });
-    expect(sep12Resp.data.id).toBeTruthy();
+    expect(sep12Resp.id).toBeTruthy();
 
     // SEP-6 deposit
     const sep6 = anchor.sep6();
