@@ -25,6 +25,18 @@ const testKp2 = SigningKeypair.fromSecret(
   "SBIK5MF5QONDTKA5ZPXLI2XTBIAOWQEEOZ3TM76XVBPPJ2EEUUXTCIVZ",
 );
 
+const xdrs = {
+  classic: encodeURIComponent(
+    "AAAAAgAAAACCMXQVfkjpO2gAJQzKsUsPfdBCyfrvy7sr8+35cOxOSwAAAGQABqQMAAAAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAACCMXQVfkjpO2gAJQzKsUsPfdBCyfrvy7sr8+35cOxOSwAAAAAAmJaAAAAAAAAAAAFw7E5LAAAAQBu4V+/lttEONNM6KFwdSf5TEEogyEBy0jTOHJKuUzKScpLHyvDJGY+xH9Ri4cIuA7AaB8aL+VdlucCfsNYpKAY=",
+  ),
+  sorobanTransfer: encodeURIComponent(
+    "AAAAAgAAAACM6IR9GHiRoVVAO78JJNksy2fKDQNs2jBn8bacsRLcrDucaFsAAAWIAAAAMQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAGAAAAAAAAAABHkEVdJ+UfDnWpBr/qF582IEoDQ0iW0WPzO9CEUdvvh8AAAAIdHJhbnNmZXIAAAADAAAAEgAAAAAAAAAAjOiEfRh4kaFVQDu/CSTZLMtnyg0DbNowZ/G2nLES3KwAAAASAAAAAAAAAADoFl2ACT9HZkbCeuaT9MAIdStpdf58wM3P24nl738AnQAAAAoAAAAAAAAAAAAAAAAAAAAFAAAAAQAAAAAAAAAAAAAAAR5BFXSflHw51qQa/6hefNiBKA0NIltFj8zvQhFHb74fAAAACHRyYW5zZmVyAAAAAwAAABIAAAAAAAAAAIzohH0YeJGhVUA7vwkk2SzLZ8oNA2zaMGfxtpyxEtysAAAAEgAAAAAAAAAA6BZdgAk/R2ZGwnrmk/TACHUraXX+fMDNz9uJ5e9/AJ0AAAAKAAAAAAAAAAAAAAAAAAAABQAAAAAAAAABAAAAAAAAAAIAAAAGAAAAAR5BFXSflHw51qQa/6hefNiBKA0NIltFj8zvQhFHb74fAAAAFAAAAAEAAAAHa35L+/RxV6EuJOVk78H5rCN+eubXBWtsKrRxeLnnpRAAAAACAAAABgAAAAEeQRV0n5R8OdakGv+oXnzYgSgNDSJbRY/M70IRR2++HwAAABAAAAABAAAAAgAAAA8AAAAHQmFsYW5jZQAAAAASAAAAAAAAAACM6IR9GHiRoVVAO78JJNksy2fKDQNs2jBn8bacsRLcrAAAAAEAAAAGAAAAAR5BFXSflHw51qQa/6hefNiBKA0NIltFj8zvQhFHb74fAAAAEAAAAAEAAAACAAAADwAAAAdCYWxhbmNlAAAAABIAAAAAAAAAAOgWXYAJP0dmRsJ65pP0wAh1K2l1/nzAzc/bieXvfwCdAAAAAQBkcwsAACBwAAABKAAAAAAAAB1kAAAAAA==",
+  ),
+  sorobanMint: encodeURIComponent(
+    "AAAAAgAAAACM6IR9GHiRoVVAO78JJNksy2fKDQNs2jBn8bacsRLcrDucQIQAAAWIAAAAMQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAGAAAAAAAAAABHkEVdJ+UfDnWpBr/qF582IEoDQ0iW0WPzO9CEUdvvh8AAAAEbWludAAAAAIAAAASAAAAAAAAAADoFl2ACT9HZkbCeuaT9MAIdStpdf58wM3P24nl738AnQAAAAoAAAAAAAAAAAAAAAAAAAAFAAAAAQAAAAAAAAAAAAAAAR5BFXSflHw51qQa/6hefNiBKA0NIltFj8zvQhFHb74fAAAABG1pbnQAAAACAAAAEgAAAAAAAAAA6BZdgAk/R2ZGwnrmk/TACHUraXX+fMDNz9uJ5e9/AJ0AAAAKAAAAAAAAAAAAAAAAAAAABQAAAAAAAAABAAAAAAAAAAIAAAAGAAAAAR5BFXSflHw51qQa/6hefNiBKA0NIltFj8zvQhFHb74fAAAAFAAAAAEAAAAHa35L+/RxV6EuJOVk78H5rCN+eubXBWtsKrRxeLnnpRAAAAABAAAABgAAAAEeQRV0n5R8OdakGv+oXnzYgSgNDSJbRY/M70IRR2++HwAAABAAAAABAAAAAgAAAA8AAAAHQmFsYW5jZQAAAAASAAAAAAAAAADoFl2ACT9HZkbCeuaT9MAIdStpdf58wM3P24nl738AnQAAAAEAYpBIAAAfrAAAAJQAAAAAAAAdYwAAAAA=",
+  ),
+};
+
 let wal: Wallet;
 let stellar: Stellar;
 
@@ -515,22 +527,39 @@ describe("Sep7Pay", () => {
 });
 
 describe("sep7Parser", () => {
-  it("isValidSep7Uri(uri) returns true when it starts with 'web+stellar:tx?xdr='", () => {
+  it("isValidSep7Uri(uri) returns true when it starts with 'web+stellar:tx?xdr=<valid-xdr-envelope>'", () => {
     expect(
       isValidSep7Uri(
         "web+stellar:tx?xdr=AAAAAP%2Byw%2BZEuNg533pUmwlYxfrq6%2FBoMJqiJ8vuQhf6rHWmAAAAZAB8NHAAAAABAAAAAAAAAAAAAAABAAAAAAAAAAYAAAABSFVHAAAAAABAH0wIyY3BJBS2qHdRPAV80M8hF7NBpxRjXyjuT9kEbH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FAAAAAAAAAAA%3D&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fa8f7asdfkjha&pubkey=GAU2ZSYYEYO5S5ZQSMMUENJ2TANY4FPXYGGIMU6GMGKTNVDG5QYFW6JS&msg=order%20number%2024",
       ).result,
     ).toBe(true);
+
     expect(
       isValidSep7Uri(
         "web+stellar:tx?xdr=AAAAAP%2Byw%2BZEuNg533pUmwlYxfrq6%2FBoMJqiJ8vuQhf6rHWmAAAAZAB8NHAAAAABAAAAAAAAAAAAAAABAAAAAAAAAAYAAAABSFVHAAAAAABAH0wIyY3BJBS2qHdRPAV80M8hF7NBpxRjXyjuT9kEbH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FAAAAAAAAAAA%3D&replace=sourceAccount%3AX%3BX%3Aaccount%20on%20which%20to%20create%20the%20trustline",
       ).result,
     ).toBe(true);
-    expect(isValidSep7Uri("web+stellar:tx").result).toBe(false);
-    expect(isValidSep7Uri("web+stellar:").result).toBe(false);
+
+    expect(
+      isValidSep7Uri(
+        `web+stellar:tx?xdr=${xdrs.classic}&replace=sourceAccount%3AX%3BX%3Aaccount%20on%20which%20to%20create%20the%20trustline`,
+      ).result,
+    ).toBe(true);
+
+    expect(
+      isValidSep7Uri(
+        `web+stellar:tx?xdr=${xdrs.sorobanTransfer}&replace=sourceAccount%3AX%3BX%3Aaccount%20on%20which%20to%20create%20the%20trustline`,
+      ).result,
+    ).toBe(true);
+
+    expect(
+      isValidSep7Uri(
+        `web+stellar:tx?xdr=${xdrs.sorobanMint}&replace=sourceAccount%3AX%3BX%3Aaccount%20on%20which%20to%20create%20the%20trustline`,
+      ).result,
+    ).toBe(true);
   });
 
-  it("isValidSep7Uri(uri) returns true when it starts with 'web+stellar:pay?destination='", () => {
+  it("isValidSep7Uri(uri) returns true when it starts with 'web+stellar:pay?destination=<valid-stellar-address>'", () => {
     expect(
       isValidSep7Uri(
         "web+stellar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.1234567&memo=skdjfasf&memo_type=MEMO_TEXT&msg=pay%20me%20with%20lumens",
@@ -541,41 +570,101 @@ describe("sep7Parser", () => {
         "web+stellar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.123&asset_code=USD&asset_issuer=GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB&memo=hasysda987fs&memo_type=MEMO_TEXT&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fhasysda987fs%3Fasset%3DUSD",
       ).result,
     ).toBe(true);
-    expect(isValidSep7Uri("web+stellar:pay").result).toBe(false);
-    expect(isValidSep7Uri("web+stellar:").result).toBe(false);
+
+    // With Muxed destination
+    expect(
+      isValidSep7Uri(
+        "web+stellar:pay?destination=MA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAAAAAABUTGI4&amount=120.1234567&memo=skdjfasf&memo_type=MEMO_TEXT&msg=pay%20me%20with%20lumens",
+      ).result,
+    ).toBe(true);
+
+    // With Soroban Contract destination
+    // TODO: add support for this once "@stellar/stellar-sdk"
+    // package is updated to version >= "v12.0.1".
+    // expect(
+    //   isValidSep7Uri(
+    //     "web+stellar:pay?destination=CAPECFLUT6KHYOOWUQNP7KC6PTMICKANBURFWRMPZTXUEEKHN67B7UI2&amount=120.1234567&memo=skdjfasf&memo_type=MEMO_TEXT&msg=pay%20me%20with%20lumens",
+    //   ).result,
+    // ).toBe(true);
   });
 
-  it("isValidSep7Uri(uri) returns false when it does not start with 'web+stellar:'", () => {
-    expect(
-      isValidSep7Uri(
-        "not-a-stellar-uri:tx?xdr=AAAAAP%2Byw%2BZEuNg533pUmwlYxfrq6%2FBoMJqiJ8vuQhf6rHWmAAAAZAB8NHAAAAABAAAAAAAAAAAAAAABAAAAAAAAAAYAAAABSFVHAAAAAABAH0wIyY3BJBS2qHdRPAV80M8hF7NBpxRjXyjuT9kEbH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FAAAAAAAAAAA%3D&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fa8f7asdfkjha&pubkey=GAU2ZSYYEYO5S5ZQSMMUENJ2TANY4FPXYGGIMU6GMGKTNVDG5QYFW6JS&msg=order%20number%2024",
-      ).result,
-    ).toBe(false);
-    expect(
-      isValidSep7Uri(
-        "aaa+stellar:tx?xdr=AAAAAP%2Byw%2BZEuNg533pUmwlYxfrq6%2FBoMJqiJ8vuQhf6rHWmAAAAZAB8NHAAAAABAAAAAAAAAAAAAAABAAAAAAAAAAYAAAABSFVHAAAAAABAH0wIyY3BJBS2qHdRPAV80M8hF7NBpxRjXyjuT9kEbH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FAAAAAAAAAAA%3D&replace=sourceAccount%3AX%3BX%3Aaccount%20on%20which%20to%20create%20the%20trustline",
-      ).result,
-    ).toBe(false);
-    expect(
-      isValidSep7Uri(
-        "web+steIIar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.1234567&memo=skdjfasf&memo_type=MEMO_TEXT&msg=pay%20me%20with%20lumens",
-      ).result,
-    ).toBe(false);
-    expect(
-      isValidSep7Uri(
-        "web+stellarr:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.123&asset_code=USD&asset_issuer=GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB&memo=hasysda987fs&memo_type=MEMO_TEXT&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fhasysda987fs%3Fasset%3DUSD",
-      ).result,
-    ).toBe(false);
-
-    expect(isValidSep7Uri("not-a-stellar-uri:tx?xdr=").result).toBe(false);
-    expect(isValidSep7Uri("not-a-stellar-uri:pay?destination=").result).toBe(
-      false,
+  it("isValidSep7Uri(uri) returns 'false' with 'reason' when it is not valid in some way", () => {
+    const validation1 = isValidSep7Uri(
+      "not-a-stellar-uri:tx?xdr=AAAAAP%2Byw%2BZEuNg533pUmwlYxfrq6%2FBoMJqiJ8vuQhf6rHWmAAAAZAB8NHAAAAABAAAAAAAAAAAAAAABAAAAAAAAAAYAAAABSFVHAAAAAABAH0wIyY3BJBS2qHdRPAV80M8hF7NBpxRjXyjuT9kEbH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FAAAAAAAAAAA%3D&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fa8f7asdfkjha&pubkey=GAU2ZSYYEYO5S5ZQSMMUENJ2TANY4FPXYGGIMU6GMGKTNVDG5QYFW6JS&msg=order%20number%2024",
     );
-    expect(isValidSep7Uri("aaa+stellar:tx?xdr=").result).toBe(false);
-    expect(isValidSep7Uri("web+steIIar:pay?destination=").result).toBe(false);
+    expect(validation1.result).toBe(false);
+    expect(validation1.reason).toBe("it must start with 'web+stellar:'");
+
+    const validation2 = isValidSep7Uri(
+      "web+steIIar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.1234567&memo=skdjfasf&memo_type=MEMO_TEXT&msg=pay%20me%20with%20lumens",
+    );
+    expect(validation2.result).toBe(false);
+    expect(validation2.reason).toBe("it must start with 'web+stellar:'");
+
+    const validation3 = isValidSep7Uri(
+      "web-stellar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.1234567&memo=skdjfasf&memo_type=MEMO_TEXT&msg=pay%20me%20with%20lumens",
+    );
+    expect(validation3.result).toBe(false);
+    expect(validation3.reason).toBe("it must start with 'web+stellar:'");
+
+    const validation4 = isValidSep7Uri(
+      "web+stellar:send?xdr=AAAAAP%2Byw%2BZEuNg533pUmwlYxfrq6%2FBoMJqiJ8vuQhf6rHWmAAAAZAB8NHAAAAABAAAAAAAAAAAAAAABAAAAAAAAAAYAAAABSFVHAAAAAABAH0wIyY3BJBS2qHdRPAV80M8hF7NBpxRjXyjuT9kEbH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FAAAAAAAAAAA%3D&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fa8f7asdfkjha&pubkey=GAU2ZSYYEYO5S5ZQSMMUENJ2TANY4FPXYGGIMU6GMGKTNVDG5QYFW6JS&msg=order%20number%2024",
+    );
+    expect(validation4.result).toBe(false);
+    expect(validation4.reason).toBe(
+      "operation type 'send' is not currently supported",
+    );
+
+    const validation5 = isValidSep7Uri(
+      "web+stellar:pay?xdr=AAAAAP%2Byw%2BZEuNg533pUmwlYxfrq6%2FBoMJqiJ8vuQhf6rHWmAAAAZAB8NHAAAAABAAAAAAAAAAAAAAABAAAAAAAAAAYAAAABSFVHAAAAAABAH0wIyY3BJBS2qHdRPAV80M8hF7NBpxRjXyjuT9kEbH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FAAAAAAAAAAA%3D&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fa8f7asdfkjha&pubkey=GAU2ZSYYEYO5S5ZQSMMUENJ2TANY4FPXYGGIMU6GMGKTNVDG5QYFW6JS&msg=order%20number%2024",
+    );
+    expect(validation5.result).toBe(false);
+    expect(validation5.reason).toBe(
+      "operation type 'pay' must have a 'destination' parameter",
+    );
+
+    const validation6 = isValidSep7Uri(
+      "web+stellar:tx?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.1234567&memo=skdjfasf&memo_type=MEMO_TEXT&msg=pay%20me%20with%20lumens",
+    );
+    expect(validation6.result).toBe(false);
+    expect(validation6.reason).toBe(
+      "operation type 'tx' must have a 'xdr' parameter",
+    );
+
+    const validation7 = isValidSep7Uri(
+      "web+stellar:tx?xdr=AAAAAP%2Byw%2BZEuNg533pUmwlYxfrq6%2FBoMJqiAAAAAAAAYAAAABSFVHAAAAAABAH0wIyY3BJBS2qHdRPAV80M8hF7NBpxRjXyjuT9kEbH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FAAAAAAAAAAA%3D&replace=sourceAccount%3AX%3BX%3Aaccount%20on%20which%20to%20create%20the%20trustline",
+    );
+    expect(validation7.result).toBe(false);
+    expect(validation7.reason).toBe(
+      "the provided 'xdr' parameter is not a valid transaction envelope on the 'Public Global Stellar Network ; September 2015' network",
+    );
+
+    const validation8 = isValidSep7Uri(
+      `web+stellar:tx?network_passphrase=${Networks.TESTNET}&xdr=AAAAAP%2Byw%2BZEuNg533pUmwlYxfrq6%2FBoMJqiAAAAAAAAYAAAABSFVHAAAAAABAH0wIyY3BJBS2qHdRPAV80M8hF7NBpxRjXyjuT9kEbH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FAAAAAAAAAAA%3D&replace=sourceAccount%3AX%3BX%3Aaccount%20on%20which%20to%20create%20the%20trustline`,
+    );
+    expect(validation8.result).toBe(false);
+    expect(validation8.reason).toBe(
+      "the provided 'xdr' parameter is not a valid transaction envelope on the 'Test SDF Network ; September 2015' network",
+    );
+
+    const validation9 = isValidSep7Uri(
+      "web+stellar:pay?destination=GCALNQQBXAPZ2WIRSDDBMST6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.123&asset_code=USD&asset_issuer=GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB&memo=hasysda987fs&memo_type=MEMO_TEXT&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fhasysda987fs%3Fasset%3DUSD",
+    );
+    expect(validation9.result).toBe(false);
+    expect(validation9.reason).toBe(
+      "the provided 'destination' parameter is not a valid Stellar address",
+    );
+
+    const validation10 = isValidSep7Uri(
+      `web+stellar:tx?xdr=${xdrs.classic}&msg=long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20message&replace=sourceAccount%3AX%3BX%3Aaccount%20on%20which%20to%20create%20the%20trustline`,
+    );
+    expect(validation10.result).toBe(false);
+    expect(validation10.reason).toBe(
+      "the 'msg' parameter should be no longer than 300 characters",
+    );
   });
 
-  it("parseSep7Uri(uri) parses a 'tx' operation uri", () => {
+  it("parseSep7Uri(uri) parses a valid 'tx' operation uri", () => {
     expect(
       parseSep7Uri(
         "web+stellar:tx?xdr=AAAAAP%2Byw%2BZEuNg533pUmwlYxfrq6%2FBoMJqiJ8vuQhf6rHWmAAAAZAB8NHAAAAABAAAAAAAAAAAAAAABAAAAAAAAAAYAAAABSFVHAAAAAABAH0wIyY3BJBS2qHdRPAV80M8hF7NBpxRjXyjuT9kEbH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FAAAAAAAAAAA%3D&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fa8f7asdfkjha&pubkey=GAU2ZSYYEYO5S5ZQSMMUENJ2TANY4FPXYGGIMU6GMGKTNVDG5QYFW6JS&msg=order%20number%2024",
@@ -586,9 +675,24 @@ describe("sep7Parser", () => {
         "web+stellar:tx?xdr=AAAAAP%2Byw%2BZEuNg533pUmwlYxfrq6%2FBoMJqiJ8vuQhf6rHWmAAAAZAB8NHAAAAABAAAAAAAAAAAAAAABAAAAAAAAAAYAAAABSFVHAAAAAABAH0wIyY3BJBS2qHdRPAV80M8hF7NBpxRjXyjuT9kEbH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FAAAAAAAAAAA%3D&replace=sourceAccount%3AX%3BX%3Aaccount%20on%20which%20to%20create%20the%20trustline",
       ),
     ).toBeInstanceOf(Sep7Tx);
+    expect(
+      parseSep7Uri(
+        `web+stellar:tx?xdr=${xdrs.classic}&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fa8f7asdfkjha&pubkey=GAU2ZSYYEYO5S5ZQSMMUENJ2TANY4FPXYGGIMU6GMGKTNVDG5QYFW6JS&msg=order%20number%2024`,
+      ),
+    ).toBeInstanceOf(Sep7Tx);
+    expect(
+      parseSep7Uri(
+        `web+stellar:tx?xdr=${xdrs.sorobanMint}&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fa8f7asdfkjha&pubkey=GAU2ZSYYEYO5S5ZQSMMUENJ2TANY4FPXYGGIMU6GMGKTNVDG5QYFW6JS&msg=order%20number%2024`,
+      ),
+    ).toBeInstanceOf(Sep7Tx);
+    expect(
+      parseSep7Uri(
+        `web+stellar:tx?xdr=${xdrs.sorobanTransfer}&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fa8f7asdfkjha&pubkey=GAU2ZSYYEYO5S5ZQSMMUENJ2TANY4FPXYGGIMU6GMGKTNVDG5QYFW6JS&msg=order%20number%2024`,
+      ),
+    ).toBeInstanceOf(Sep7Tx);
   });
 
-  it("parseSep7Uri(uri) parses a 'pay' operation uri", () => {
+  it("parseSep7Uri(uri) parses a valid 'pay' operation uri", () => {
     expect(
       parseSep7Uri(
         "web+stellar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.1234567&memo=skdjfasf&memo_type=MEMO_TEXT&msg=pay%20me%20with%20lumens",
@@ -599,16 +703,78 @@ describe("sep7Parser", () => {
         "web+stellar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.123&asset_code=USD&asset_issuer=GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB&memo=hasysda987fs&memo_type=MEMO_TEXT&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fhasysda987fs%3Fasset%3DUSD",
       ),
     ).toBeInstanceOf(Sep7Pay);
+
+    // With Muxed destination
+    expect(
+      parseSep7Uri(
+        "web+stellar:pay?destination=MA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAAAAAABUTGI4&amount=120.123&asset_code=USD&asset_issuer=GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB&memo=hasysda987fs&memo_type=MEMO_TEXT&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fhasysda987fs%3Fasset%3DUSD",
+      ),
+    ).toBeInstanceOf(Sep7Pay);
+
+    // With Soroban Contract destination
+    // TODO: add support for this once "@stellar/stellar-sdk"
+    // package is updated to version >= "v12.0.1".
+    // expect(
+    //   parseSep7Uri(
+    //     "web+stellar:pay?destination=CAPECFLUT6KHYOOWUQNP7KC6PTMICKANBURFWRMPZTXUEEKHN67B7UI2&amount=120.123&asset_code=USD&asset_issuer=GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB&memo=hasysda987fs&memo_type=MEMO_TEXT&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fhasysda987fs%3Fasset%3DUSD",
+    //   ),
+    // ).toBeInstanceOf(Sep7Pay);
   });
 
-  it("parseSep7Uri(uri) throws an error when it is not a valid stellar uri", () => {
-    const uri = "not-a-stellar-uri:tx";
-
+  it("parseSep7Uri(uri) throws an error when it is not a valid Stellar uri in some way", () => {
     try {
-      const sep7Uri = parseSep7Uri(uri);
-      expect(sep7Uri).toBeUndefined();
+      parseSep7Uri(
+        "not-a-stellar-uri:tx?xdr=AAAAAP%2Byw%2BZEuNg533pUmwlYxfrq6%2FBoMJqiJ8vuQhf6rHWmAAAAZAB8NHAAAAABAAAAAAAAAAAAAAABAAAAAAAAAAYAAAABSFVHAAAAAABAH0wIyY3BJBS2qHdRPAV80M8hF7NBpxRjXyjuT9kEbH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FAAAAAAAAAAA%3D&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fa8f7asdfkjha&pubkey=GAU2ZSYYEYO5S5ZQSMMUENJ2TANY4FPXYGGIMU6GMGKTNVDG5QYFW6JS&msg=order%20number%2024",
+      );
     } catch (error) {
       expect(error).toBeInstanceOf(Sep7InvalidUriError);
+      expect(error.toString()).toContain(
+        "Invalid Stellar Sep-7 URI, reason: it must start with 'web+stellar:'",
+      );
+    }
+
+    try {
+      parseSep7Uri(
+        "web+stellar:send?xdr=AAAAAP%2Byw%2BZEuNg533pUmwlYxfrq6%2FBoMJqiJ8vuQhf6rHWmAAAAZAB8NHAAAAABAAAAAAAAAAAAAAABAAAAAAAAAAYAAAABSFVHAAAAAABAH0wIyY3BJBS2qHdRPAV80M8hF7NBpxRjXyjuT9kEbH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FAAAAAAAAAAA%3D&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fa8f7asdfkjha&pubkey=GAU2ZSYYEYO5S5ZQSMMUENJ2TANY4FPXYGGIMU6GMGKTNVDG5QYFW6JS&msg=order%20number%2024",
+      );
+    } catch (error) {
+      expect(error).toBeInstanceOf(Sep7InvalidUriError);
+      expect(error.toString()).toContain(
+        "Invalid Stellar Sep-7 URI, reason: operation type 'send' is not currently supported",
+      );
+    }
+
+    try {
+      parseSep7Uri(
+        "web+stellar:tx?xdr=AAAAAP%2Byw%2BZEuNg533pUmwlYxfrq6%2FBoMJqiAAAAAAAAYAAAABSFVHAAAAAABAH0wIyY3BJBS2qHdRPAV80M8hF7NBpxRjXyjuT9kEbH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FAAAAAAAAAAA%3D&replace=sourceAccount%3AX%3BX%3Aaccount%20on%20which%20to%20create%20the%20trustline",
+      );
+    } catch (error) {
+      expect(error).toBeInstanceOf(Sep7InvalidUriError);
+      expect(error.toString()).toContain(
+        "Invalid Stellar Sep-7 URI, reason: the provided 'xdr' parameter is not a valid transaction envelope on the 'Public Global Stellar Network ; September 2015' network",
+      );
+    }
+
+    try {
+      parseSep7Uri(
+        "web+stellar:pay?destination=GCALNQQBXAPZ2WIRSDDBMST6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.123&asset_code=USD&asset_issuer=GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB&memo=hasysda987fs&memo_type=MEMO_TEXT&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fhasysda987fs%3Fasset%3DUSD",
+      );
+    } catch (error) {
+      expect(error).toBeInstanceOf(Sep7InvalidUriError);
+      expect(error.toString()).toContain(
+        "Invalid Stellar Sep-7 URI, reason: the provided 'destination' parameter is not a valid Stellar address",
+      );
+    }
+
+    try {
+      parseSep7Uri(
+        `web+stellar:tx?xdr=${xdrs.classic}&msg=long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20long%20message&replace=sourceAccount%3AX%3BX%3Aaccount%20on%20which%20to%20create%20the%20trustline`,
+      );
+    } catch (error) {
+      expect(error).toBeInstanceOf(Sep7InvalidUriError);
+      expect(error.toString()).toContain(
+        "Invalid Stellar Sep-7 URI, reason: the 'msg' parameter should be no longer than 300 characters",
+      );
     }
   });
 

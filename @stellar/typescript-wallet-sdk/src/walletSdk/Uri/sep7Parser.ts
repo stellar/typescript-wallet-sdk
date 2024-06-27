@@ -86,7 +86,8 @@ export const isValidSep7Uri = (uri: string): IsValidSep7UriResult => {
     if (!isValidStellarAddress) {
       return {
         result: false,
-        reason: `the provided 'destination' parameter is not a valid Stellar address`,
+        reason:
+          "the provided 'destination' parameter is not a valid Stellar address",
       };
     }
   }
