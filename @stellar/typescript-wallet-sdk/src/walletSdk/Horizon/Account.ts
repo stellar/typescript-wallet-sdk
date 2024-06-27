@@ -1,4 +1,5 @@
 import { Keypair, Transaction, FeeBumpTransaction } from "@stellar/stellar-sdk";
+import { SigningKeypairMissingSecretError } from "../Exceptions";
 
 export class AccountKeypair {
   keypair: Keypair;
@@ -28,7 +29,7 @@ export class PublicKeypair extends AccountKeypair {
 export class SigningKeypair extends AccountKeypair {
   constructor(keypair: Keypair) {
     if (!keypair.canSign()) {
-      throw new Error("This keypair doesn't have a secret key and can't sign");
+      throw new SigningKeypairMissingSecretError();
     }
     super(keypair);
   }

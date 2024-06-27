@@ -306,6 +306,20 @@ export class InvalidJsonError extends Error {
   }
 }
 
+export class SigningKeypairMissingSecretError extends Error {
+  constructor() {
+    super("This keypair doesn't have a secret key and can't sign");
+    Object.setPrototypeOf(this, SigningKeypairMissingSecretError.prototype);
+  }
+}
+
+export class DefaultSignerDomainAccountError extends Error {
+  constructor() {
+    super("The DefaultSigner can't sign transactions with domain account");
+    Object.setPrototypeOf(this, DefaultSignerDomainAccountError.prototype);
+  }
+}
+
 export class AuthHeaderSigningKeypairRequiredError extends Error {
   constructor() {
     super("Must be SigningKeypair to sign auth header");
@@ -319,8 +333,31 @@ export class AuthHeaderSigningKeypairRequiredError extends Error {
 export class AuthHeaderClientDomainRequiredError extends Error {
   constructor() {
     super(
-      "This class should only be used for remote signing. For local signing use DefaultAuthHeaderSigner.",
+      "This class should only be used for remote signing. For local signing use DefaultAuthHeaderSigner",
     );
     Object.setPrototypeOf(this, AuthHeaderClientDomainRequiredError.prototype);
+  }
+}
+
+export class Sep7InvalidUriError extends Error {
+  constructor(reason: string) {
+    super(`Invalid Stellar Sep-7 URI, reason: ${reason}`);
+    Object.setPrototypeOf(this, Sep7InvalidUriError.prototype);
+  }
+}
+
+export class Sep7LongMsgError extends Error {
+  constructor(msgMaxLength: number) {
+    super(`'msg' should be no longer than ${msgMaxLength} characters`);
+    Object.setPrototypeOf(this, Sep7LongMsgError.prototype);
+  }
+}
+
+export class Sep7UriTypeNotSupportedError extends Error {
+  constructor(type: string) {
+    super(
+      `Stellar Sep-7 URI operation type '${type}' is not currently supported`,
+    );
+    Object.setPrototypeOf(this, Sep7UriTypeNotSupportedError.prototype);
   }
 }

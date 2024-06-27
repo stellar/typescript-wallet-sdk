@@ -10,6 +10,7 @@ import {
   HttpHeaders,
 } from "../Types";
 import { DefaultClient } from "../";
+import { DefaultSignerDomainAccountError } from "../Exceptions";
 
 /**
  * A Wallet Signer for signing Stellar transactions.
@@ -51,9 +52,8 @@ export const DefaultSigner: WalletSigner = {
   },
   // eslint-disable-next-line @typescript-eslint/require-await
   signWithDomainAccount: async () => {
-    throw new Error(
-      "The DefaultSigner can't sign transactions with domain account",
-    );
+    // The DefaultSigner can't sign transactions with domain account
+    throw new DefaultSignerDomainAccountError();
   },
 };
 

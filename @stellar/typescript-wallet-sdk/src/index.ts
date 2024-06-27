@@ -33,6 +33,15 @@ export {
   SponsoringBuilder,
 } from "./walletSdk/Horizon";
 export { Recovery } from "./walletSdk/Recovery";
+export {
+  Sep7Base,
+  Sep7Pay,
+  Sep7Tx,
+  isValidSep7Uri,
+  parseSep7Uri,
+  sep7ReplacementsFromString,
+  sep7ReplacementsToString,
+} from "./walletSdk/Uri";
 export { Watcher } from "./walletSdk/Watcher";
 
 /**
