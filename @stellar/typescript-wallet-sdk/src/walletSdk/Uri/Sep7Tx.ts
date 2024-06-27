@@ -4,7 +4,11 @@ import {
   sep7ReplacementsFromString,
   sep7ReplacementsToString,
 } from "../Uri";
-import { Sep7Replacement, WEB_STELLAR_TX_SCHEME } from "../Types";
+import {
+  Sep7OperationType,
+  Sep7Replacement,
+  WEB_STELLAR_SCHEME,
+} from "../Types";
 
 /**
  * The Sep-7 'tx' operation represents a request to sign
@@ -38,7 +42,7 @@ export class Sep7Tx extends Sep7Base {
    * @param {URL | string} [uri] - uri to initialize the Sep7 instance.
    */
   constructor(uri?: URL | string) {
-    super(uri ?? new URL(WEB_STELLAR_TX_SCHEME));
+    super(uri ?? new URL(`${WEB_STELLAR_SCHEME}${Sep7OperationType.tx}`));
   }
 
   /**

@@ -5,8 +5,6 @@ import {
   FLOW_TYPE,
   AxiosErrorData,
   GetCustomerParams,
-  WEB_STELLAR_TX_SCHEME,
-  WEB_STELLAR_PAY_SCHEME,
 } from "../Types";
 import { extractAxiosErrorData } from "../Utils";
 
@@ -335,31 +333,31 @@ export class AuthHeaderSigningKeypairRequiredError extends Error {
 export class AuthHeaderClientDomainRequiredError extends Error {
   constructor() {
     super(
-      "This class should only be used for remote signing. For local signing use DefaultAuthHeaderSigner.",
+      "This class should only be used for remote signing. For local signing use DefaultAuthHeaderSigner",
     );
     Object.setPrototypeOf(this, AuthHeaderClientDomainRequiredError.prototype);
   }
 }
 
 export class Sep7InvalidUriError extends Error {
-  constructor() {
-    super(
-      `Invalid Stellar Sep-7 URI: it must either start with '${WEB_STELLAR_TX_SCHEME}' and have a 'xdr' param or start with '${WEB_STELLAR_PAY_SCHEME}' and have a 'destination' param`,
-    );
+  constructor(reason: string) {
+    super(`Invalid Stellar Sep-7 URI, reason: ${reason}`);
     Object.setPrototypeOf(this, Sep7InvalidUriError.prototype);
   }
 }
 
 export class Sep7LongMsgError extends Error {
   constructor(msgMaxLength: number) {
-    super(`'msg' should be no longer than ${msgMaxLength} characters.`);
+    super(`'msg' should be no longer than ${msgMaxLength} characters`);
     Object.setPrototypeOf(this, Sep7LongMsgError.prototype);
   }
 }
 
 export class Sep7UriTypeNotSupportedError extends Error {
   constructor(type: string) {
-    super(`Stellar Sep-7 URI type ${type} is not currently supported.`);
+    super(
+      `Stellar Sep-7 URI operation type '${type}' is not currently supported`,
+    );
     Object.setPrototypeOf(this, Sep7UriTypeNotSupportedError.prototype);
   }
 }

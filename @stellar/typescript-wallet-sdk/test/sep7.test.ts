@@ -516,32 +516,89 @@ describe("Sep7Pay", () => {
 
 describe("sep7Parser", () => {
   it("isValidSep7Uri(uri) returns true when it starts with 'web+stellar:tx?xdr='", () => {
-    expect(isValidSep7Uri("web+stellar:tx?xdr=")).toBe(true);
-    expect(isValidSep7Uri("web+stellar:tx")).toBe(false);
-    expect(isValidSep7Uri("web+stellar:")).toBe(false);
+    expect(
+      isValidSep7Uri(
+        "web+stellar:tx?xdr=AAAAAP%2Byw%2BZEuNg533pUmwlYxfrq6%2FBoMJqiJ8vuQhf6rHWmAAAAZAB8NHAAAAABAAAAAAAAAAAAAAABAAAAAAAAAAYAAAABSFVHAAAAAABAH0wIyY3BJBS2qHdRPAV80M8hF7NBpxRjXyjuT9kEbH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FAAAAAAAAAAA%3D&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fa8f7asdfkjha&pubkey=GAU2ZSYYEYO5S5ZQSMMUENJ2TANY4FPXYGGIMU6GMGKTNVDG5QYFW6JS&msg=order%20number%2024",
+      ).result,
+    ).toBe(true);
+    expect(
+      isValidSep7Uri(
+        "web+stellar:tx?xdr=AAAAAP%2Byw%2BZEuNg533pUmwlYxfrq6%2FBoMJqiJ8vuQhf6rHWmAAAAZAB8NHAAAAABAAAAAAAAAAAAAAABAAAAAAAAAAYAAAABSFVHAAAAAABAH0wIyY3BJBS2qHdRPAV80M8hF7NBpxRjXyjuT9kEbH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FAAAAAAAAAAA%3D&replace=sourceAccount%3AX%3BX%3Aaccount%20on%20which%20to%20create%20the%20trustline",
+      ).result,
+    ).toBe(true);
+    expect(isValidSep7Uri("web+stellar:tx").result).toBe(false);
+    expect(isValidSep7Uri("web+stellar:").result).toBe(false);
   });
 
   it("isValidSep7Uri(uri) returns true when it starts with 'web+stellar:pay?destination='", () => {
-    expect(isValidSep7Uri("web+stellar:pay?destination=")).toBe(true);
-    expect(isValidSep7Uri("web+stellar:pay")).toBe(false);
-    expect(isValidSep7Uri("web+stellar:")).toBe(false);
+    expect(
+      isValidSep7Uri(
+        "web+stellar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.1234567&memo=skdjfasf&memo_type=MEMO_TEXT&msg=pay%20me%20with%20lumens",
+      ).result,
+    ).toBe(true);
+    expect(
+      isValidSep7Uri(
+        "web+stellar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.123&asset_code=USD&asset_issuer=GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB&memo=hasysda987fs&memo_type=MEMO_TEXT&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fhasysda987fs%3Fasset%3DUSD",
+      ).result,
+    ).toBe(true);
+    expect(isValidSep7Uri("web+stellar:pay").result).toBe(false);
+    expect(isValidSep7Uri("web+stellar:").result).toBe(false);
   });
 
   it("isValidSep7Uri(uri) returns false when it does not start with 'web+stellar:'", () => {
-    expect(isValidSep7Uri("not-a-stellar-uri:tx?xdr=")).toBe(false);
-    expect(isValidSep7Uri("not-a-stellar-uri:pay?destination=")).toBe(false);
-    expect(isValidSep7Uri("aaa+stellar:tx?xdr=")).toBe(false);
-    expect(isValidSep7Uri("web+steIIar:pay?destination=")).toBe(false);
+    expect(
+      isValidSep7Uri(
+        "not-a-stellar-uri:tx?xdr=AAAAAP%2Byw%2BZEuNg533pUmwlYxfrq6%2FBoMJqiJ8vuQhf6rHWmAAAAZAB8NHAAAAABAAAAAAAAAAAAAAABAAAAAAAAAAYAAAABSFVHAAAAAABAH0wIyY3BJBS2qHdRPAV80M8hF7NBpxRjXyjuT9kEbH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FAAAAAAAAAAA%3D&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fa8f7asdfkjha&pubkey=GAU2ZSYYEYO5S5ZQSMMUENJ2TANY4FPXYGGIMU6GMGKTNVDG5QYFW6JS&msg=order%20number%2024",
+      ).result,
+    ).toBe(false);
+    expect(
+      isValidSep7Uri(
+        "aaa+stellar:tx?xdr=AAAAAP%2Byw%2BZEuNg533pUmwlYxfrq6%2FBoMJqiJ8vuQhf6rHWmAAAAZAB8NHAAAAABAAAAAAAAAAAAAAABAAAAAAAAAAYAAAABSFVHAAAAAABAH0wIyY3BJBS2qHdRPAV80M8hF7NBpxRjXyjuT9kEbH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FAAAAAAAAAAA%3D&replace=sourceAccount%3AX%3BX%3Aaccount%20on%20which%20to%20create%20the%20trustline",
+      ).result,
+    ).toBe(false);
+    expect(
+      isValidSep7Uri(
+        "web+steIIar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.1234567&memo=skdjfasf&memo_type=MEMO_TEXT&msg=pay%20me%20with%20lumens",
+      ).result,
+    ).toBe(false);
+    expect(
+      isValidSep7Uri(
+        "web+stellarr:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.123&asset_code=USD&asset_issuer=GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB&memo=hasysda987fs&memo_type=MEMO_TEXT&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fhasysda987fs%3Fasset%3DUSD",
+      ).result,
+    ).toBe(false);
+
+    expect(isValidSep7Uri("not-a-stellar-uri:tx?xdr=").result).toBe(false);
+    expect(isValidSep7Uri("not-a-stellar-uri:pay?destination=").result).toBe(
+      false,
+    );
+    expect(isValidSep7Uri("aaa+stellar:tx?xdr=").result).toBe(false);
+    expect(isValidSep7Uri("web+steIIar:pay?destination=").result).toBe(false);
   });
 
-  it("parseSep7Uri(uri) parses a transaction operation uri", () => {
-    const uri = "web+stellar:tx?xdr=";
-    expect(parseSep7Uri(uri)).toBeInstanceOf(Sep7Tx);
+  it("parseSep7Uri(uri) parses a 'tx' operation uri", () => {
+    expect(
+      parseSep7Uri(
+        "web+stellar:tx?xdr=AAAAAP%2Byw%2BZEuNg533pUmwlYxfrq6%2FBoMJqiJ8vuQhf6rHWmAAAAZAB8NHAAAAABAAAAAAAAAAAAAAABAAAAAAAAAAYAAAABSFVHAAAAAABAH0wIyY3BJBS2qHdRPAV80M8hF7NBpxRjXyjuT9kEbH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FAAAAAAAAAAA%3D&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fa8f7asdfkjha&pubkey=GAU2ZSYYEYO5S5ZQSMMUENJ2TANY4FPXYGGIMU6GMGKTNVDG5QYFW6JS&msg=order%20number%2024",
+      ),
+    ).toBeInstanceOf(Sep7Tx);
+    expect(
+      parseSep7Uri(
+        "web+stellar:tx?xdr=AAAAAP%2Byw%2BZEuNg533pUmwlYxfrq6%2FBoMJqiJ8vuQhf6rHWmAAAAZAB8NHAAAAABAAAAAAAAAAAAAAABAAAAAAAAAAYAAAABSFVHAAAAAABAH0wIyY3BJBS2qHdRPAV80M8hF7NBpxRjXyjuT9kEbH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FAAAAAAAAAAA%3D&replace=sourceAccount%3AX%3BX%3Aaccount%20on%20which%20to%20create%20the%20trustline",
+      ),
+    ).toBeInstanceOf(Sep7Tx);
   });
 
-  it("parseSep7Uri(uri) parses a pay operation uri", () => {
-    const uri = "web+stellar:pay?destination=";
-    expect(parseSep7Uri(uri)).toBeInstanceOf(Sep7Pay);
+  it("parseSep7Uri(uri) parses a 'pay' operation uri", () => {
+    expect(
+      parseSep7Uri(
+        "web+stellar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.1234567&memo=skdjfasf&memo_type=MEMO_TEXT&msg=pay%20me%20with%20lumens",
+      ),
+    ).toBeInstanceOf(Sep7Pay);
+    expect(
+      parseSep7Uri(
+        "web+stellar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.123&asset_code=USD&asset_issuer=GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB&memo=hasysda987fs&memo_type=MEMO_TEXT&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fhasysda987fs%3Fasset%3DUSD",
+      ),
+    ).toBeInstanceOf(Sep7Pay);
   });
 
   it("parseSep7Uri(uri) throws an error when it is not a valid stellar uri", () => {

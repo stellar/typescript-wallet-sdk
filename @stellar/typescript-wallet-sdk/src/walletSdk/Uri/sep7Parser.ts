@@ -1,9 +1,12 @@
+import { Networks, StrKey, Transaction } from "@stellar/stellar-sdk";
+
 import { Sep7Pay, Sep7Tx } from "../Uri";
 import {
   Sep7Replacement,
-  WEB_STELLAR_TX_SCHEME,
-  WEB_STELLAR_PAY_SCHEME,
   Sep7OperationType,
+  IsValidSep7UriResult,
+  WEB_STELLAR_SCHEME,
+  URI_MSG_MAX_LENGTH,
 } from "../Types";
 import {
   Sep7InvalidUriError,
@@ -18,23 +21,86 @@ import {
  *
  * @param {string} uri The URI string to check.
  *
- * @returns {boolen} returns `true` if it's a valid Sep-7 uri, `false` otherwise.
+ * @returns {IsValidSep7UriResult} returns '{ result: true }' if it's a valid Sep-7
+ * uri, returns '{ result: false, reason: "<reason>" }' containing a 'reason' message
+ * in case the verification fails.
  */
-export const isValidSep7Uri = (uri: string): boolean => {
-  // 'xdr' param is required for 'web+stellar:tx' uri
-  if (uri.startsWith(WEB_STELLAR_TX_SCHEME) && uri.indexOf("xdr=") !== -1) {
-    return true;
+export const isValidSep7Uri = (uri: string): IsValidSep7UriResult => {
+  if (!uri.startsWith(WEB_STELLAR_SCHEME)) {
+    return {
+      result: false,
+      reason: `it must start with '${WEB_STELLAR_SCHEME}'`,
+    };
   }
 
-  // 'destination' param is required for 'web+stellar:pay' uri
-  if (
-    uri.startsWith(WEB_STELLAR_PAY_SCHEME) &&
-    uri.indexOf("destination=") !== -1
-  ) {
-    return true;
+  const url = new URL(uri);
+
+  const type = url.pathname as Sep7OperationType;
+  const xdr = url.searchParams.get("xdr");
+  const networkPassphrase =
+    url.searchParams.get("network_passphrase") || Networks.PUBLIC;
+  const destination = url.searchParams.get("destination");
+  const msg = url.searchParams.get("msg");
+
+  if (![Sep7OperationType.tx, Sep7OperationType.pay].includes(type)) {
+    return {
+      result: false,
+      reason: `operation type '${type}' is not currently supported`,
+    };
   }
 
-  return false;
+  if (type === Sep7OperationType.tx && !xdr) {
+    return {
+      result: false,
+      reason: `operation type '${type}' must have a 'xdr' parameter`,
+    };
+  }
+
+  if (type === Sep7OperationType.tx && xdr) {
+    try {
+      new Transaction(xdr, networkPassphrase);
+    } catch {
+      return {
+        result: false,
+        reason: `the provided 'xdr' parameter is not a valid transaction envelope on the '${networkPassphrase}' network`,
+      };
+    }
+  }
+
+  if (type === Sep7OperationType.pay && !destination) {
+    return {
+      result: false,
+      reason: `operation type '${type}' must have a 'destination' parameter`,
+    };
+  }
+
+  if (type === Sep7OperationType.pay && destination) {
+    // Checks if it's a valid "G" or "M" Stellar address
+    // TODO: also check if it's a valid "C" address once the "@stellar/stellar-sdk"
+    // package is updated to version >= "v12.0.1".
+    const isValidStellarAddress =
+      StrKey.isValidEd25519PublicKey(destination) ||
+      StrKey.isValidMed25519PublicKey(destination);
+    // StrKey.isValidContract(destination) => checks if it's a valid "C" address
+
+    if (!isValidStellarAddress) {
+      return {
+        result: false,
+        reason: `the provided 'destination' parameter is not a valid Stellar address`,
+      };
+    }
+  }
+
+  if (msg?.length > URI_MSG_MAX_LENGTH) {
+    return {
+      result: false,
+      reason: `the 'msg' parameter should be no longer than ${URI_MSG_MAX_LENGTH} characters`,
+    };
+  }
+
+  return {
+    result: true,
+  };
 };
 
 /**
@@ -50,8 +116,9 @@ export const isValidSep7Uri = (uri: string): boolean => {
  * supported SEP-7 type.
  */
 export const parseSep7Uri = (uri: string): Sep7Tx | Sep7Pay => {
-  if (!isValidSep7Uri(uri)) {
-    throw new Sep7InvalidUriError();
+  const isValid = isValidSep7Uri(uri);
+  if (!isValid.result) {
+    throw new Sep7InvalidUriError(isValid.reason);
   }
 
   const url = new URL(uri);

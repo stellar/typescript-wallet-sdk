@@ -1,6 +1,6 @@
 import { MemoType } from "@stellar/stellar-sdk";
 import { Sep7Base } from "../Uri";
-import { WEB_STELLAR_PAY_SCHEME } from "../Types";
+import { Sep7OperationType, WEB_STELLAR_SCHEME } from "../Types";
 
 /**
  * The Sep-7 'pay' operation represents a request to pay a specific address
@@ -29,7 +29,7 @@ export class Sep7Pay extends Sep7Base {
    * @param {URL | string} [uri] - uri to initialize the Sep7 instance.
    */
   constructor(uri?: URL | string) {
-    super(uri ?? new URL(WEB_STELLAR_PAY_SCHEME));
+    super(uri ?? new URL(`${WEB_STELLAR_SCHEME}${Sep7OperationType.pay}`));
   }
 
   /**
