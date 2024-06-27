@@ -527,7 +527,7 @@ describe("Sep7Pay", () => {
 });
 
 describe("sep7Parser", () => {
-  it("isValidSep7Uri(uri) returns true when it starts with 'web+stellar:tx?xdr=<valid-xdr-envelope>'", () => {
+  it("isValidSep7Uri(uri) returns true when it starts with 'web+stellar:tx?xdr=<valid-url-encoded-xdr-envelope>'", () => {
     expect(
       isValidSep7Uri(
         "web+stellar:tx?xdr=AAAAAP%2Byw%2BZEuNg533pUmwlYxfrq6%2FBoMJqiJ8vuQhf6rHWmAAAAZAB8NHAAAAABAAAAAAAAAAAAAAABAAAAAAAAAAYAAAABSFVHAAAAAABAH0wIyY3BJBS2qHdRPAV80M8hF7NBpxRjXyjuT9kEbH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FAAAAAAAAAAA%3D&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fa8f7asdfkjha&pubkey=GAU2ZSYYEYO5S5ZQSMMUENJ2TANY4FPXYGGIMU6GMGKTNVDG5QYFW6JS&msg=order%20number%2024",
