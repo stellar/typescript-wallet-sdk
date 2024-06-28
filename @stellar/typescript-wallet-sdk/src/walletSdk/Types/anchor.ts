@@ -192,4 +192,8 @@ export enum TransactionStatus {
 
   /** Catch-all for any error not enumerated above. */
   error = "error",
+  /** deposit/withdrawal is currently on hold for additional checks after receiving user's funds.
+   * Anchor may use this status to indicate to the user that transaction is being reviewed (for example,
+   * for compliance reasons). Once this status cleared, transaction should follow the regular flow */
+  on_hold = "on_hold",
 }
