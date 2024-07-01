@@ -75,13 +75,11 @@ export const isValidSep7Uri = (uri: string): IsValidSep7UriResult => {
   }
 
   if (type === Sep7OperationType.pay && destination) {
-    // Checks if it's a valid "G" or "M" Stellar address
-    // TODO: also check if it's a valid "C" address once the "@stellar/stellar-sdk"
-    // package is updated to version >= "v12.0.1".
+    // Checks if it's a valid "G", "M" or "C" Stellar address
     const isValidStellarAddress =
       StrKey.isValidEd25519PublicKey(destination) ||
-      StrKey.isValidMed25519PublicKey(destination);
-    // StrKey.isValidContract(destination) => checks if it's a valid "C" address
+      StrKey.isValidMed25519PublicKey(destination) ||
+      StrKey.isValidContract(destination);
 
     if (!isValidStellarAddress) {
       return {
