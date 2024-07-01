@@ -579,13 +579,11 @@ describe("sep7Parser", () => {
     ).toBe(true);
 
     // With Soroban Contract destination
-    // TODO: add support for this once "@stellar/stellar-sdk"
-    // package is updated to version >= "v12.0.1".
-    // expect(
-    //   isValidSep7Uri(
-    //     "web+stellar:pay?destination=CAPECFLUT6KHYOOWUQNP7KC6PTMICKANBURFWRMPZTXUEEKHN67B7UI2&amount=120.1234567&memo=skdjfasf&memo_type=MEMO_TEXT&msg=pay%20me%20with%20lumens",
-    //   ).result,
-    // ).toBe(true);
+    expect(
+      isValidSep7Uri(
+        "web+stellar:pay?destination=CAPECFLUT6KHYOOWUQNP7KC6PTMICKANBURFWRMPZTXUEEKHN67B7UI2&amount=120.1234567&memo=skdjfasf&memo_type=MEMO_TEXT&msg=pay%20me%20with%20lumens",
+      ).result,
+    ).toBe(true);
   });
 
   it("isValidSep7Uri(uri) returns 'false' with 'reason' when it is not valid in some way", () => {
@@ -712,13 +710,11 @@ describe("sep7Parser", () => {
     ).toBeInstanceOf(Sep7Pay);
 
     // With Soroban Contract destination
-    // TODO: add support for this once "@stellar/stellar-sdk"
-    // package is updated to version >= "v12.0.1".
-    // expect(
-    //   parseSep7Uri(
-    //     "web+stellar:pay?destination=CAPECFLUT6KHYOOWUQNP7KC6PTMICKANBURFWRMPZTXUEEKHN67B7UI2&amount=120.123&asset_code=USD&asset_issuer=GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB&memo=hasysda987fs&memo_type=MEMO_TEXT&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fhasysda987fs%3Fasset%3DUSD",
-    //   ),
-    // ).toBeInstanceOf(Sep7Pay);
+    expect(
+      parseSep7Uri(
+        "web+stellar:pay?destination=CAPECFLUT6KHYOOWUQNP7KC6PTMICKANBURFWRMPZTXUEEKHN67B7UI2&amount=120.123&asset_code=USD&asset_issuer=GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB&memo=hasysda987fs&memo_type=MEMO_TEXT&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fhasysda987fs%3Fasset%3DUSD",
+      ),
+    ).toBeInstanceOf(Sep7Pay);
   });
 
   it("parseSep7Uri(uri) throws an error when it is not a valid Stellar uri in some way", () => {
