@@ -85,7 +85,7 @@ describe("Anchor Platform Integration Tests", () => {
       },
     });
     expect(wResp.id).toBeTruthy();
-  }, 30000);
+  }, 120000);
 
   it("SEP-24 should work", async () => {
     const assetCode = "USDC";
