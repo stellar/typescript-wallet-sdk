@@ -28,7 +28,7 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "@stellar/stellar-sdk": "^11.1.0"
+    "@stellar/stellar-sdk": "12.1.0"
   },
   "scripts": {
     "prepare": "husky install",
