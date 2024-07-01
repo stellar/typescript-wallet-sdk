@@ -36,7 +36,7 @@
     "@ledgerhq/hw-app-str": "^6.28.4",
     "@ledgerhq/hw-transport-u2f": "^5.36.0-deprecated",
     "@stellar/freighter-api": "^2.0.0",
-    "@stellar/stellar-sdk": "^11.1.0",
+    "@stellar/stellar-sdk": "12.1.0",
     "@trezor/connect-plugin-stellar": "^9.0.2",
     "bignumber.js": "^9.1.2",
     "scrypt-async": "^2.0.1",
