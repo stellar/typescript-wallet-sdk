@@ -1,6 +1,16 @@
+# Release notes - Typescript Wallet SDK - 1.6.0
+
+### Added
+* Support for Sep-7 (#141)(#144)
+* Upgrade @stellar/stellar-sdk to 12.1.0 (#143)
+* New on_hold status (#140)
+
+### Fixed
+* [BREAKING CHANGE] Fix response objects returned on Customer functions (#142)
+
 # Release notes - Typescript Wallet SDK - 1.5.0
 
-# Added
+### Added
 * AuthHeaderSigner to Authentication Flow
 * End to end tests for testing browser build 
 * Beta builds on merges to develop branch
