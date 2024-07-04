@@ -1,4 +1,5 @@
 const commonConfigs = {
+  transformIgnorePatterns: [`/node_modules/(?!${["@stablelib"].join("|")})`],
   transform: {
     "^.+\\.(js|jsx|ts|tsx|mjs)$": ["babel-jest"],
   },
