@@ -41,8 +41,7 @@
     "bignumber.js": "^9.1.2",
     "scrypt-async": "^2.0.1",
     "trezor-connect": "^8.2.12",
-    "tweetnacl": "^1.0.3",
-    "tweetnacl-util": "^0.15.1"
+    "tweetnacl": "^1.0.3"
   },
   "scripts": {
     "test": "jest --watchAll",
