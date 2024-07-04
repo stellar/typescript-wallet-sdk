@@ -1,6 +1,10 @@
+import { encode as utf8Encode, decode as utf8Decode } from "@stablelib/utf8";
+import {
+  encode as base64Encode,
+  decode as base64Decode,
+} from "@stablelib/base64";
 import scrypt from "scrypt-async";
 import nacl from "tweetnacl";
-import naclutil from "tweetnacl-util";
 
 export interface ScryptPassParams {
   password: string;
@@ -65,7 +69,7 @@ function scryptPass(params: ScryptPassParams): Promise<Uint8Array> {
 }
 
 function generateSalt(): string {
-  return naclutil.encodeBase64(nacl.randomBytes(SALT_BYTES));
+  return base64Encode(nacl.randomBytes(SALT_BYTES));
 }
 
 /**
@@ -84,7 +88,7 @@ export async function encrypt(params: EncryptParams): Promise<EncryptResponse> {
 
   const secretboxNonce = nonce || nacl.randomBytes(NONCE_BYTES);
   const scryptedPass = await scryptPass({ password, salt: secretboxSalt });
-  const textBytes = naclutil.decodeUTF8(phrase);
+  const textBytes = utf8Encode(phrase);
   const cipherText = nacl.secretbox(textBytes, secretboxNonce, scryptedPass);
 
   if (!cipherText) {
@@ -99,7 +103,7 @@ export async function encrypt(params: EncryptParams): Promise<EncryptResponse> {
   bundle.set(cipherText, 1 + secretboxNonce.length);
 
   return {
-    encryptedPhrase: naclutil.encodeBase64(bundle),
+    encryptedPhrase: base64Encode(bundle),
     salt: secretboxSalt,
   };
 }
@@ -108,7 +112,7 @@ export async function decrypt(params: DecryptParams): Promise<string> {
   const { phrase, password, salt } = params;
   const scryptedPass = await scryptPass({ password, salt });
 
-  const bundle = naclutil.decodeBase64(phrase);
+  const bundle = base64Decode(phrase);
   const version = bundle[0];
   let decryptedBytes;
   if (version === CRYPTO_V1) {
@@ -121,5 +125,5 @@ export async function decrypt(params: DecryptParams): Promise<string> {
   if (!decryptedBytes) {
     throw new Error("That passphrase wasn’t valid.");
   }
-  return naclutil.encodeUTF8(decryptedBytes);
+  return utf8Decode(decryptedBytes);
 }

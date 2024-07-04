@@ -12,8 +12,6 @@
   "devDependencies": {
     "@babel/preset-env": "^7.20.2",
     "@babel/preset-typescript": "^7.23.3",
-    "@stablelib/base64": "^2.0.0",
-    "@stablelib/utf8": "^2.0.0",
     "@stellar/prettier-config": "^1.0.1",
     "@stellar/tsconfig": "^1.0.2",
     "@types/jest": "^29.4.0",
@@ -46,6 +44,8 @@
     "webpack-cli": "^5.1.1"
   },
   "dependencies": {
+    "@stablelib/base64": "^2.0.0",
+    "@stablelib/utf8": "^2.0.0",
     "@stellar/stellar-sdk": "12.1.0",
     "axios": "^1.4.0",
     "base64url": "^3.0.1",
