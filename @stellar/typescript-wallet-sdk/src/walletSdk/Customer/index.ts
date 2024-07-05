@@ -11,6 +11,11 @@ import {
 } from "../Types";
 
 /**
+ * @alias Customer alias for Sep12 class.
+ */
+export type Customer = Sep12;
+
+/**
  * KYC management with Sep-12.
  * @see {@link https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0012.md}
  * Do not create this object directly, use the Anchor class.
