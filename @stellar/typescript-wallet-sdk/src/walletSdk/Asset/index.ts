@@ -39,6 +39,9 @@ export class IssuedAssetId extends StellarAssetId {
   }
 }
 
+/**
+ * @alias XLM alias for NativeAssetId class.
+ */
 export type XLM = NativeAssetId;
 
 export class NativeAssetId extends StellarAssetId {
