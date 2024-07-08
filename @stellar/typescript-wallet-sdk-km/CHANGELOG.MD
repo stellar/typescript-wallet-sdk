@@ -1,3 +1,12 @@
+# Release notes - Typescript Wallet SDK Key Manager - 1.7.0
+
+### Added
+* Support for `home_domain` on `GET /auth` request (#151)
+
+### Fixed
+* Replace `tweetnacl-util` with `@stablelib` packages (#149)
+  * ^ this fixes the lib `crashing` on `React Native` environment
+
 # Release notes - Typescript Wallet SDK Key Manager - 1.6.0
 
 ### Added

@@ -1,3 +1,23 @@
+# Release notes - Typescript Wallet SDK - 1.7.0
+
+### Fixed
+* Replace `tweetnacl-util` with `@stablelib` packages (#149)
+   * this fixes the lib `crashing` on `React Native` environment
+* Export missing classes and aliases (#150)
+  * with this change devs can now access the following classes:
+    * `Sep6`
+    * `Sep12`
+    * `Sep38`
+    * `StellarAssetId`
+    * `DomainSigner`
+  * and aliases:
+    * `Transfer` (alias for `Sep6` class)
+    * `Auth` (alias for `Sep10` class)
+    * `Customer` (alias for `Sep12` class)
+    * `Interactive` (alias for `Sep24` class)
+    * `Quote` (alias for `Sep38` class)
+    * `XLM` (alias for `NativeAssetId` class)
+
 # Release notes - Typescript Wallet SDK - 1.6.0
 
 ### Added
