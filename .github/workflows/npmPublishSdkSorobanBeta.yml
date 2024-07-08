@@ -2,7 +2,7 @@ name: typescript-wallet-sdk-soroban beta build
 on:
   push:
     branches:
-      - develop
+      - develop-soroban
 jobs:
   npm-beta:
     runs-on: ubuntu-latest
