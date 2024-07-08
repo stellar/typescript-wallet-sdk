@@ -1,7 +1,7 @@
 import { AxiosInstance } from "axios";
+import { encode as utf8Encode } from "@stablelib/utf8";
 import { StrKey } from "@stellar/stellar-sdk";
 import nacl from "tweetnacl";
-import naclUtil from "tweetnacl-util";
 import base64url from "base64url";
 
 import { SigningKeypair } from "../Horizon/Account";
@@ -66,12 +66,10 @@ export class DefaultAuthHeaderSigner implements AuthHeaderSigner {
     const encodedPayload = base64url(
       JSON.stringify({ ...claims, exp: timeExp, iat: issuedAt }),
     );
+    const utf8Jwt = utf8Encode(`${encodedHeader}.${encodedPayload}`);
 
     // sign JWT and create signature
-    const signature = nacl.sign.detached(
-      naclUtil.decodeUTF8(`${encodedHeader}.${encodedPayload}`),
-      naclKP.secretKey,
-    );
+    const signature = nacl.sign.detached(utf8Jwt, naclKP.secretKey);
     const encodedSignature = base64url(Buffer.from(signature));
 
     const jwt = `${encodedHeader}.${encodedPayload}.${encodedSignature}`;

@@ -35,14 +35,15 @@
     "@albedo-link/intent": "^0.12.0",
     "@ledgerhq/hw-app-str": "^6.28.4",
     "@ledgerhq/hw-transport-u2f": "^5.36.0-deprecated",
+    "@stablelib/base64": "^2.0.0",
+    "@stablelib/utf8": "^2.0.0",
     "@stellar/freighter-api": "^2.0.0",
     "@stellar/stellar-sdk": "12.1.0",
     "@trezor/connect-plugin-stellar": "^9.0.2",
     "bignumber.js": "^9.1.2",
     "scrypt-async": "^2.0.1",
     "trezor-connect": "^8.2.12",
-    "tweetnacl": "^1.0.3",
-    "tweetnacl-util": "^0.15.1"
+    "tweetnacl": "^1.0.3"
   },
   "scripts": {
     "test": "jest --watchAll",
