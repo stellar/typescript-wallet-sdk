@@ -10,7 +10,7 @@
     * `Sep38`
     * `StellarAssetId`
     * `DomainSigner`
-  * And aliases:
+  * and aliases:
     * `Transfer` (alias for `Sep6` class)
     * `Auth` (alias for `Sep10` class)
     * `Customer` (alias for `Sep12` class)
