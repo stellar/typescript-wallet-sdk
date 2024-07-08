@@ -225,24 +225,29 @@ export class KeyManager {
    * https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0010.md
    *
    * @async
-   * @param {object} params Params object
+   * @param {object} params Params object.
    * @param {string} params.id The user's key to authenticate. The id is
    *                           computed as `sha1(private key + public key)`.
-   * @param {string} params.password The password that will decrypt that secret
-   * @param {string} params.authServer The URL of the authentication server
+   * @param {string} params.password The password that will decrypt that secret.
+   * @param {string} params.authServer The URL of the authentication server.
    * @param {Array} params.authServerHomeDomains The home domain(s) of the
-   *                                             authentication server
+   *                                             authentication server.
    * @param {string} params.authServerKey Check the challenge transaction
    *                                      for this key as source and signature.
-   * @param {string} params.clientDomain a domain hosting a SEP-1 stellar.toml
-   * containing a SIGNING_KEY used for verifying the client domain.
+   * @param {string} params.clientDomain A domain hosting a SEP-1 stellar.toml
+   * containing a SIGNING_KEY used for verifying the client domain. This will
+   * be used as the 'client_domain' param on the GET /authServer request.
+   * @param {string} params.homeDomain Servers that generate tokens for multiple
+   * Home Domains can use this parameter to identify which home domain the Client
+   * hopes to authenticate with. This will be used as the 'home_domain' param
+   * on the GET /authServer request.
    * @param {Function} params.onChallengeTransactionSignature When
    * `params.clientDomain` is set, you need to provide a function that will add
    * the signature identified by the SIGNING_KEY present on your client domain's
    * toml file.
    * @param {string} [params.account] The authenticating public key. If not
    * provided, then the signers's public key will be used instead.
-   * @returns {Promise<string>} authToken JWT
+   * @returns {Promise<string>} authToken JWT.
    */
   // tslint:enable max-line-length
   public async fetchAuthToken(params: GetAuthTokenParams): Promise<string> {
@@ -254,6 +259,7 @@ export class KeyManager {
       challengeToken,
       authServerHomeDomains,
       clientDomain,
+      homeDomain,
       onChallengeTransactionSignature = (tx: Transaction) =>
         Promise.resolve(tx),
     } = params;
@@ -301,6 +307,10 @@ export class KeyManager {
 
     if (clientDomain) {
       challengeUrl += `&client_domain=${encodeURIComponent(clientDomain)}`;
+    }
+
+    if (homeDomain) {
+      challengeUrl += `&home_domain=${encodeURIComponent(homeDomain)}`;
     }
 
     let headers = {};

@@ -182,6 +182,7 @@ export interface GetAuthTokenParams {
   challengeToken?: string;
   account?: string;
   clientDomain?: string;
+  homeDomain?: string;
   onChallengeTransactionSignature?: (tx: Transaction) => Promise<Transaction>;
 }
 
