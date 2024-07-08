@@ -28,6 +28,11 @@ import {
 import { camelToSnakeCaseObject } from "../Utils";
 
 /**
+ * @alias Transfer alias for Sep6 class.
+ */
+export type Transfer = Sep6;
+
+/**
  * Flow for creating deposits and withdrawals with an anchor using SEP-6.
  * For an interactive flow use Sep24 instead.
  * @see {@link https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0006.md}

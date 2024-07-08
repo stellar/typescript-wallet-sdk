@@ -22,7 +22,7 @@ import {
 import { AccountKeypair } from "../Horizon/Account";
 import { AuthHeaderSigner } from "./AuthHeaderSigner";
 
-export { WalletSigner, DefaultSigner } from "./WalletSigner";
+export { WalletSigner, DomainSigner, DefaultSigner } from "./WalletSigner";
 
 // Let's prevent exporting this constructor type as
 // we should not create this Anchor class directly.
@@ -32,6 +32,11 @@ type Sep10Params = {
   homeDomain: string;
   httpClient: AxiosInstance;
 };
+
+/**
+ * @alias Auth alias for Sep10 class.
+ */
+export type Auth = Sep10;
 
 /**
  * Sep-10 used for authentication to an external server.

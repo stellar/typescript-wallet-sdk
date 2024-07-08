@@ -2,15 +2,15 @@ import { AxiosInstance } from "axios";
 import { StellarToml } from "@stellar/stellar-sdk";
 
 import { Config } from "../";
-import { Sep10 } from "../Auth";
-import { Sep12 } from "../Customer";
+import { Auth, Sep10 } from "../Auth";
+import { Customer, Sep12 } from "../Customer";
 import {
   ServerRequestFailedError,
   KYCServerNotFoundError,
 } from "../Exceptions";
-import { Sep6 } from "./Sep6";
-import { Sep24 } from "./Sep24";
-import { Sep38 } from "./Sep38";
+import { Sep6, Transfer } from "./Sep6";
+import { Interactive, Sep24 } from "./Sep24";
+import { Quote, Sep38 } from "./Sep38";
 import { AnchorServiceInfo, TomlInfo, AuthToken } from "../Types";
 import { parseToml } from "../Utils";
 
@@ -23,16 +23,6 @@ type AnchorParams = {
   httpClient: AxiosInstance;
   language: string;
 };
-
-export type Transfer = Sep6;
-
-export type Auth = Sep10;
-
-export type Customer = Sep12;
-
-export type Interactive = Sep24;
-
-export type Quote = Sep38;
 
 /**
  * Build on/off ramps with anchors.

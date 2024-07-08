@@ -21,6 +21,11 @@ import {
 import { camelToSnakeCaseObject } from "../Utils";
 
 /**
+ * @alias Quote alias for Sep38 class.
+ */
+export type Quote = Sep38;
+
+/**
  * Quote service using SEP-38. It can be used for getting price quotes from an anchor
  * for exchanging assets.
  * @see {@link https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0038.md}

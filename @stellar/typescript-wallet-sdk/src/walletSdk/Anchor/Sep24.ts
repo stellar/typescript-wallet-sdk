@@ -31,6 +31,11 @@ type Sep24Params = {
 };
 
 /**
+ * @alias Interactive alias for Sep24 class.
+ */
+export type Interactive = Sep24;
+
+/**
  * Interactive flow for deposit and withdrawal using SEP-24.
  * @see {@link https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0024.md}
  * Do not create this object directly, use the Anchor class.

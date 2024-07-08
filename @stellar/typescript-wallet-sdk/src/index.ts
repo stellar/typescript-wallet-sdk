@@ -14,14 +14,29 @@ export {
   ApplicationConfiguration,
 } from "./walletSdk";
 export { Anchor } from "./walletSdk/Anchor";
-export { Sep24 } from "./walletSdk/Anchor/Sep24";
-export { IssuedAssetId, NativeAssetId, FiatAssetId } from "./walletSdk/Asset";
-export { Sep10, WalletSigner, DefaultSigner } from "./walletSdk/Auth";
+export { Sep6, Transfer } from "./walletSdk/Anchor/Sep6";
+export { Sep24, Interactive } from "./walletSdk/Anchor/Sep24";
+export { Sep38, Quote } from "./walletSdk/Anchor/Sep38";
+export {
+  StellarAssetId,
+  IssuedAssetId,
+  NativeAssetId,
+  XLM,
+  FiatAssetId,
+} from "./walletSdk/Asset";
+export {
+  Sep10,
+  Auth,
+  WalletSigner,
+  DefaultSigner,
+  DomainSigner,
+} from "./walletSdk/Auth";
 export {
   AuthHeaderSigner,
   DefaultAuthHeaderSigner,
   DomainAuthHeaderSigner,
 } from "./walletSdk/Auth/AuthHeaderSigner";
+export { Sep12, Customer } from "./walletSdk/Customer";
 export {
   AccountKeypair,
   PublicKeypair,
