@@ -2,7 +2,7 @@ name: typescript-wallet-sdk-km beta build
 on:
   push:
     branches:
-      - develop
+      - develop-km
 jobs:
   npm-beta:
     runs-on: ubuntu-latest
