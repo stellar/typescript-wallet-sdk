@@ -47,7 +47,7 @@
     "@stablelib/base64": "^2.0.0",
     "@stablelib/utf8": "^2.0.0",
     "@stellar/stellar-sdk": "12.1.0",
-    "axios": "^1.4.0",
+    "axios": "^1.6.0",
     "base64url": "^3.0.1",
     "https-browserify": "^1.0.0",
     "jws": "^4.0.0",
