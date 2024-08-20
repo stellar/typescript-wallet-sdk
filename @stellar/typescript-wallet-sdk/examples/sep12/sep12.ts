@@ -2,6 +2,7 @@ import path from "path";
 
 import * as dotenv from "dotenv";
 import { SigningKeypair, walletSdk } from "../../src";
+import { askQuestion } from "helpers/ask-question";
 
 dotenv.config({ path: path.resolve(__dirname, ".env") });
 
@@ -20,17 +21,14 @@ const main = async () => {
   const authToken = await sep10.authenticate({ accountKp: authKey });
   const sep12 = await anchor.sep12(authToken);
 
+  const firstName = await askQuestion("What is your first name?");
+  const lastName = await askQuestion("What is your last name?");
+
   const response = await sep12.add({
     sep9Info: {
-      first_name: "john",
-      last_name: "smith",
-      email_address: "123@gmail.com",
-      bank_number: "12345",
-      bank_account_number: "12345",
-    },
-    sep9BinaryInfo: {
-      photo_id_front: "./path/to/image/front",
-      photo_id_back: "./path/to/image/back",
+      first_name: firstName,
+      last_name: lastName,
+      // ...
     },
   });
 
