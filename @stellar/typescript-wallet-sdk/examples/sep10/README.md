@@ -2,10 +2,10 @@
 
 ## Example code
 
-To view how the wallet-sdk can be used to create a sep-10 auth token for an
-wallet to send to an anchor,look at `sep10Wallet.ts`.
+To view how the wallet-sdk can be used to create a sep-10 auth token for a
+wallet to send to an anchor, look at `sep10Wallet.ts`.
 
-To view how to setup an authentication server for the anchor,look at
+To view how to setup an authentication server for the anchor, look at
 `sep10Server.ts`.
 
 ## Changing environment variables
