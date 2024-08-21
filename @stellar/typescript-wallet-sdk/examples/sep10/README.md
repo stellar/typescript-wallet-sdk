@@ -1,4 +1,4 @@
-# Sep-1o examples for stellar typescript-wallet-sdk
+# Sep-10 examples for stellar typescript-wallet-sdk
 
 ## Example code
 
