@@ -1,0 +1,18 @@
+ACCOUNTS = [ "GBM53YM5CUICEOTGY3N2UJLLZ4QXNCAANINBNLHSNTEULBQ3HENOUU2J" ]
+VERSION = "0.1.0"
+SIGNING_KEY = "GBM53YM5CUICEOTGY3N2UJLLZ4QXNCAANINBNLHSNTEULBQ3HENOUU2J"
+NETWORK_PASSPHRASE = "Test SDF Network ; September 2015"
+
+[[PRINCIPALS]]
+name = "user"
+email = "user@stellar.org"
+keybase = "user"
+github = "https://www.github.com/user"
+
+[DOCUMENTATION]
+ORG_NAME = "Stellar Development Foundation"
+ORG_URL = "https://stellar.org"
+ORG_DESCRIPTION = "TS example backend server."
+ORG_KEYBASE = "stellar.public"
+ORG_TWITTER = "StellarOrg"
+ORG_GITHUB = "stellar"

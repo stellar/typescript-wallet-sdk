@@ -8,6 +8,17 @@ wallet to send to an anchor, look at `sep10Wallet.ts`.
 To view how to setup an authentication server for the anchor, look at
 `sep10Server.ts`.
 
+## Running deposit and withdrawals
+
+To see them in action you can run below from the project root:
+
+```
+$ yarn example:sep10
+```
+
+This will run an example SEP-10 server which can use to sign authentication
+requests and to serve a SEP-1 stellar.toml
+
 ## Changing environment variables
 
 If you'd like to use different environment variable values than the default

@@ -1,23 +1,22 @@
-/* eslint-disable */
-
-// @ts-expect-error: express will need to be installed to run this example
+import path from "path";
 import express from "express";
-import { Transaction, Keypair } from "stellar-sdk";
+import { Transaction, Keypair } from "@stellar/stellar-sdk";
+import * as dotenv from "dotenv";
+import bodyParser from "body-parser";
 
-require("dotenv").config({ path: require("find-config")(".env") });
+dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 const PORT = process.env.SERVER_PORT ?? 7000;
 const SERVER_SIGNING_KEY = String(process.env.SERVER_SIGNING_KEY);
 const app = express();
 
-const bodyParser = require("body-parser");
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Serve the sep-1 stellar.toml file
 app.use(
   "/.well-known",
-  express.static("./src/static/well_known", {
+  express.static(path.join(__dirname, "well_known"), {
     setHeaders: function (res) {
       res.set("Access-Control-Allow-Headers", "Content-Type,X-Requested-With");
       res.type("application/json");
@@ -52,5 +51,3 @@ app.post("/sign", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Listening on port ${PORT}`);
 });
-
-/* eslint-enable */
