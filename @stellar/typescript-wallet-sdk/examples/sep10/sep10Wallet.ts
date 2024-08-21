@@ -23,7 +23,7 @@ const anchor = wallet.anchor({
   homeDomain: anchorDomain,
 });
 
-export const getSep10AuthToken = async () => {
+const getSep10AuthToken = async () => {
   const authKey = SigningKeypair.fromSecret(authKeySecret);
   const sep10 = await anchor.sep10();
   const signer = DefaultSigner;
@@ -40,3 +40,6 @@ export const getSep10AuthToken = async () => {
 
   return authToken;
 };
+
+const authToken = getSep10AuthToken();
+console.log(`Auth Token: ${authToken}`);

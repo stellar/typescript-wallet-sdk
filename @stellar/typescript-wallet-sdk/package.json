@@ -70,7 +70,8 @@
     "build:web": "webpack --config webpack.config.js",
     "build:node": "webpack --env NODE=true --config webpack.config.js",
     "build": "run-p build:web build:node",
-    "example:sep10": "ts-node examples/sep10/sep10Server.ts",
+    "example:sep10Server": "ts-node examples/sep10/sep10Server.ts",
+    "example:sep10Wallet": "ts-node examples/sep10/sep10Wallet.ts",
     "example:sep24": "ts-node examples/sep24/sep24.ts"
   }
 }
