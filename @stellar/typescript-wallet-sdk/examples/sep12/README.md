@@ -9,7 +9,7 @@ To run the script and interactively collect KYC details, configure the
 appropriate environment variables and run -
 
 ```
-$ yarn example:12
+$ yarn example:sep12
 ```
 
 ## Changing environment variables
