@@ -1,5 +1,4 @@
 import axios from "axios";
-import readline from "readline";
 import path from "path";
 
 import {
@@ -19,6 +18,7 @@ import {
 } from "@stellar/stellar-sdk";
 
 import * as dotenv from "dotenv";
+import { askQuestion } from "helpers/ask-question";
 dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 // Grabbing environment variables
@@ -235,20 +235,6 @@ walletSigner.signWithDomainAccount = async ({
   signer.sign(transaction);
 
   return Promise.resolve(transaction);
-};
-
-export const askQuestion = (query) => {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  return new Promise((resolve) =>
-    rl.question(query, (ans) => {
-      rl.close();
-      resolve(ans);
-    }),
-  );
 };
 
 runSep24();
