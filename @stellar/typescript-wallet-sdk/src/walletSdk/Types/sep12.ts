@@ -3,7 +3,7 @@ export type CustomerInfoMap = {
 };
 
 export type CustomerBinaryInfoMap = {
-  [key: string]: string | Buffer;
+  [key: string]: Buffer | string;
 };
 
 export enum Sep12Status {
