@@ -194,7 +194,7 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
 
   /**
    * Swap assets using the Stellar network. This swaps using the
-   * pathPaymentStrictReceive operation.
+   * pathPaymentStrictSend operation.
    * @param {StellarAssetId} fromAsset - The source asset to be sent.
    * @param {StellarAssetId} toAsset - The destination asset to receive.
    * @param {string} amount - The amount of the source asset to be sent.
