@@ -159,6 +159,13 @@ export class WithdrawalTxNotPendingUserTransferStartError extends Error {
   }
 }
 
+export class WithdrawalTxMissingDestinationError extends Error {
+  constructor() {
+    super(`Withdrawal transaction missing withdraw_anchor_account field`);
+    Object.setPrototypeOf(this, WithdrawalTxMissingDestinationError.prototype);
+  }
+}
+
 export class WithdrawalTxMissingMemoError extends Error {
   constructor() {
     super(`Withdrawal transaction missing memo`);

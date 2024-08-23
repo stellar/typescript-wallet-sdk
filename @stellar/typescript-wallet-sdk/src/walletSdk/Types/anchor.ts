@@ -60,7 +60,7 @@ export interface WithdrawTransaction extends ProcessingAnchorTransaction {
   to?: string;
   withdraw_memo?: string;
   withdraw_memo_type: MemoType;
-  withdraw_anchor_account: string;
+  withdraw_anchor_account?: string;
 }
 
 export type Sep6Transaction = DepositTransaction &
