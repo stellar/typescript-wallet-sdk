@@ -1,9 +1,9 @@
-import { Wallet } from "../src";
+import { Sep12, SigningKeypair, Wallet } from "../src";
 import axios from "axios";
 import { getRandomString } from "./utils";
 
-let wallet;
-let accountKp;
+let wallet: Wallet;
+let accountKp: SigningKeypair;
 
 describe("Customer", () => {
   beforeAll(async () => {
@@ -22,31 +22,36 @@ describe("Customer", () => {
     const auth = await anchor.sep10();
     const authToken = await auth.authenticate({ accountKp });
 
-    const sep12 = await anchor.sep12(authToken);
+    const sep12: Sep12 = await anchor.sep12(authToken);
     const customerType = "sep31-receiver";
     const customerEmail = `${getRandomString(6)}@gmail.com`;
 
     // Add
-    let resp = await sep12.add({
+    const addResp = await sep12.add({
       sep9Info: {
         first_name: "john",
         last_name: "smith",
         email_address: customerEmail,
         type: customerType,
       },
+      transactionId: "abcd1234",
     });
-    expect(resp.id).toBeTruthy();
-    const { id } = resp;
+    expect(addResp.id).toBeTruthy();
+    const { id } = addResp;
 
     // Get
-    resp = await sep12.getCustomer({ id, type: customerType });
-    expect(Object.keys(resp).sort()).toEqual(
+    const getResp = await sep12.getCustomer({
+      id,
+      type: customerType,
+      transactionId: "abcd1234",
+    });
+    expect(Object.keys(getResp).sort()).toEqual(
       ["id", "provided_fields", "fields", "status"].sort(),
     );
-    expect(Object.keys(resp?.provided_fields).sort()).toEqual(
+    expect(Object.keys(getResp?.provided_fields).sort()).toEqual(
       ["first_name", "last_name", "email_address"].sort(),
     );
-    expect(Object.keys(resp?.fields).sort()).toEqual(
+    expect(Object.keys(getResp?.fields).sort()).toEqual(
       [
         "bank_account_number",
         "bank_number",
@@ -56,7 +61,7 @@ describe("Customer", () => {
     );
 
     // Update
-    resp = await sep12.update({
+    const updateResp = await sep12.update({
       sep9Info: {
         first_name: "j",
         last_name: "s",
@@ -69,12 +74,17 @@ describe("Customer", () => {
         photo_id_back: Buffer.from("test-back-image"),
       },
       id,
+      transactionId: "abcd1234",
     });
-    expect(resp.id).toBeTruthy();
+    expect(updateResp.id).toBeTruthy();
 
     // Get again, check that the provided fields updated
-    resp = await sep12.getCustomer({ id, type: customerType });
-    expect(Object.keys(resp.fields).length).toBe(0);
+    const getResp2 = await sep12.getCustomer({
+      id,
+      type: customerType,
+      transactionId: "abcd1234",
+    });
+    expect(Object.keys(getResp2.fields).length).toBe(0);
 
     // Delete
     await sep12.delete();
