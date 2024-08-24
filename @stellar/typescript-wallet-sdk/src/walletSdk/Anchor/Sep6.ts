@@ -60,17 +60,23 @@ export class Sep6 {
    * Get SEP-6 anchor information.
    * If `shouldRefresh` is set to `true`, it fetches fresh values; otherwise, it returns cached values if available.
    * @param {boolean} [shouldRefresh=false] - Flag to force a refresh of TOML values.
+   * @param {string} [lang=this.anchor.language] - The language in which to retrieve information.
    * @returns {Promise<Sep6Info>} - SEP-6 information about the anchor.
    * @throws {ServerRequestFailedError} If the server request to fetch information fails.
    */
-  async info(shouldRefresh?: boolean): Promise<Sep6Info> {
+  async info(
+    shouldRefresh?: boolean,
+    lang: string = this.anchor.language,
+  ): Promise<Sep6Info> {
     if (this.anchorInfo && !shouldRefresh) {
       return this.anchorInfo;
     }
 
     const { transferServer } = await this.anchor.sep1();
     try {
-      const resp = await this.httpClient.get(`${transferServer}/info`);
+      const resp = await this.httpClient.get(
+        `${transferServer}/info?lang=${lang}`,
+      );
       this.anchorInfo = resp.data;
       return resp.data;
     } catch (e) {
