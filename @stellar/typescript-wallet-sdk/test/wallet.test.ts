@@ -156,7 +156,7 @@ describe("Anchor", () => {
     expect(signedByClient).toBe(true);
     expect(signedByDomain).toBe(true);
   });
-  it("should get anchor services info", async () => {
+  it("(deprecated) should get anchor services info", async () => {
     let serviceInfo = await anchor.sep24().getServicesInfo();
     expect(serviceInfo.deposit).toBeTruthy();
     expect(serviceInfo.withdraw).toBeTruthy();
@@ -165,6 +165,23 @@ describe("Anchor", () => {
     serviceInfo = await anchor.interactive().getServicesInfo();
     expect(serviceInfo.deposit).toBeTruthy();
     expect(serviceInfo.withdraw).toBeTruthy();
+  });
+
+  it("should get anchor Sep-24 info", async () => {
+    const sep24Info = await anchor.sep24().info();
+    expect(sep24Info.deposit).toBeTruthy();
+    expect(sep24Info.withdraw).toBeTruthy();
+  });
+
+  it("should get anchor Sep-6 info", async () => {
+    const sep6Info = await anchor.sep6().info();
+    expect(sep6Info["deposit-exchange"]).toBeTruthy();
+    expect(sep6Info["withdraw-exchange"]).toBeTruthy();
+  });
+
+  it("should get anchor Sep-38 info", async () => {
+    const sep38Info = await anchor.sep38().info();
+    expect(sep38Info.assets).toBeTruthy();
   });
 
   it("should give interactive deposit url", async () => {

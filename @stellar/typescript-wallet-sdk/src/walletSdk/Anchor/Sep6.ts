@@ -61,6 +61,7 @@ export class Sep6 {
    * If `shouldRefresh` is set to `true`, it fetches fresh values; otherwise, it returns cached values if available.
    * @param {boolean} [shouldRefresh=false] - Flag to force a refresh of TOML values.
    * @returns {Promise<Sep6Info>} - SEP-6 information about the anchor.
+   * @throws {ServerRequestFailedError} If the server request to fetch information fails.
    */
   async info(shouldRefresh?: boolean): Promise<Sep6Info> {
     if (this.anchorInfo && !shouldRefresh) {
