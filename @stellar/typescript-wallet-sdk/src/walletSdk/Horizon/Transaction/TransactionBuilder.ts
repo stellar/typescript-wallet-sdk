@@ -15,6 +15,7 @@ import {
   WithdrawalTxMissingMemoError,
   WithdrawalTxNotPendingUserTransferStartError,
   WithdrawalTxMemoError,
+  WithdrawalTxMissingDestinationError,
 } from "../../Exceptions";
 import { StellarAssetId } from "../../Asset";
 import {
@@ -193,7 +194,7 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
 
   /**
    * Swap assets using the Stellar network. This swaps using the
-   * pathPaymentStrictReceive operation.
+   * pathPaymentStrictSend operation.
    * @param {StellarAssetId} fromAsset - The source asset to be sent.
    * @param {StellarAssetId} toAsset - The destination asset to receive.
    * @param {string} amount - The amount of the source asset to be sent.
@@ -241,6 +242,7 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
    * @param {WithdrawTransaction} transaction - The withdrawal transaction.
    * @param {StellarAssetId} assetId - The asset ID to transfer.
    * @throws {WithdrawalTxNotPendingUserTransferStartError} If the withdrawal transaction status is not pending_user_transfer_start.
+   * @throws {WithdrawalTxMissingDestinationError} If the withdrawal transaction is missing withdraw_anchor_account field.
    * @throws {WithdrawalTxMissingMemoError} If the withdrawal transaction is missing a memo.
    * @throws {WithdrawalTxMemoError} If there is an issue with the withdrawal transaction memo.
    * @returns {TransactionBuilder} The TransactionBuilder instance.
@@ -253,6 +255,11 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
       throw new WithdrawalTxNotPendingUserTransferStartError(
         transaction.status,
       );
+    }
+
+    // We can't send a payment if we don't know the destination address
+    if (!transaction.withdraw_anchor_account) {
+      throw new WithdrawalTxMissingDestinationError();
     }
 
     if (!(transaction.withdraw_memo_type && transaction.withdraw_memo)) {

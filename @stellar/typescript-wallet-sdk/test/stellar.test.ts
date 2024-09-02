@@ -13,6 +13,11 @@ import {
   Assets,
 } from "../src/walletSdk/Asset";
 import { TransactionStatus, WithdrawTransaction } from "../src/walletSdk/Types";
+import {
+  WithdrawalTxMissingDestinationError,
+  WithdrawalTxMissingMemoError,
+  WithdrawalTxNotPendingUserTransferStartError,
+} from "../src/walletSdk/Exceptions";
 
 let wal: Wallet;
 let stellar: Stellar;
@@ -31,6 +36,7 @@ describe("Stellar", () => {
       await stellar.fundTestnetAccount(kp.publicKey);
     }
   }, 10000);
+
   it("should create and submit a transaction", async () => {
     const now = Math.floor(Date.now() / 1000) - 5;
 
@@ -190,34 +196,70 @@ describe("Stellar", () => {
     const tx = stellar.decodeTransaction(txnXdr);
     kp.sign(tx);
   });
-  it("should transfer withdrawal transaction", async () => {
-    const memoExamples = [
-      {
-        type: "text",
-        value: "example text",
-      },
-      {
-        type: "id",
-        value: "12345",
-      },
-      {
-        type: "hash",
-        value: "AAAAAAAAAAAAAAAAAAAAAMAP+8deo0TViBD09TfOBY0=",
-      },
-      {
-        type: "hash",
-        value: "MV9b23bQeMQ7isAGTkoBZGErH853yGk0W/yUx1iU7dM=",
-      },
-    ];
 
-    for (const memoExample of memoExamples) {
+  it("should return recommended fee", async () => {
+    const fee = await stellar.getRecommendedFee();
+    expect(fee).toBeTruthy();
+  });
+
+  describe("TransactionBuilder/transferWithdrawalTransaction", () => {
+    it("should transfer withdrawal transaction", async () => {
+      const memoExamples = [
+        {
+          type: "text",
+          value: "example text",
+        },
+        {
+          type: "id",
+          value: "12345",
+        },
+        {
+          type: "hash",
+          value: "AAAAAAAAAAAAAAAAAAAAAMAP+8deo0TViBD09TfOBY0=",
+        },
+        {
+          type: "hash",
+          value: "MV9b23bQeMQ7isAGTkoBZGErH853yGk0W/yUx1iU7dM=",
+        },
+      ];
+
+      for (const memoExample of memoExamples) {
+        const walletTransaction = {
+          id: "db15d166-5a5e-4d5c-ba5d-271c32cd8cf0",
+          kind: "withdrawal",
+          status: TransactionStatus.pending_user_transfer_start,
+          amount_in: "50.55",
+          withdraw_memo_type: memoExample.type,
+          withdraw_memo: memoExample.value,
+          withdraw_anchor_account:
+            "GCSGSR6KQQ5BP2FXVPWRL6SWPUSFWLVONLIBJZUKTVQB5FYJFVL6XOXE",
+        } as WithdrawTransaction;
+
+        const asset = new IssuedAssetId(
+          "USDC",
+          "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+        );
+
+        const txBuilder = await stellar.transaction({
+          sourceAddress: kp,
+          baseFee: 100,
+        });
+
+        const txn = txBuilder
+          .transferWithdrawalTransaction(walletTransaction, asset)
+          .build();
+        expect(txn).toBeTruthy();
+      }
+    }, 20000);
+
+    it("should throw if tx not in pending_user_transfer_start status", async () => {
       const walletTransaction = {
         id: "db15d166-5a5e-4d5c-ba5d-271c32cd8cf0",
         kind: "withdrawal",
-        status: TransactionStatus.pending_user_transfer_start,
+        status: TransactionStatus.pending_anchor,
         amount_in: "50.55",
-        withdraw_memo_type: memoExample.type,
-        withdraw_memo: memoExample.value,
+        withdraw_memo_type: "text",
+        withdraw_memo: "example text",
         withdraw_anchor_account:
           "GCSGSR6KQQ5BP2FXVPWRL6SWPUSFWLVONLIBJZUKTVQB5FYJFVL6XOXE",
       } as WithdrawTransaction;
@@ -232,16 +274,98 @@ describe("Stellar", () => {
         baseFee: 100,
       });
 
-      const txn = txBuilder
-        .transferWithdrawalTransaction(walletTransaction, asset)
-        .build();
-      expect(txn).toBeTruthy();
-    }
-  }, 20000);
+      expect(() => {
+        txBuilder
+          .transferWithdrawalTransaction(walletTransaction, asset)
+          .build();
+      }).toThrowError(WithdrawalTxNotPendingUserTransferStartError);
+    }, 5000);
 
-  it("should return recommended fee", async () => {
-    const fee = await stellar.getRecommendedFee();
-    expect(fee).toBeTruthy();
+    it("should throw if tx is missing withdraw_anchor_account", async () => {
+      const walletTransaction = {
+        id: "db15d166-5a5e-4d5c-ba5d-271c32cd8cf0",
+        kind: "withdrawal",
+        status: TransactionStatus.pending_user_transfer_start,
+        amount_in: "50.55",
+        withdraw_memo_type: "text",
+        withdraw_memo: "example text",
+        withdraw_anchor_account: null,
+      } as WithdrawTransaction;
+
+      const asset = new IssuedAssetId(
+        "USDC",
+        "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+      );
+
+      const txBuilder = await stellar.transaction({
+        sourceAddress: kp,
+        baseFee: 100,
+      });
+
+      expect(() => {
+        txBuilder
+          .transferWithdrawalTransaction(walletTransaction, asset)
+          .build();
+      }).toThrowError(WithdrawalTxMissingDestinationError);
+    }, 5000);
+
+    it("should throw if tx is missing withdraw_memo_type", async () => {
+      const walletTransaction = {
+        id: "db15d166-5a5e-4d5c-ba5d-271c32cd8cf0",
+        kind: "withdrawal",
+        status: TransactionStatus.pending_user_transfer_start,
+        amount_in: "50.55",
+        withdraw_memo_type: null,
+        withdraw_memo: "example text",
+        withdraw_anchor_account:
+          "GCSGSR6KQQ5BP2FXVPWRL6SWPUSFWLVONLIBJZUKTVQB5FYJFVL6XOXE",
+      } as WithdrawTransaction;
+
+      const asset = new IssuedAssetId(
+        "USDC",
+        "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+      );
+
+      const txBuilder = await stellar.transaction({
+        sourceAddress: kp,
+        baseFee: 100,
+      });
+
+      expect(() => {
+        txBuilder
+          .transferWithdrawalTransaction(walletTransaction, asset)
+          .build();
+      }).toThrowError(WithdrawalTxMissingMemoError);
+    }, 5000);
+
+    it("should throw if tx is missing withdraw_memo", async () => {
+      const walletTransaction = {
+        id: "db15d166-5a5e-4d5c-ba5d-271c32cd8cf0",
+        kind: "withdrawal",
+        status: TransactionStatus.pending_user_transfer_start,
+        amount_in: "50.55",
+        withdraw_memo_type: "text",
+        withdraw_memo: null,
+        withdraw_anchor_account:
+          "GCSGSR6KQQ5BP2FXVPWRL6SWPUSFWLVONLIBJZUKTVQB5FYJFVL6XOXE",
+      } as WithdrawTransaction;
+
+      const asset = new IssuedAssetId(
+        "USDC",
+        "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+      );
+
+      const txBuilder = await stellar.transaction({
+        sourceAddress: kp,
+        baseFee: 100,
+      });
+
+      expect(() => {
+        txBuilder
+          .transferWithdrawalTransaction(walletTransaction, asset)
+          .build();
+      }).toThrowError(WithdrawalTxMissingMemoError);
+    }, 5000);
   });
 });
 
