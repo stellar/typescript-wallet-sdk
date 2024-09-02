@@ -161,7 +161,9 @@ export class WithdrawalTxNotPendingUserTransferStartError extends Error {
 
 export class WithdrawalTxMissingDestinationError extends Error {
   constructor() {
-    super(`Withdrawal transaction missing withdraw_anchor_account field`);
+    super(
+      `Anchor should set the withdraw_anchor_account field for transactions in pending_user_transfer_start status.`,
+    );
     Object.setPrototypeOf(this, WithdrawalTxMissingDestinationError.prototype);
   }
 }
