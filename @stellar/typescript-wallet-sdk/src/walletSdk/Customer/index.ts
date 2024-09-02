@@ -2,13 +2,11 @@ import { AxiosInstance } from "axios";
 import queryString from "query-string";
 import { Sep9InfoRequiredError, CustomerNotFoundError } from "../Exceptions";
 import {
-  CustomerBinaryInfoMap,
   GetCustomerParams,
   GetCustomerResponse,
   AddCustomerResponse,
   AddCustomerParams,
   AuthToken,
-  CustomerInfoMap,
 } from "../Types";
 import { camelToSnakeCaseObject } from "../Utils";
 
@@ -98,7 +96,7 @@ export class Sep12 {
     memo,
     transactionId,
   }: AddCustomerParams): Promise<AddCustomerResponse> {
-    let customerMap: CustomerInfoMap | CustomerBinaryInfoMap = {
+    let customerMap: { [key: string]: string | Buffer } = {
       ...sep9Info,
       ...sep9BinaryInfo,
     };
@@ -151,7 +149,7 @@ export class Sep12 {
     memo,
     transactionId,
   }: AddCustomerParams): Promise<AddCustomerResponse> {
-    let customerMap: CustomerInfoMap | CustomerBinaryInfoMap = {};
+    let customerMap: { [key: string]: string | Buffer } = {};
     if (id) {
       customerMap["id"] = id;
     }
