@@ -2,6 +2,10 @@ export type CustomerInfoMap = {
   [key: string]: string;
 };
 
+export type CustomerBinaryInfoMap = {
+  [key: string]: Buffer;
+};
+
 export enum Sep12Status {
   ACCEPTED = "ACCEPTED",
   PROCESSING = "PROCESSING",
@@ -38,6 +42,7 @@ export type GetCustomerParams = {
   type?: string;
   memo?: string;
   lang?: string;
+  transactionId?: string;
 };
 
 export type GetCustomerResponse = {
@@ -50,10 +55,11 @@ export type GetCustomerResponse = {
 
 export type AddCustomerParams = {
   sep9Info?: CustomerInfoMap;
-  sep9BinaryInfo?: CustomerInfoMap;
+  sep9BinaryInfo?: CustomerBinaryInfoMap;
   id?: string;
   memo?: string;
   type?: string;
+  transactionId?: string;
 };
 
 export type AddCustomerResponse = {
