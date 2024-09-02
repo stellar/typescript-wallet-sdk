@@ -2,6 +2,25 @@ import { Memo } from "@stellar/stellar-sdk";
 
 import { AuthToken } from "./auth";
 
+export interface Sep24Info {
+  deposit: Sep24AssetInfoMap;
+  withdraw: Sep24AssetInfoMap;
+  fee: { enabled: boolean };
+  features: { account_creation: boolean; claimable_balances: boolean };
+}
+
+export interface Sep24AssetInfoMap {
+  [asset_code: string]: Sep24AssetInfo;
+}
+
+export interface Sep24AssetInfo {
+  enabled: boolean;
+  min_amount: number;
+  max_amount: number;
+  fee_fixed: number;
+  fee_percent: number;
+}
+
 export enum FLOW_TYPE {
   DEPOSIT = "deposit",
   WITHDRAW = "withdraw",

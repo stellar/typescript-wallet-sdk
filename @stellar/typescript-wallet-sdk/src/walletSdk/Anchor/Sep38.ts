@@ -63,6 +63,7 @@ export class Sep38 {
    * If `shouldRefresh` is set to `true`, it fetches fresh values; otherwise, it returns cached values if available.
    * @param {boolean} [shouldRefresh=false] - Flag to force a refresh of TOML values.
    * @returns {Promise<Sep38Info>} - SEP-38 information about the anchor.
+   * @throws {ServerRequestFailedError} If the server request to fetch information fails.
    */
   async info(shouldRefresh?: boolean): Promise<Sep38Info> {
     if (this.sep38Info && !shouldRefresh) {
@@ -70,7 +71,6 @@ export class Sep38 {
     }
 
     const { anchorQuoteServer } = await this.anchor.sep1();
-
     try {
       const resp = await this.httpClient.get(`${anchorQuoteServer}/info`, {
         headers: this.headers,

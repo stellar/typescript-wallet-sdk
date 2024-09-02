@@ -184,10 +184,12 @@ export class Anchor {
   }
 
   /**
-   * Get information about an Anchor.
+   * @deprecated Please use sep24().info() instead.
+   *
+   * Get SEP-24 anchor information.
    * @param {string} [lang=this.language] - The language in which to retrieve information.
-   * @returns {Promise<AnchorServiceInfo>} An object containing information about the Anchor.
-   * @throws {ServerRequestFailedError} If the http request fails.
+   * @returns {Promise<AnchorServiceInfo>} - SEP-24 information about the anchor.
+   * @throws {ServerRequestFailedError} If the server request to fetch information fails.
    */
   async getServicesInfo(
     lang: string = this.language,
@@ -198,15 +200,8 @@ export class Anchor {
     try {
       const resp = await this.httpClient.get(
         `${transferServerEndpoint}/info?lang=${lang}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        },
       );
-
       const servicesInfo: AnchorServiceInfo = resp.data;
-
       return servicesInfo;
     } catch (e) {
       throw new ServerRequestFailedError(e);

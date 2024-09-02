@@ -2,25 +2,20 @@ import { MemoType } from "@stellar/stellar-sdk";
 import { Optional } from "utility-types";
 
 import { AuthToken } from "./auth";
+import { Sep24AssetInfo, Sep24AssetInfoMap, Sep24Info } from "./sep24";
 
-export interface AnchorServiceInfo {
-  deposit: AssetInfoMap;
-  withdraw: AssetInfoMap;
-  fee: { enabled: boolean };
-  features: { account_creation: boolean; claimable_balances: boolean };
-}
-
-export interface AssetInfoMap {
-  [asset_code: string]: AnchorServiceAsset;
-}
-
-export interface AnchorServiceAsset {
-  enabled: boolean;
-  min_amount: number;
-  max_amount: number;
-  fee_fixed: number;
-  fee_percent: number;
-}
+/**
+ * @deprecated Please use Sep24Info interface instead.
+ */
+export type AnchorServiceInfo = Sep24Info;
+/**
+ * @deprecated Please use Sep24AssetInfoMap interface instead.
+ */
+export type AssetInfoMap = Sep24AssetInfoMap;
+/**
+ * @deprecated Please use Sep24AssetInfo interface instead.
+ */
+export type AnchorServiceAsset = Sep24AssetInfo;
 
 export interface BaseTransaction {
   id: string;
@@ -60,7 +55,7 @@ export interface WithdrawTransaction extends ProcessingAnchorTransaction {
   to?: string;
   withdraw_memo?: string;
   withdraw_memo_type: MemoType;
-  withdraw_anchor_account: string;
+  withdraw_anchor_account?: string;
 }
 
 export type Sep6Transaction = DepositTransaction &

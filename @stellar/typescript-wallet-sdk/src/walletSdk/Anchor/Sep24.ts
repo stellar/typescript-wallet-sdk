@@ -15,6 +15,7 @@ import {
   GetTransactionsParams,
   AnchorServiceInfo,
   WatcherSepType,
+  Sep24Info,
 } from "../Types";
 import {
   Watcher,
@@ -44,6 +45,7 @@ export type Interactive = Sep24;
 export class Sep24 {
   private anchor: Anchor;
   private httpClient: AxiosInstance;
+  private anchorInfo: Sep24Info;
 
   /**
    * Creates a new instance of the Sep24 class.
@@ -55,6 +57,45 @@ export class Sep24 {
 
     this.anchor = anchor;
     this.httpClient = httpClient;
+  }
+
+  /**
+   * Get SEP-24 anchor information.
+   * If `shouldRefresh` is set to `true`, it fetches fresh values; otherwise, it returns cached values if available.
+   * @param {boolean} [shouldRefresh=false] - Flag to force a refresh of TOML values.
+   * @param {string} [lang=this.anchor.language] - The language in which to retrieve information.
+   * @returns {Promise<Sep24Info>} - SEP-24 information about the anchor.
+   * @throws {ServerRequestFailedError} If the server request to fetch information fails.
+   */
+  async info(
+    shouldRefresh?: boolean,
+    lang: string = this.anchor.language,
+  ): Promise<Sep24Info> {
+    if (this.anchorInfo && !shouldRefresh) {
+      return this.anchorInfo;
+    }
+
+    const { transferServerSep24 } = await this.anchor.sep1();
+    try {
+      const resp = await this.httpClient.get(
+        `${transferServerSep24}/info?lang=${lang}`,
+      );
+      this.anchorInfo = resp.data;
+      return resp.data;
+    } catch (e) {
+      throw new ServerRequestFailedError(e);
+    }
+  }
+
+  /**
+   * @deprecated Please use info() instead.
+   *
+   * Get SEP-24 anchor information.
+   * @returns {Promise<AnchorServiceInfo>} - SEP-24 information about the anchor.
+   * @throws {ServerRequestFailedError} If the server request to fetch information fails.
+   */
+  async getServicesInfo(): Promise<AnchorServiceInfo> {
+    return this.info();
   }
 
   /**
@@ -132,13 +173,13 @@ export class Sep24 {
     const toml = await this.anchor.sep1();
     const transferServerEndpoint = toml.transferServerSep24;
 
-    const serviceInfo = await this.anchor.getServicesInfo();
+    const sep24Info = await this.info();
 
     let assets: string[];
     if (type === FLOW_TYPE.DEPOSIT) {
-      assets = Object.keys(serviceInfo.deposit);
+      assets = Object.keys(sep24Info.deposit);
     } else {
-      assets = Object.keys(serviceInfo.withdraw);
+      assets = Object.keys(sep24Info.withdraw);
     }
     if (!assets.includes(assetCode)) {
       throw new AssetNotSupportedError(type, assetCode);
@@ -173,15 +214,6 @@ export class Sep24 {
     } catch (e) {
       throw new ServerRequestFailedError(e);
     }
-  }
-
-  /**
-   * Retrieves information about the Anchor.
-   * @returns {Promise<AnchorServiceInfo>} An object containing information about the Anchor.
-   * @throws {ServerRequestFailedError} If the server request to fetch information fails.
-   */
-  async getServicesInfo(): Promise<AnchorServiceInfo> {
-    return this.anchor.getServicesInfo();
   }
 
   /**
