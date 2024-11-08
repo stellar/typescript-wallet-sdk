@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Java Anchor SDK
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: stellar/java-stellar-anchor-sdk
       - name: Build docker
@@ -19,8 +19,8 @@ jobs:
           service-runner/src/main/resources/docker-compose.yaml up -d
       - name: Wait for docker to be ready
         run: sleep 90 && curl http://localhost:8080/.well-known/stellar.toml
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 18
       - run: yarn install
