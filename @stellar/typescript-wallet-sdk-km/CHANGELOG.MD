@@ -1,3 +1,8 @@
+# Release notes - Typescript Wallet SDK Key Manager - 1.8.0
+
+### Added
+* Upgrades `@stellar/stellar-sdk` to `13.0.0-beta.1` which supports the `Protocol 22` XDR (#172)
+
 # Release notes - Typescript Wallet SDK Key Manager - 1.7.0
 
 ### Added
