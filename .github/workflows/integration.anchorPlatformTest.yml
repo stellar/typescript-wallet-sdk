@@ -11,9 +11,11 @@ jobs:
           repository: stellar/java-stellar-anchor-sdk
       - name: Build docker
         run:
-          docker build --build-arg BASE_IMAGE=gradle:7.6.4-jdk17 -t
+          docker build --build-arg BASE_IMAGE=gradle:8.2.1-jdk17 -t
           anchor-platform:local ./
       - name: Run docker
+        env:
+          TEST_PROFILE_NAME: default
         run:
           docker compose -f
           service-runner/src/main/resources/docker-compose.yaml up -d
