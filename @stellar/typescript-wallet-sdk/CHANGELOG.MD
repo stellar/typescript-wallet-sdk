@@ -1,3 +1,11 @@
+# Release notes - Typescript Wallet SDK - 1.8.0
+
+### Added
+* Upgrades `@stellar/stellar-sdk` to `13.0.0-beta.1` which supports the `Protocol 22` XDR (#172)
+* Add `transaction_id` field to SEP-12 requests (#165)
+* Make `withdraw_anchor_account` field optional (#164)
+* Deprecate `getServicesInfo()` in favor of `Sep24.info()` (#166)
+
 # Release notes - Typescript Wallet SDK - 1.7.0
 
 ### Fixed

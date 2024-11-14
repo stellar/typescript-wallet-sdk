@@ -18,7 +18,7 @@ jobs:
           docker compose -f
           service-runner/src/main/resources/docker-compose.yaml up -d
       - name: Wait for docker to be ready
-        run: sleep 90 && curl http://localhost:8080/.well-known/stellar.toml
+        run: sleep 300 && curl http://localhost:8080/.well-known/stellar.toml
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:

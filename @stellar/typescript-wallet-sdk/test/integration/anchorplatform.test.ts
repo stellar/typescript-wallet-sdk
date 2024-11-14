@@ -16,13 +16,13 @@ describe("Anchor Platform Integration Tests", () => {
     anchor = wallet.anchor({ homeDomain: anchorUrl, allowHttp: true });
     accountKp = stellar.account().createKeypair();
     await stellar.fundTestnetAccount(accountKp.publicKey);
-  }, 15000);
+  }, 30000);
 
   it("SEP-10 auth should work", async () => {
     const auth = await anchor.sep10();
     const authToken = await auth.authenticate({ accountKp });
     expect(authToken.token).toBeTruthy();
-  });
+  }, 30000);
 
   it("using DefaultAuthHeaderSigner should work", async () => {
     const auth = await anchor.sep10();
@@ -30,7 +30,7 @@ describe("Anchor Platform Integration Tests", () => {
     const authHeaderSigner = new DefaultAuthHeaderSigner();
     const authToken = await auth.authenticate({ accountKp, authHeaderSigner });
     expect(authToken.token).toBeTruthy();
-  });
+  }, 30000);
 
   it("SEP-12 KYC and SEP-6 should work", async () => {
     const auth = await anchor.sep10();
@@ -85,7 +85,7 @@ describe("Anchor Platform Integration Tests", () => {
       },
     });
     expect(wResp.id).toBeTruthy();
-  }, 120000);
+  }, 300000);
 
   it("SEP-24 should work", async () => {
     const assetCode = "USDC";
@@ -119,7 +119,7 @@ describe("Anchor Platform Integration Tests", () => {
       limit: 5,
     });
     expect(transactions.length).toBe(2);
-  }, 45000);
+  }, 300000);
 
   it("SEP-38 should work", async () => {
     const auth = await anchor.sep10();
@@ -150,5 +150,5 @@ describe("Anchor Platform Integration Tests", () => {
     const quoteId = postResp.id;
     const getResp = await sep38.getQuote(quoteId);
     expect(getResp.id).toBeTruthy();
-  });
+  }, 300000);
 });
