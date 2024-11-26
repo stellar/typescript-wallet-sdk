@@ -15,7 +15,12 @@ jobs:
         run:
           docker compose -f docker-compose.yaml --profile v2-stable up -d
       - name: Wait for docker to be ready
-        run: sleep 300 && curl http://localhost:8080/.well-known/stellar.toml
+        uses: mydea/action-wait-for-api@v1
+        with:
+          url: "http://localhost:8080/.well-known/stellar.toml"
+          expected-status: "200"
+          timeout: "300"
+          interval: "1"
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
