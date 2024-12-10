@@ -33,7 +33,7 @@ export interface Sep43Interface {
       submitUrl?: string;
     },
   ): Promise<
-    { signedTxXdr: string; signerAddress?: string } & { error?: Error }
+    { signedTxXdr: string; signerAddress: string } & { error?: Error }
   >;
 
   /**
