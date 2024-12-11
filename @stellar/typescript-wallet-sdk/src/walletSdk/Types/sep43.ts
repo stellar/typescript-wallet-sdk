@@ -55,7 +55,7 @@ export interface Sep43Interface {
       path?: string;
     },
   ): Promise<
-    { signedAuthEntry: string; signerAddress?: string } & { error?: Error }
+    { signedAuthEntry: string; signerAddress: string } & { error?: Error }
   >;
 
   /**
@@ -77,7 +77,7 @@ export interface Sep43Interface {
       path?: string;
     },
   ): Promise<
-    { signedMessage: string; signerAddress?: string } & { error?: Error }
+    { signedMessage: string; signerAddress: string } & { error?: Error }
   >;
 
   /**
