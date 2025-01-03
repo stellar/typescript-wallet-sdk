@@ -5,10 +5,10 @@ jobs:
     name: anchor platform test
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Java Anchor SDK
+      - name: Checkout Anchor Platform
         uses: actions/checkout@v2
         with:
-          repository: stellar/java-stellar-anchor-sdk
+          repository: stellar/anchor-platform
       - name: Run docker
         env:
           TEST_PROFILE_NAME: default
