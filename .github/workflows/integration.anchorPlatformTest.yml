@@ -5,20 +5,22 @@ jobs:
     name: anchor platform test
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Java Anchor SDK
+      - name: Checkout Anchor Platform
         uses: actions/checkout@v2
         with:
-          repository: stellar/java-stellar-anchor-sdk
-      - name: Build docker
-        run:
-          docker build --build-arg BASE_IMAGE=gradle:7.6.4-jdk17 -t
-          anchor-platform:local ./
+          repository: stellar/anchor-platform
       - name: Run docker
+        env:
+          TEST_PROFILE_NAME: default
         run:
-          docker compose -f
-          service-runner/src/main/resources/docker-compose.yaml up -d
+          docker compose -f docker-compose.yaml --profile v2-stable up -d
       - name: Wait for docker to be ready
-        run: sleep 300 && curl http://localhost:8080/.well-known/stellar.toml
+        uses: mydea/action-wait-for-api@v1
+        with:
+          url: "http://localhost:8080/.well-known/stellar.toml"
+          expected-status: "200"
+          timeout: "300"
+          interval: "1"
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
