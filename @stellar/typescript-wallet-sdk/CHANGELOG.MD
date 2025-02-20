@@ -1,3 +1,8 @@
+# Release notes - Typescript Wallet SDK - 1.9.0
+
+### Added
+* Added SEP-43 types: (#186)
+
 # Release notes - Typescript Wallet SDK - 1.8.0
 
 ### Added
