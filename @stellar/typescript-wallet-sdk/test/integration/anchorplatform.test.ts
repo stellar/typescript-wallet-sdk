@@ -69,6 +69,7 @@ describe("Anchor Platform Integration Tests", () => {
       params: {
         asset_code: "USDC",
         account: accountKp.publicKey,
+        type: "SEPA",
       },
     });
     expect(dResp.id).toBeTruthy();
