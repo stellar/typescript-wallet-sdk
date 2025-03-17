@@ -6,7 +6,7 @@ let wallet;
 let stellar;
 let anchor;
 let accountKp;
-const anchorUrl = "http://localhost:8080";
+const anchorUrl = "https://anchor-sep-server-dev.stellar.org/";
 
 describe("Anchor Platform Integration Tests", () => {
   beforeAll(async () => {
