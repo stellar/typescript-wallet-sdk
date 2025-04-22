@@ -28,11 +28,6 @@ against.
 
 ## To run tests locally:
 
-- follow the steps defined in the
-  (.github/workflows/integration.anchorPlatformTest.yml)[https://github.com/stellar/typescript-wallet-sdk/blob/main/.github/workflows/integration.anchorPlatformTest.yml]
-  file locally
-
-1. Clone the java-stellar-anchor-sdk repo locally
-2. Run the docker build command
-3. Run the docker command
-4. Run the anchorPlatform tests from this repo
+```
+yarn test:anchorplatform:ci
+```
