@@ -8,8 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+        uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 18
           registry-url: https://registry.npmjs.org/
@@ -24,7 +24,7 @@ jobs:
           echo "new_version=${current_version}-beta.${timestamp}" >> $GITHUB_ENV
 
       - name: Update package.json version
-        uses: jossef/action-set-json-field@6e6d7e639f24b3955ef682815317b5613ac6ca12 # v1
+        uses: jossef/action-set-json-field@2a0f7d953b580b828717daf4de7fafc7e4135e97 # v2
         with:
           file: ./@stellar/typescript-wallet-sdk-soroban/package.json
           field: version
