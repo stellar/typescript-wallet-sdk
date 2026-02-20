@@ -798,29 +798,20 @@ describe("sep7Parser", () => {
     );
   });
 
-  it("sep7ReplacementsFromString() handles replace string without hints (no ';' delimiter)", () => {
+  it("sep7ReplacementsFromString() throws on replace string without hints (no ';' delimiter)", () => {
     const str = "sourceAccount:X,operations[0].sourceAccount:Y";
-    const replacements = sep7ReplacementsFromString(str);
-
-    expect(replacements.length).toBe(2);
-
-    expect(replacements[0].id).toBe("X");
-    expect(replacements[0].path).toBe("sourceAccount");
-    expect(replacements[0].hint).toBeUndefined();
-
-    expect(replacements[1].id).toBe("Y");
-    expect(replacements[1].path).toBe("operations[0].sourceAccount");
-    expect(replacements[1].hint).toBeUndefined();
+    expect(() => sep7ReplacementsFromString(str)).toThrow(Sep7InvalidUriError);
   });
 
-  it("sep7ReplacementsFromString() handles single replacement without hints", () => {
+  it("sep7ReplacementsFromString() throws on single replacement without hints", () => {
     const str = "sourceAccount:X";
-    const replacements = sep7ReplacementsFromString(str);
+    expect(() => sep7ReplacementsFromString(str)).toThrow(Sep7InvalidUriError);
+  });
 
-    expect(replacements.length).toBe(1);
-    expect(replacements[0].id).toBe("X");
-    expect(replacements[0].path).toBe("sourceAccount");
-    expect(replacements[0].hint).toBeUndefined();
+  it("sep7ReplacementsFromString() throws on unbalanced identifiers", () => {
+    // Spec example: {X} on left but {Y} on right should be rejected
+    const str = "sourceAccount:X;Y:The account";
+    expect(() => sep7ReplacementsFromString(str)).toThrow(Sep7InvalidUriError);
   });
 
   it("sep7ReplacementsFromString() returns empty array for undefined/empty input", () => {
@@ -828,16 +819,12 @@ describe("sep7Parser", () => {
     expect(sep7ReplacementsFromString("")).toEqual([]);
   });
 
-  it("Sep7Tx.getReplacements() does not crash on replace param missing hints", () => {
+  it("Sep7Tx.getReplacements() throws on replace param missing hints", () => {
     const uri = new Sep7Tx(
       `web+stellar:tx?xdr=test&replace=${encodeURIComponent("sourceAccount:X")}`,
     );
 
-    const replacements = uri.getReplacements();
-    expect(replacements.length).toBe(1);
-    expect(replacements[0].id).toBe("X");
-    expect(replacements[0].path).toBe("sourceAccount");
-    expect(replacements[0].hint).toBeUndefined();
+    expect(() => uri.getReplacements()).toThrow(Sep7InvalidUriError);
   });
 
   it("sep7ReplacementsToString outputs the right string", () => {

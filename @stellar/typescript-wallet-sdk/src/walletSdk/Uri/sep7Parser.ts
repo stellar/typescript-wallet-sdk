@@ -164,6 +164,15 @@ export const sep7ReplacementsFromString = (
 
   const [txrepString, hintsString] = replacements.split(HINT_DELIMITER);
 
+  const txrepList = txrepString.split(LIST_DELIMITER);
+  const txrepIds: string[] = [];
+  txrepList.forEach((item) => {
+    const id = item.split(ID_DELIMITER)[1];
+    if (id && txrepIds.indexOf(id) === -1) {
+      txrepIds.push(id);
+    }
+  });
+
   const hintsMap: { [id: string]: string } = {};
 
   if (hintsString) {
@@ -173,7 +182,17 @@ export const sep7ReplacementsFromString = (
       .forEach(([id, hint]) => (hintsMap[id] = hint));
   }
 
-  const txrepList = txrepString.split(LIST_DELIMITER);
+  const hintIds = Object.keys(hintsMap);
+
+  const isBalanced =
+    txrepIds.length === hintIds.length &&
+    txrepIds.every((id) => hintsMap.hasOwnProperty(id));
+
+  if (!isBalanced) {
+    throw new Sep7InvalidUriError(
+      "the 'replace' parameter has unbalanced reference identifiers",
+    );
+  }
 
   const replacementsList = txrepList
     .map((item) => item.split(ID_DELIMITER))
