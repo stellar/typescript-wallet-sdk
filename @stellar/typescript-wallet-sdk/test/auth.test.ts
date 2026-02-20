@@ -76,6 +76,16 @@ describe("validateToken", () => {
     expect(() => validateToken(token)).toThrow(ExpiredTokenError);
   });
 
+  it("should throw ExpiredTokenError for a token with exp=0", () => {
+    const token = createToken({
+      iss: "https://anchor.example.com",
+      sub: "GABC1234",
+      exp: 0,
+    });
+
+    expect(() => validateToken(token)).toThrow(ExpiredTokenError);
+  });
+
   it("should throw InvalidTokenError for a malformed token", () => {
     expect(() => validateToken("not-a-valid-jwt")).toThrow(InvalidTokenError);
   });
