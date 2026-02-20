@@ -179,7 +179,7 @@ export const sep7ReplacementsFromString = (
     }
   });
 
-  const hintsMap: { [id: string]: string } = {};
+  const hintsMap = Object.create(null) as Record<string, string>;
 
   if (hintsString) {
     const hintsList = hintsString.split(LIST_DELIMITER);
