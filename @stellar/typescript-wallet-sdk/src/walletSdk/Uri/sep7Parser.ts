@@ -162,6 +162,12 @@ export const sep7ReplacementsFromString = (
     return [];
   }
 
+  if (replacements.length > 4096) {
+    throw new Sep7InvalidUriError(
+      "the 'replace' parameter exceeds the maximum allowed length",
+    );
+  }
+
   const [txrepString, hintsString] = replacements.split(HINT_DELIMITER);
 
   const txrepList = txrepString.split(LIST_DELIMITER);
