@@ -186,7 +186,7 @@ export const sep7ReplacementsFromString = (
 
   const isBalanced =
     txrepIds.length === hintIds.length &&
-    txrepIds.every((id) => hintsMap.hasOwnProperty(id));
+    txrepIds.every((id) => Object.prototype.hasOwnProperty.call(hintsMap, id));
 
   if (!isBalanced) {
     throw new Sep7InvalidUriError(
