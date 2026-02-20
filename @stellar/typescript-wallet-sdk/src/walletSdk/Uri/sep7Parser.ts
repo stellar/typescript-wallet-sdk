@@ -163,13 +163,15 @@ export const sep7ReplacementsFromString = (
   }
 
   const [txrepString, hintsString] = replacements.split(HINT_DELIMITER);
-  const hintsList = hintsString.split(LIST_DELIMITER);
 
   const hintsMap: { [id: string]: string } = {};
 
-  hintsList
-    .map((item) => item.split(ID_DELIMITER))
-    .forEach(([id, hint]) => (hintsMap[id] = hint));
+  if (hintsString) {
+    const hintsList = hintsString.split(LIST_DELIMITER);
+    hintsList
+      .map((item) => item.split(ID_DELIMITER))
+      .forEach(([id, hint]) => (hintsMap[id] = hint));
+  }
 
   const txrepList = txrepString.split(LIST_DELIMITER);
 

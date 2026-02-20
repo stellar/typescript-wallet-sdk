@@ -798,6 +798,48 @@ describe("sep7Parser", () => {
     );
   });
 
+  it("sep7ReplacementsFromString() handles replace string without hints (no ';' delimiter)", () => {
+    const str = "sourceAccount:X,operations[0].sourceAccount:Y";
+    const replacements = sep7ReplacementsFromString(str);
+
+    expect(replacements.length).toBe(2);
+
+    expect(replacements[0].id).toBe("X");
+    expect(replacements[0].path).toBe("sourceAccount");
+    expect(replacements[0].hint).toBeUndefined();
+
+    expect(replacements[1].id).toBe("Y");
+    expect(replacements[1].path).toBe("operations[0].sourceAccount");
+    expect(replacements[1].hint).toBeUndefined();
+  });
+
+  it("sep7ReplacementsFromString() handles single replacement without hints", () => {
+    const str = "sourceAccount:X";
+    const replacements = sep7ReplacementsFromString(str);
+
+    expect(replacements.length).toBe(1);
+    expect(replacements[0].id).toBe("X");
+    expect(replacements[0].path).toBe("sourceAccount");
+    expect(replacements[0].hint).toBeUndefined();
+  });
+
+  it("sep7ReplacementsFromString() returns empty array for undefined/empty input", () => {
+    expect(sep7ReplacementsFromString(undefined)).toEqual([]);
+    expect(sep7ReplacementsFromString("")).toEqual([]);
+  });
+
+  it("Sep7Tx.getReplacements() does not crash on replace param missing hints", () => {
+    const uri = new Sep7Tx(
+      `web+stellar:tx?xdr=test&replace=${encodeURIComponent("sourceAccount:X")}`,
+    );
+
+    const replacements = uri.getReplacements();
+    expect(replacements.length).toBe(1);
+    expect(replacements[0].id).toBe("X");
+    expect(replacements[0].path).toBe("sourceAccount");
+    expect(replacements[0].hint).toBeUndefined();
+  });
+
   it("sep7ReplacementsToString outputs the right string", () => {
     const expected =
       "sourceAccount:X,operations[0].sourceAccount:Y,operations[1].destination:Y;X:account from where you want to pay fees,Y:account that needs the trustline and which will receive the new tokens";
