@@ -4,7 +4,8 @@
     "baseUrl": "src/",
     "outDir": "lib",
     "declaration": true,
-    "declarationDir": "lib"
+    "declarationDir": "lib",
+    "stripInternal": true
   },
   "include": ["src"]
 }
