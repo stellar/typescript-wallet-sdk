@@ -167,8 +167,14 @@ export const sep7ReplacementsFromString = (
   const txrepList = txrepString.split(LIST_DELIMITER);
   const txrepIds: string[] = [];
   txrepList.forEach((item) => {
-    const id = item.split(ID_DELIMITER)[1];
-    if (id && txrepIds.indexOf(id) === -1) {
+    const parts = item.split(ID_DELIMITER);
+    if (parts.length < 2 || !parts[1]) {
+      throw new Sep7InvalidUriError(
+        "the 'replace' parameter has an entry missing a reference identifier",
+      );
+    }
+    const id = parts[1];
+    if (txrepIds.indexOf(id) === -1) {
       txrepIds.push(id);
     }
   });
