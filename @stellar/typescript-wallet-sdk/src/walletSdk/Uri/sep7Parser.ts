@@ -7,6 +7,7 @@ import {
   IsValidSep7UriResult,
   WEB_STELLAR_SCHEME,
   URI_MSG_MAX_LENGTH,
+  URI_REPLACE_MAX_LENGTH,
 } from "../Types";
 import {
   Sep7InvalidUriError,
@@ -162,16 +163,55 @@ export const sep7ReplacementsFromString = (
     return [];
   }
 
+  if (replacements.length > URI_REPLACE_MAX_LENGTH) {
+    throw new Sep7InvalidUriError(
+      "the 'replace' parameter exceeds the maximum allowed length",
+    );
+  }
+
   const [txrepString, hintsString] = replacements.split(HINT_DELIMITER);
-  const hintsList = hintsString.split(LIST_DELIMITER);
-
-  const hintsMap: { [id: string]: string } = {};
-
-  hintsList
-    .map((item) => item.split(ID_DELIMITER))
-    .forEach(([id, hint]) => (hintsMap[id] = hint));
 
   const txrepList = txrepString.split(LIST_DELIMITER);
+  const txrepIds: string[] = [];
+  txrepList.forEach((item) => {
+    const parts = item.split(ID_DELIMITER);
+    if (parts.length < 2 || !parts[0] || !parts[1]) {
+      throw new Sep7InvalidUriError(
+        "the 'replace' parameter has an entry missing a path or reference identifier",
+      );
+    }
+    const id = parts[1];
+    if (txrepIds.indexOf(id) === -1) {
+      txrepIds.push(id);
+    }
+  });
+
+  const hintsMap = Object.create(null) as Record<string, string>;
+
+  if (hintsString) {
+    const hintsList = hintsString.split(LIST_DELIMITER);
+    hintsList.forEach((item) => {
+      const parts = item.split(ID_DELIMITER);
+      if (parts.length < 2 || !parts[0] || !parts[1]) {
+        throw new Sep7InvalidUriError(
+          "the 'replace' parameter has a hint entry missing an identifier or hint value",
+        );
+      }
+      hintsMap[parts[0]] = parts[1];
+    });
+  }
+
+  const hintIds = Object.keys(hintsMap);
+
+  const isBalanced =
+    txrepIds.length === hintIds.length &&
+    txrepIds.every((id) => Object.prototype.hasOwnProperty.call(hintsMap, id));
+
+  if (!isBalanced) {
+    throw new Sep7InvalidUriError(
+      "the 'replace' parameter has unbalanced reference identifiers",
+    );
+  }
 
   const replacementsList = txrepList
     .map((item) => item.split(ID_DELIMITER))

@@ -6,6 +6,7 @@ export enum Sep7OperationType {
 }
 
 export const URI_MSG_MAX_LENGTH = 300;
+export const URI_REPLACE_MAX_LENGTH = 4096;
 
 export type Sep7Replacement = {
   id: string;
