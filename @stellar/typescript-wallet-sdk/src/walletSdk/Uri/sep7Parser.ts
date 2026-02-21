@@ -7,6 +7,7 @@ import {
   IsValidSep7UriResult,
   WEB_STELLAR_SCHEME,
   URI_MSG_MAX_LENGTH,
+  URI_REPLACE_MAX_LENGTH,
 } from "../Types";
 import {
   Sep7InvalidUriError,
@@ -162,7 +163,7 @@ export const sep7ReplacementsFromString = (
     return [];
   }
 
-  if (replacements.length > 4096) {
+  if (replacements.length > URI_REPLACE_MAX_LENGTH) {
     throw new Sep7InvalidUriError(
       "the 'replace' parameter exceeds the maximum allowed length",
     );
@@ -174,9 +175,9 @@ export const sep7ReplacementsFromString = (
   const txrepIds: string[] = [];
   txrepList.forEach((item) => {
     const parts = item.split(ID_DELIMITER);
-    if (parts.length < 2 || !parts[1]) {
+    if (parts.length < 2 || !parts[0] || !parts[1]) {
       throw new Sep7InvalidUriError(
-        "the 'replace' parameter has an entry missing a reference identifier",
+        "the 'replace' parameter has an entry missing a path or reference identifier",
       );
     }
     const id = parts[1];
@@ -189,9 +190,15 @@ export const sep7ReplacementsFromString = (
 
   if (hintsString) {
     const hintsList = hintsString.split(LIST_DELIMITER);
-    hintsList
-      .map((item) => item.split(ID_DELIMITER))
-      .forEach(([id, hint]) => (hintsMap[id] = hint));
+    hintsList.forEach((item) => {
+      const parts = item.split(ID_DELIMITER);
+      if (parts.length < 2 || !parts[0] || !parts[1]) {
+        throw new Sep7InvalidUriError(
+          "the 'replace' parameter has a hint entry missing an identifier or hint value",
+        );
+      }
+      hintsMap[parts[0]] = parts[1];
+    });
   }
 
   const hintIds = Object.keys(hintsMap);
