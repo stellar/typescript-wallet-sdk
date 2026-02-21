@@ -11,7 +11,10 @@ import {
   sep7ReplacementsFromString,
   sep7ReplacementsToString,
 } from "../src";
-import { Sep7OperationType } from "../src/walletSdk/Types";
+import {
+  Sep7OperationType,
+  URI_REPLACE_MAX_LENGTH,
+} from "../src/walletSdk/Types";
 import {
   Sep7InvalidUriError,
   Sep7LongMsgError,
@@ -812,6 +815,16 @@ describe("sep7Parser", () => {
     // Spec example: {X} on left but {Y} on right should be rejected
     const str = "sourceAccount:X;Y:The account";
     expect(() => sep7ReplacementsFromString(str)).toThrow(Sep7InvalidUriError);
+  });
+
+  it("sep7ReplacementsFromString() throws when replace string exceeds URI_REPLACE_MAX_LENGTH", () => {
+    const longPath = "a".repeat(URI_REPLACE_MAX_LENGTH);
+    const str = `${longPath}:X;X:hint`;
+    expect(str.length).toBeGreaterThan(URI_REPLACE_MAX_LENGTH);
+    expect(() => sep7ReplacementsFromString(str)).toThrow(Sep7InvalidUriError);
+    expect(() => sep7ReplacementsFromString(str)).toThrow(
+      "the 'replace' parameter exceeds the maximum allowed length",
+    );
   });
 
   it("sep7ReplacementsFromString() returns empty array for undefined/empty input", () => {
