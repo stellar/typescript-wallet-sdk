@@ -188,13 +188,15 @@ export class Sep10 {
   }
 }
 
-const validateToken = (token: string) => {
+/** @internal Exported for testing only. Not part of the public API. */
+export const validateToken = (token: string) => {
   const parsedToken = decode(token);
   if (!parsedToken) {
     throw new InvalidTokenError();
   }
-  if (parsedToken.expiresAt < Math.floor(Date.now() / 1000)) {
-    throw new ExpiredTokenError(parsedToken.expiresAt);
+  const exp = parsedToken.payload?.exp;
+  if (typeof exp === "number" && exp < Math.floor(Date.now() / 1000)) {
+    throw new ExpiredTokenError(exp);
   }
 };
 
