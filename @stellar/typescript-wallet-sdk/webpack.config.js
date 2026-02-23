@@ -39,6 +39,9 @@ module.exports = (env = { NODE: false }) => {
       globalObject: "this",
       filename: `bundle${isBrowser ? "_browser" : ""}.js`,
       path: path.resolve(__dirname, "lib"),
+      environment: {
+        bigIntLiteral: true,
+      },
     },
     target: isBrowser ? "web" : "node",
     plugins: isBrowser

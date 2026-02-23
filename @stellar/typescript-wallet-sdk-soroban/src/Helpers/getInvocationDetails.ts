@@ -1,4 +1,4 @@
-import { Address, Asset, StrKey, xdr } from "@stellar/stellar-sdk";
+import { Address, Asset, xdr } from "@stellar/stellar-sdk";
 
 import { InvocationArgs } from "Types";
 
@@ -33,9 +33,9 @@ export const getInvocationArgs = (
     // sorobanAuthorizedFunctionTypeContractFn
     case 0: {
       const _invocation = fn.contractFn();
-      const contractId = StrKey.encodeContract(
-        _invocation.contractAddress().contractId(),
-      );
+      const contractId = Address.fromScAddress(
+        _invocation.contractAddress(),
+      ).toString();
       const fnName = _invocation.functionName().toString();
       const args = _invocation.args();
       return { fnName, contractId, args, type: "invoke" };

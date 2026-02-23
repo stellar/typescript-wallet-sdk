@@ -2,7 +2,7 @@
   "name": "@stellar/typescript-wallet-sdk-soroban",
   "version": "1.9.0",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "browser": "./lib/bundle_browser.js",
   "main": "./lib/bundle.js",
@@ -28,7 +28,7 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "@stellar/stellar-sdk": "13.0.0-beta.1"
+    "@stellar/stellar-sdk": "14.5.0"
   },
   "scripts": {
     "prepare": "husky install",
