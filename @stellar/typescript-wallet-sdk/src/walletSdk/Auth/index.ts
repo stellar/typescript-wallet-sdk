@@ -166,7 +166,9 @@ export class Sep10 {
         new URL(this.webAuthEndpoint).hostname,
       );
     } catch (e) {
-      throw new ChallengeValidationFailedError(e);
+      throw new ChallengeValidationFailedError(
+        e instanceof Error ? e : new Error(String(e)),
+      );
     }
 
     let transaction: Transaction = TransactionBuilder.fromXDR(
