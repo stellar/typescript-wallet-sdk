@@ -210,6 +210,15 @@ export class KYCServerNotFoundError extends Error {
   }
 }
 
+export class SigningKeyNotFoundError extends Error {
+  constructor() {
+    super(
+      `Required SIGNING_KEY not found in stellar.toml. SEP-10 authentication requires the anchor to publish a SIGNING_KEY`,
+    );
+    Object.setPrototypeOf(this, SigningKeyNotFoundError.prototype);
+  }
+}
+
 export class RecoveryServerNotFoundError extends Error {
   constructor(serverKey: string) {
     super(`Server with key ${serverKey} was not found`);
@@ -277,6 +286,13 @@ export class Sep38PriceOnlyOneAmountError extends Error {
   constructor() {
     super("Must give sellAmount or buyAmount value, but not both");
     Object.setPrototypeOf(this, Sep38PriceOnlyOneAmountError.prototype);
+  }
+}
+
+export class ChallengeValidationFailedError extends Error {
+  constructor(cause: Error) {
+    super(`SEP-10 challenge validation failed: ${cause.message}`);
+    Object.setPrototypeOf(this, ChallengeValidationFailedError.prototype);
   }
 }
 

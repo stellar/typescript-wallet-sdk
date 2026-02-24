@@ -1,9 +1,31 @@
 import { sign, decode } from "jws";
+import {
+  Keypair,
+  Account,
+  Asset,
+  Networks,
+  StellarToml,
+  TransactionBuilder as SdkTransactionBuilder,
+  Operation,
+  BASE_FEE,
+} from "@stellar/stellar-sdk";
+import { randomBytes } from "crypto";
+import axios from "axios";
+import sinon from "sinon";
 
-import { validateToken } from "../src/walletSdk/Auth";
+import { validateToken, Sep10 } from "../src/walletSdk/Auth";
+import {
+  Config,
+  StellarConfiguration,
+  ApplicationConfiguration,
+} from "../src/walletSdk";
+import { Anchor } from "../src/walletSdk/Anchor";
+import { SigningKeypair } from "../src/walletSdk/Horizon/Account";
 import {
   InvalidTokenError,
   ExpiredTokenError,
+  ChallengeValidationFailedError,
+  SigningKeyNotFoundError,
 } from "../src/walletSdk/Exceptions";
 
 const createToken = (payload: Record<string, unknown>): string => {
@@ -101,5 +123,250 @@ describe("validateToken", () => {
     });
 
     expect(() => validateToken(token)).not.toThrow();
+  });
+});
+
+describe("Sep10 challenge validation", () => {
+  const homeDomain = "testanchor.stellar.org";
+  const webAuthEndpoint = "https://testanchor.stellar.org/auth";
+  const networkPassphrase = Networks.TESTNET;
+  const webAuthDomain = new URL(webAuthEndpoint).hostname;
+  const cfg = new Config({
+    stellarConfiguration: StellarConfiguration.TestNet(),
+    applicationConfiguration: new ApplicationConfiguration(),
+  });
+
+  const buildChallengeXdr = ({
+    serverKeypair,
+    clientKeypair,
+    challengeHomeDomain = homeDomain,
+    addPaymentOperation = false,
+  }: {
+    serverKeypair: Keypair;
+    clientKeypair: Keypair;
+    challengeHomeDomain?: string;
+    addPaymentOperation?: boolean;
+  }): string => {
+    const serverAccount = new Account(serverKeypair.publicKey(), "-1");
+    const value = randomBytes(48).toString("base64");
+
+    const builder = new SdkTransactionBuilder(serverAccount, {
+      fee: BASE_FEE,
+      networkPassphrase,
+    })
+      .addOperation(
+        Operation.manageData({
+          name: `${challengeHomeDomain} auth`,
+          value,
+          source: clientKeypair.publicKey(),
+        }),
+      )
+      .addOperation(
+        Operation.manageData({
+          name: "web_auth_domain",
+          value: webAuthDomain,
+          source: serverAccount.accountId(),
+        }),
+      );
+
+    if (addPaymentOperation) {
+      builder.addOperation(
+        Operation.payment({
+          destination: serverKeypair.publicKey(),
+          asset: Asset.native(),
+          amount: "1",
+        }),
+      );
+    }
+
+    const challengeTx = builder.setTimeout(300).build();
+    challengeTx.sign(serverKeypair);
+    return challengeTx.toXDR();
+  };
+
+  const createJwt = (clientKeypair: Keypair): string => {
+    const now = Math.floor(Date.now() / 1000);
+    return createToken({
+      iss: webAuthEndpoint,
+      sub: clientKeypair.publicKey(),
+      iat: now,
+      exp: now + 3600,
+    });
+  };
+
+  const setupSep10 = ({
+    serverSigningKey,
+    challengeXdr,
+    token,
+  }: {
+    serverSigningKey: string;
+    challengeXdr: string;
+    token: string;
+  }) => {
+    const httpClient = axios.create();
+    sinon.stub(httpClient, "get").resolves({
+      data: {
+        transaction: challengeXdr,
+        network_passphrase: networkPassphrase,
+      },
+    });
+    const postStub = sinon.stub(httpClient, "post").resolves({
+      data: { token },
+    });
+
+    const sep10 = new Sep10({
+      cfg,
+      webAuthEndpoint,
+      homeDomain,
+      httpClient,
+      serverSigningKey,
+    });
+
+    return { sep10, postStub };
+  };
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should accept a valid challenge transaction", async () => {
+    const serverKeypair = Keypair.random();
+    const clientKeypair = Keypair.random();
+    const accountKp = SigningKeypair.fromSecret(clientKeypair.secret());
+    const challengeXdr = buildChallengeXdr({
+      serverKeypair,
+      clientKeypair,
+    });
+    const token = createJwt(clientKeypair);
+
+    const { sep10 } = setupSep10({
+      serverSigningKey: serverKeypair.publicKey(),
+      challengeXdr,
+      token,
+    });
+
+    const authToken = await sep10.authenticate({ accountKp });
+
+    expect(authToken.account).toBe(clientKeypair.publicKey());
+  });
+
+  it("should reject a challenge signed by the wrong server key", async () => {
+    const serverKeypair = Keypair.random();
+    const clientKeypair = Keypair.random();
+    const accountKp = SigningKeypair.fromSecret(clientKeypair.secret());
+    const challengeXdr = buildChallengeXdr({
+      serverKeypair,
+      clientKeypair,
+    });
+    const token = createJwt(clientKeypair);
+
+    const { sep10, postStub } = setupSep10({
+      serverSigningKey: Keypair.random().publicKey(),
+      challengeXdr,
+      token,
+    });
+
+    await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+      ChallengeValidationFailedError,
+    );
+    expect(postStub.notCalled).toBe(true);
+  });
+
+  it("should reject a challenge containing a non-manageData operation", async () => {
+    const serverKeypair = Keypair.random();
+    const clientKeypair = Keypair.random();
+    const accountKp = SigningKeypair.fromSecret(clientKeypair.secret());
+    const challengeXdr = buildChallengeXdr({
+      serverKeypair,
+      clientKeypair,
+      addPaymentOperation: true,
+    });
+    const token = createJwt(clientKeypair);
+
+    const { sep10, postStub } = setupSep10({
+      serverSigningKey: serverKeypair.publicKey(),
+      challengeXdr,
+      token,
+    });
+
+    await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+      ChallengeValidationFailedError,
+    );
+    expect(postStub.notCalled).toBe(true);
+  });
+
+  it("should reject a challenge with the wrong home domain", async () => {
+    const serverKeypair = Keypair.random();
+    const clientKeypair = Keypair.random();
+    const accountKp = SigningKeypair.fromSecret(clientKeypair.secret());
+    const challengeXdr = buildChallengeXdr({
+      serverKeypair,
+      clientKeypair,
+      challengeHomeDomain: "malicious.stellar.org",
+    });
+    const token = createJwt(clientKeypair);
+
+    const { sep10, postStub } = setupSep10({
+      serverSigningKey: serverKeypair.publicKey(),
+      challengeXdr,
+      token,
+    });
+
+    await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+      ChallengeValidationFailedError,
+    );
+    expect(postStub.notCalled).toBe(true);
+  });
+});
+
+describe("Anchor.sep10() signing key requirement", () => {
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should throw SigningKeyNotFoundError when TOML has no SIGNING_KEY", async () => {
+    sinon.stub(StellarToml.Resolver, "resolve").resolves({
+      WEB_AUTH_ENDPOINT: "https://testanchor.stellar.org/auth",
+      DOCUMENTATION: {},
+    } as StellarToml.Api.StellarToml);
+
+    const cfg = new Config({
+      stellarConfiguration: StellarConfiguration.TestNet(),
+      applicationConfiguration: new ApplicationConfiguration(),
+    });
+
+    const anchor = new Anchor({
+      cfg,
+      homeDomain: "testanchor.stellar.org",
+      httpClient: axios.create(),
+      language: "en",
+    });
+
+    await expect(anchor.sep10()).rejects.toThrow(SigningKeyNotFoundError);
+  });
+
+  it("should succeed when TOML has SIGNING_KEY", async () => {
+    const serverKeypair = Keypair.random();
+
+    sinon.stub(StellarToml.Resolver, "resolve").resolves({
+      WEB_AUTH_ENDPOINT: "https://testanchor.stellar.org/auth",
+      SIGNING_KEY: serverKeypair.publicKey(),
+      DOCUMENTATION: {},
+    } as StellarToml.Api.StellarToml);
+
+    const cfg = new Config({
+      stellarConfiguration: StellarConfiguration.TestNet(),
+      applicationConfiguration: new ApplicationConfiguration(),
+    });
+
+    const anchor = new Anchor({
+      cfg,
+      homeDomain: "testanchor.stellar.org",
+      httpClient: axios.create(),
+      language: "en",
+    });
+
+    const sep10 = await anchor.sep10();
+    expect(sep10).toBeDefined();
   });
 });

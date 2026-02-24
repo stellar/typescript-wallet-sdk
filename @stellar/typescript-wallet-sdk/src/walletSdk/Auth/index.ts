@@ -1,5 +1,5 @@
 import { AxiosInstance } from "axios";
-import { TransactionBuilder, Transaction } from "@stellar/stellar-sdk";
+import { TransactionBuilder, Transaction, WebAuth } from "@stellar/stellar-sdk";
 import { decode } from "jws";
 
 import { Config } from "../";
@@ -10,6 +10,7 @@ import {
   InvalidTokenError,
   MissingTokenError,
   ExpiredTokenError,
+  ChallengeValidationFailedError,
 } from "../Exceptions";
 import {
   AuthenticateParams,
@@ -31,6 +32,7 @@ type Sep10Params = {
   webAuthEndpoint: string;
   homeDomain: string;
   httpClient: AxiosInstance;
+  serverSigningKey: string;
 };
 
 /**
@@ -49,6 +51,7 @@ export class Sep10 {
   private webAuthEndpoint: string;
   private homeDomain: string;
   private httpClient: AxiosInstance;
+  private serverSigningKey: string;
 
   /**
    * Creates a new instance of the Sep10 class.
@@ -57,12 +60,14 @@ export class Sep10 {
    * @param {Sep10Params} params - Parameters to initialize the Sep10 instance.
    */
   constructor(params: Sep10Params) {
-    const { cfg, webAuthEndpoint, homeDomain, httpClient } = params;
+    const { cfg, webAuthEndpoint, homeDomain, httpClient, serverSigningKey } =
+      params;
 
     this.cfg = cfg;
     this.webAuthEndpoint = webAuthEndpoint;
     this.homeDomain = homeDomain;
     this.httpClient = httpClient;
+    this.serverSigningKey = serverSigningKey;
   }
 
   /**
@@ -150,9 +155,23 @@ export class Sep10 {
     challengeResponse,
     walletSigner,
   }: SignParams): Promise<Transaction> {
+    const networkPassphrase = this.cfg.stellar.network;
+
+    try {
+      WebAuth.readChallengeTx(
+        challengeResponse.transaction,
+        this.serverSigningKey,
+        networkPassphrase,
+        this.homeDomain,
+        new URL(this.webAuthEndpoint).hostname,
+      );
+    } catch (e) {
+      throw new ChallengeValidationFailedError(e);
+    }
+
     let transaction: Transaction = TransactionBuilder.fromXDR(
       challengeResponse.transaction,
-      challengeResponse.network_passphrase,
+      networkPassphrase,
     ) as Transaction;
 
     // check if verifying client domain as well
@@ -160,7 +179,7 @@ export class Sep10 {
       if (op.type === "manageData" && op.name === "client_domain") {
         transaction = await walletSigner.signWithDomainAccount({
           transactionXDR: challengeResponse.transaction,
-          networkPassphrase: challengeResponse.network_passphrase,
+          networkPassphrase,
           accountKp,
         });
       }
@@ -188,7 +207,10 @@ export class Sep10 {
   }
 }
 
-/** @internal Exported for testing only. Not part of the public API. */
+/**
+ * @internal
+ * @param {string} token - The JWT token to validate.
+ */
 export const validateToken = (token: string) => {
   const parsedToken = decode(token);
   if (!parsedToken) {

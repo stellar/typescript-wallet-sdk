@@ -76,6 +76,7 @@ export class Recovery extends AccountRecover {
       webAuthEndpoint: server.authEndpoint,
       homeDomain: server.homeDomain,
       httpClient: this.httpClient,
+      serverSigningKey: server.signingKey,
     });
   }
 
