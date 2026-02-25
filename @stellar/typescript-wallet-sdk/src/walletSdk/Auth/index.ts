@@ -32,7 +32,7 @@ type Sep10Params = {
   webAuthEndpoint: string;
   homeDomain: string;
   httpClient: AxiosInstance;
-  serverSigningKey: string;
+  serverSigningKey?: string;
 };
 
 /**
@@ -51,7 +51,7 @@ export class Sep10 {
   private webAuthEndpoint: string;
   private homeDomain: string;
   private httpClient: AxiosInstance;
-  private serverSigningKey: string;
+  private serverSigningKey?: string;
 
   /**
    * Creates a new instance of the Sep10 class.
@@ -157,18 +157,20 @@ export class Sep10 {
   }: SignParams): Promise<Transaction> {
     const networkPassphrase = this.cfg.stellar.network;
 
-    try {
-      WebAuth.readChallengeTx(
-        challengeResponse.transaction,
-        this.serverSigningKey,
-        networkPassphrase,
-        this.homeDomain,
-        new URL(this.webAuthEndpoint).hostname,
-      );
-    } catch (e) {
-      throw new ChallengeValidationFailedError(
-        e instanceof Error ? e : new Error(String(e)),
-      );
+    if (this.serverSigningKey) {
+      try {
+        WebAuth.readChallengeTx(
+          challengeResponse.transaction,
+          this.serverSigningKey,
+          networkPassphrase,
+          this.homeDomain,
+          new URL(this.webAuthEndpoint).hostname,
+        );
+      } catch (e) {
+        throw new ChallengeValidationFailedError(
+          e instanceof Error ? e : new Error(String(e)),
+        );
+      }
     }
 
     let transaction: Transaction = TransactionBuilder.fromXDR(

@@ -918,7 +918,8 @@ describe("fetchAuthToken", () => {
       expect("This test failed: transaction didn't cause error").toBe(null);
     } catch (e) {
       expect(e.toString()).toMatch(
-        `The transaction` + ` sequence number should be zero`,
+        `InvalidChallengeError: The transaction` +
+          ` sequence number should be zero`,
       );
     }
   });
@@ -1114,7 +1115,9 @@ describe("fetchAuthToken", () => {
 
       expect("This test failed: transaction didn't cause error").toBe(null);
     } catch (e) {
-      expect(e.toString()).toMatch(`Transaction not signed by server`);
+      expect(e.toString()).toMatch(
+        `InvalidChallengeError: Transaction not signed by server`,
+      );
     }
   });
 
@@ -1308,7 +1311,8 @@ describe("fetchAuthToken", () => {
       expect("This test failed: transaction didn't cause error").toBe(null);
     } catch (e) {
       expect(e.toString()).toMatch(
-        `'web_auth_domain' operation ` + `value does not match www.stellar.org`,
+        `InvalidChallengeError: 'web_auth_domain' operation ` +
+          `value does not match www.stellar.org`,
       );
     }
   });
@@ -1409,7 +1413,7 @@ describe("fetchAuthToken", () => {
       expect("This test failed: transaction didn't cause error").toBe(null);
     } catch (e) {
       expect(e.toString()).toMatch(
-        `The transaction source account` +
+        `InvalidChallengeError: The transaction source account` +
           ` is not equal to the server's account`,
       );
     }

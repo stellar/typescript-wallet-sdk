@@ -1,10 +1,4 @@
-import {
-  Address,
-  Operation,
-  StrKey,
-  scValToNative,
-  xdr,
-} from "@stellar/stellar-sdk";
+import { Operation, StrKey, scValToNative, xdr } from "@stellar/stellar-sdk";
 
 import {
   ArgsForTokenInvocation,
@@ -68,9 +62,9 @@ export const getTokenInvocationArgs = (
     return null;
   }
 
-  const contractId = Address.fromScAddress(
-    invokedContract.contractAddress(),
-  ).toString();
+  const contractId = StrKey.encodeContract(
+    invokedContract.contractAddress().contractId(),
+  );
   const fnName = invokedContract
     .functionName()
     .toString() as SorobanTokenInterface;

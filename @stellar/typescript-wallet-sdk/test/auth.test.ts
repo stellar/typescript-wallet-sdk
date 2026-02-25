@@ -25,7 +25,6 @@ import {
   InvalidTokenError,
   ExpiredTokenError,
   ChallengeValidationFailedError,
-  SigningKeyNotFoundError,
 } from "../src/walletSdk/Exceptions";
 
 const createToken = (payload: Record<string, unknown>): string => {
@@ -295,6 +294,38 @@ describe("Sep10 challenge validation", () => {
     expect(postStub.notCalled).toBe(true);
   });
 
+  it("should skip validation and succeed when no serverSigningKey is provided", async () => {
+    const serverKeypair = Keypair.random();
+    const clientKeypair = Keypair.random();
+    const accountKp = SigningKeypair.fromSecret(clientKeypair.secret());
+    const challengeXdr = buildChallengeXdr({
+      serverKeypair,
+      clientKeypair,
+    });
+    const token = createJwt(clientKeypair);
+
+    const httpClient = axios.create();
+    sinon.stub(httpClient, "get").resolves({
+      data: {
+        transaction: challengeXdr,
+        network_passphrase: networkPassphrase,
+      },
+    });
+    sinon.stub(httpClient, "post").resolves({
+      data: { token },
+    });
+
+    const sep10 = new Sep10({
+      cfg,
+      webAuthEndpoint,
+      homeDomain,
+      httpClient,
+    });
+
+    const authToken = await sep10.authenticate({ accountKp });
+    expect(authToken.account).toBe(clientKeypair.publicKey());
+  });
+
   it("should reject a challenge with the wrong home domain", async () => {
     const serverKeypair = Keypair.random();
     const clientKeypair = Keypair.random();
@@ -319,12 +350,12 @@ describe("Sep10 challenge validation", () => {
   });
 });
 
-describe("Anchor.sep10() signing key requirement", () => {
+describe("Anchor.sep10() signing key handling", () => {
   afterEach(() => {
     sinon.restore();
   });
 
-  it("should throw SigningKeyNotFoundError when TOML has no SIGNING_KEY", async () => {
+  it("should succeed when TOML has no SIGNING_KEY", async () => {
     sinon.stub(StellarToml.Resolver, "resolve").resolves({
       WEB_AUTH_ENDPOINT: "https://testanchor.stellar.org/auth",
       DOCUMENTATION: {},
@@ -342,7 +373,8 @@ describe("Anchor.sep10() signing key requirement", () => {
       language: "en",
     });
 
-    await expect(anchor.sep10()).rejects.toThrow(SigningKeyNotFoundError);
+    const sep10 = await anchor.sep10();
+    expect(sep10).toBeDefined();
   });
 
   it("should succeed when TOML has SIGNING_KEY", async () => {
