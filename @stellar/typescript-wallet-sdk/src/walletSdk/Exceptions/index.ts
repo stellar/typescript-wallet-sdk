@@ -210,15 +210,6 @@ export class KYCServerNotFoundError extends Error {
   }
 }
 
-export class SigningKeyNotFoundError extends Error {
-  constructor() {
-    super(
-      `Required SIGNING_KEY not found in stellar.toml. SEP-10 authentication requires the anchor to publish a SIGNING_KEY`,
-    );
-    Object.setPrototypeOf(this, SigningKeyNotFoundError.prototype);
-  }
-}
-
 export class RecoveryServerNotFoundError extends Error {
   constructor(serverKey: string) {
     super(`Server with key ${serverKey} was not found`);
