@@ -4,6 +4,7 @@ jobs:
   playwright:
     name: "Playwright e2e Tests"
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     container:
       image: mcr.microsoft.com/playwright:v1.43.0-jammy
     steps:
