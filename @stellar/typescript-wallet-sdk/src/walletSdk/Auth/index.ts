@@ -370,7 +370,7 @@ const readChallengeTx = (
       if (op.value === undefined) {
         throw new Error("'web_auth_domain' operation value should not be null");
       }
-      if (Buffer.from(webAuthDomain).compare(Buffer.from(op.value)) !== 0) {
+      if (op.value.compare(Buffer.from(webAuthDomain)) !== 0) {
         throw new Error(
           `'web_auth_domain' operation value does not match ${webAuthDomain}`,
         );
