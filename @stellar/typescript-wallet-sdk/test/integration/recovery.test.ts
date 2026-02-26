@@ -22,6 +22,7 @@ describe("Recovery Integration Tests", () => {
       endpoint: "http://localhost:8000",
       authEndpoint: "http://localhost:8001",
       homeDomain: "test-domain",
+      signingKey: "GA43H67KTOSLFDM5LPUSJGIJSPWV6WVQN6FUYQWZKWJE5EMHXWE5EGK5",
     };
 
     const server2Key: RecoveryServerKey = "server2";
@@ -29,6 +30,7 @@ describe("Recovery Integration Tests", () => {
       endpoint: "http://localhost:8002",
       authEndpoint: "http://localhost:8003",
       homeDomain: "test-domain",
+      signingKey: "GAZ2ITFWBXNT4SXSDEPM43IN72FQXOUCVXEXSHYX3VT2WZUI4E6UBSI2",
     };
 
     const servers: RecoveryServerMap = {

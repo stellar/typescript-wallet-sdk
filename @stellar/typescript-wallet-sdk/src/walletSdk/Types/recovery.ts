@@ -63,7 +63,7 @@ export type RecoveryServer = {
   endpoint: string;
   authEndpoint: string;
   homeDomain: string;
-  signingKey?: string;
+  signingKey: string;
   walletSigner?: WalletSigner;
   clientDomain?: string;
 };

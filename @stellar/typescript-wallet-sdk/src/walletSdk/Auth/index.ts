@@ -1,10 +1,5 @@
 import { AxiosInstance } from "axios";
-import {
-  TransactionBuilder,
-  Transaction,
-  FeeBumpTransaction,
-  WebAuth,
-} from "@stellar/stellar-sdk";
+import { TransactionBuilder, Transaction, WebAuth } from "@stellar/stellar-sdk";
 import { decode } from "jws";
 
 import { Config } from "../";
@@ -38,7 +33,7 @@ type Sep10Params = {
   webAuthEndpoint: string;
   homeDomain: string;
   httpClient: AxiosInstance;
-  serverSigningKey?: string;
+  serverSigningKey: string;
 };
 
 /**
@@ -57,7 +52,7 @@ export class Sep10 {
   private webAuthEndpoint: string;
   private homeDomain: string;
   private httpClient: AxiosInstance;
-  private serverSigningKey?: string;
+  private serverSigningKey: string;
 
   /**
    * Creates a new instance of the Sep10 class.
@@ -176,22 +171,13 @@ export class Sep10 {
     try {
       const webAuthDomain = new URL(this.webAuthEndpoint).hostname;
 
-      if (this.serverSigningKey) {
-        WebAuth.readChallengeTx(
-          challengeResponse.transaction,
-          this.serverSigningKey,
-          networkPassphrase,
-          this.homeDomain,
-          webAuthDomain,
-        );
-      } else {
-        readChallengeTx(
-          challengeResponse.transaction,
-          networkPassphrase,
-          this.homeDomain,
-          webAuthDomain,
-        );
-      }
+      WebAuth.readChallengeTx(
+        challengeResponse.transaction,
+        this.serverSigningKey,
+        networkPassphrase,
+        this.homeDomain,
+        webAuthDomain,
+      );
     } catch (e) {
       throw new ChallengeValidationFailedError(
         e instanceof Error ? e : new Error(String(e)),
@@ -253,136 +239,6 @@ export const validateToken = (token: string) => {
   if (typeof exp === "number" && exp < Math.floor(Date.now() / 1000)) {
     throw new ExpiredTokenError(exp);
   }
-};
-
-/*
- * Validates a SEP-10 challenge transaction without requiring the server's
- * signing key. This performs all structural validations from the SEP-10 spec
- * (sequence number, operation types, timebounds, home domain, web_auth_domain,
- * nonce format) but skips the server account and signature checks.
- *
- * Used as a fallback when the anchor's stellar.toml does not publish a
- * SIGNING_KEY, providing strong protection against malformed or malicious
- * challenge transactions.
- *
- * @internal
- * @see {@link https://github.com/stellar/js-stellar-sdk/blob/v13.0.0-beta.1/src/webauth/utils.ts#L188 | WebAuth.readChallengeTx}
- */
-const readChallengeTx = (
-  challengeTx: string,
-  networkPassphrase: string,
-  homeDomain: string,
-  webAuthDomain: string,
-): { tx: Transaction; clientAccountID: string } => {
-  let transaction: Transaction;
-  try {
-    transaction = new Transaction(challengeTx, networkPassphrase);
-  } catch {
-    try {
-      // eslint-disable-next-line no-new
-      new FeeBumpTransaction(challengeTx, networkPassphrase);
-    } catch {
-      throw new Error(
-        "Invalid challenge: unable to deserialize challengeTx transaction string",
-      );
-    }
-    throw new Error(
-      "Invalid challenge: expected a Transaction but received a FeeBumpTransaction",
-    );
-  }
-
-  // verify sequence number
-  const sequence = Number.parseInt(transaction.sequence, 10);
-  if (sequence !== 0) {
-    throw new Error("The transaction sequence number should be zero");
-  }
-
-  // verify operations
-  if (transaction.operations.length < 1) {
-    throw new Error("The transaction should contain at least one operation");
-  }
-
-  const [operation, ...subsequentOperations] = transaction.operations;
-
-  if (!operation.source) {
-    throw new Error(
-      "The transaction's operation should contain a source account",
-    );
-  }
-  const clientAccountID: string = operation.source;
-
-  // verify memo
-  if (transaction.memo.type !== "none") {
-    if (clientAccountID.startsWith("M")) {
-      throw new Error(
-        "The transaction has a memo but the client account ID is a muxed account",
-      );
-    }
-    if (transaction.memo.type !== "id") {
-      throw new Error("The transaction's memo must be of type `id`");
-    }
-  }
-
-  if (operation.type !== "manageData") {
-    throw new Error("The transaction's operation type should be 'manageData'");
-  }
-
-  // verify timebounds
-  if (!transaction.timeBounds) {
-    throw new Error("The transaction requires timebounds");
-  }
-
-  if (Number.parseInt(transaction.timeBounds.maxTime, 10) === 0) {
-    throw new Error("The transaction requires non-infinite timebounds");
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-  const gracePeriod = 60 * 5;
-  const minTime = Number.parseInt(transaction.timeBounds.minTime, 10) || 0;
-  const maxTime = Number.parseInt(transaction.timeBounds.maxTime, 10) || 0;
-  if (now < minTime - gracePeriod || now > maxTime + gracePeriod) {
-    throw new Error("The transaction has expired");
-  }
-
-  // verify nonce value
-  if (operation.value === undefined || !operation.value) {
-    throw new Error("The transaction's operation value should not be null");
-  }
-
-  if (Buffer.from(operation.value.toString(), "base64").length !== 48) {
-    throw new Error(
-      "The transaction's operation value should be a 64 bytes base64 random string",
-    );
-  }
-
-  // verify home domain
-  if (`${homeDomain} auth` !== operation.name) {
-    throw new Error(
-      "Invalid homeDomains: the transaction's operation key name " +
-        "does not match the expected home domain",
-    );
-  }
-
-  // verify subsequent operations are all manageData
-  for (const op of subsequentOperations) {
-    if (op.type !== "manageData") {
-      throw new Error(
-        "The transaction has operations that are not of type 'manageData'",
-      );
-    }
-    if (op.name === "web_auth_domain") {
-      if (op.value === undefined) {
-        throw new Error("'web_auth_domain' operation value should not be null");
-      }
-      if (op.value.compare(Buffer.from(webAuthDomain)) !== 0) {
-        throw new Error(
-          `'web_auth_domain' operation value does not match ${webAuthDomain}`,
-        );
-      }
-    }
-  }
-
-  return { tx: transaction, clientAccountID };
 };
 
 const createAuthSignToken = async (

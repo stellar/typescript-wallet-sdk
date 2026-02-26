@@ -7,6 +7,7 @@ import { Customer, Sep12 } from "../Customer";
 import {
   ServerRequestFailedError,
   KYCServerNotFoundError,
+  MissingSigningKeyError,
 } from "../Exceptions";
 import { Sep6, Transfer } from "./Sep6";
 import { Interactive, Sep24 } from "./Sep24";
@@ -104,6 +105,9 @@ export class Anchor {
    */
   async sep10(): Promise<Sep10> {
     const tomlInfo = await this.sep1();
+    if (!tomlInfo.signingKey) {
+      throw new MissingSigningKeyError();
+    }
     return new Sep10({
       cfg: this.cfg,
       webAuthEndpoint: tomlInfo.webAuthEndpoint,
