@@ -1,3 +1,4 @@
+import axios from "axios";
 import { TransactionBuilder } from "@stellar/stellar-sdk";
 import { Wallet, Server } from "../src";
 
@@ -5,6 +6,7 @@ let wallet;
 let account;
 let accountKp;
 const networkPassphrase = "Test SDF Network ; September 2015";
+const anchorDomain = "testanchor.stellar.org";
 describe("SEP-10 helpers", () => {
   beforeEach(() => {
     wallet = Wallet.TestNet();
@@ -13,29 +15,23 @@ describe("SEP-10 helpers", () => {
   });
 
   it("should validate and sign challenge txn", async () => {
-    const validChallengeTx =
-      "AAAAAgAAAACpn2Fr7GAZ4XOcFvEz+xduBFDK1NDLQP875GtWWlJ0XQAAAMgAAAAAAAAAAAAAAAEAAAAAZa76AgAAAABlrv2GAAAAAAAAAAIAAAABAAAAALO9GbK9e+E+ul46lJyGjkzjlQnwqNryiqBsIR1vgMlAAAAACgAAABt0ZXN0YW5jaG9yLnN0ZWxsYXIub3JnIGF1dGgAAAAAAQAAAEBRT0ZDTE02OFQ0cVF4Um55TCtRdlBlVTdPeDJYNnhLdzdyenZTbzBBYUdqdUtIdGxQRkpHNTFKMndJazBwMXl2AAAAAQAAAACpn2Fr7GAZ4XOcFvEz+xduBFDK1NDLQP875GtWWlJ0XQAAAAoAAAAPd2ViX2F1dGhfZG9tYWluAAAAAAEAAAAWdGVzdGFuY2hvci5zdGVsbGFyLm9yZwAAAAAAAAAAAAFaUnRdAAAAQG6cMkt4YhwOzgizIimXRX8zTfFjAOItG7kSX14A454KlhGj9ocFhaRpj3tCc4fK45toFCBKRAdyFM7aQq331QI=";
+    const resp = await axios.get(
+      `https://${anchorDomain}/auth?account=${accountKp.publicKey}&home_domain=${anchorDomain}`,
+    );
+    const validChallengeTx = resp.data.transaction;
 
-    let isValid;
-    try {
-      const signedResp = await Server.signChallengeTransaction({
-        accountKp,
-        challengeTx: validChallengeTx,
-        networkPassphrase,
-        anchorDomain: "testanchor.stellar.org",
-      });
-      const signedTxn = TransactionBuilder.fromXDR(
-        signedResp.transaction,
-        networkPassphrase,
-      );
-      expect(signedTxn.signatures.length).toBe(2);
-      expect(signedResp.networkPassphrase).toBe(networkPassphrase);
-      isValid = true;
-    } catch (e) {
-      isValid = false;
-    }
-
-    expect(isValid).toBeTruthy();
+    const signedResp = await Server.signChallengeTransaction({
+      accountKp,
+      challengeTx: validChallengeTx,
+      networkPassphrase,
+      anchorDomain,
+    });
+    const signedTxn = TransactionBuilder.fromXDR(
+      signedResp.transaction,
+      networkPassphrase,
+    );
+    expect(signedTxn.signatures.length).toBe(2);
+    expect(signedResp.networkPassphrase).toBe(networkPassphrase);
   });
 
   it("should invalidate bad challenge txn", async () => {
@@ -48,7 +44,7 @@ describe("SEP-10 helpers", () => {
         accountKp,
         challengeTx: invalidChallengeTx,
         networkPassphrase,
-        anchorDomain: "testanchor.stellar.org",
+        anchorDomain,
       });
       isValid = true;
     } catch (e) {
