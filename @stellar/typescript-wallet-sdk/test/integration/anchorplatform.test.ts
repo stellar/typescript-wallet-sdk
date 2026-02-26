@@ -6,14 +6,14 @@ let wallet;
 let stellar;
 let anchor;
 let accountKp;
-const anchorUrl = "https://anchor-sep-server-dev.stellar.org/";
+const anchorUrl = "anchor-sep-server-dev.stellar.org";
 
 describe("Anchor Platform Integration Tests", () => {
   beforeAll(async () => {
     // Setup
     wallet = Wallet.TestNet();
     stellar = wallet.stellar();
-    anchor = wallet.anchor({ homeDomain: anchorUrl, allowHttp: true });
+    anchor = wallet.anchor({ homeDomain: anchorUrl });
     accountKp = stellar.account().createKeypair();
     await stellar.fundTestnetAccount(accountKp.publicKey);
   }, 30000);
