@@ -287,6 +287,15 @@ export class ChallengeValidationFailedError extends Error {
   }
 }
 
+export class NetworkPassphraseMismatchError extends Error {
+  constructor(expected: string, received: string) {
+    super(
+      `Network passphrase mismatch: expected "${expected}" but server returned "${received}"`,
+    );
+    Object.setPrototypeOf(this, NetworkPassphraseMismatchError.prototype);
+  }
+}
+
 export class ChallengeTxnIncorrectSequenceError extends Error {
   constructor() {
     super("Challenge transaction sequence number must be 0");

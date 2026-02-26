@@ -16,6 +16,7 @@ import {
   MissingTokenError,
   ExpiredTokenError,
   ChallengeValidationFailedError,
+  NetworkPassphraseMismatchError,
 } from "../Exceptions";
 import {
   AuthenticateParams,
@@ -161,6 +162,16 @@ export class Sep10 {
     walletSigner,
   }: SignParams): Promise<Transaction> {
     const networkPassphrase = this.cfg.stellar.network;
+
+    if (
+      challengeResponse.network_passphrase &&
+      challengeResponse.network_passphrase !== (networkPassphrase as string)
+    ) {
+      throw new NetworkPassphraseMismatchError(
+        networkPassphrase,
+        challengeResponse.network_passphrase,
+      );
+    }
 
     const webAuthDomain = new URL(this.webAuthEndpoint).hostname;
 
@@ -313,21 +324,20 @@ const readChallengeTx = (
   }
 
   // verify timebounds
-  if (
-    transaction.timeBounds &&
-    Number.parseInt(transaction.timeBounds.maxTime, 10) === 0
-  ) {
+  if (!transaction.timeBounds) {
+    throw new Error("The transaction requires timebounds");
+  }
+
+  if (Number.parseInt(transaction.timeBounds.maxTime, 10) === 0) {
     throw new Error("The transaction requires non-infinite timebounds");
   }
 
-  if (transaction.timeBounds) {
-    const now = Math.floor(Date.now() / 1000);
-    const gracePeriod = 60 * 5;
-    const minTime = Number.parseInt(transaction.timeBounds.minTime, 10) || 0;
-    const maxTime = Number.parseInt(transaction.timeBounds.maxTime, 10) || 0;
-    if (now < minTime - gracePeriod || now > maxTime + gracePeriod) {
-      throw new Error("The transaction has expired");
-    }
+  const now = Math.floor(Date.now() / 1000);
+  const gracePeriod = 60 * 5;
+  const minTime = Number.parseInt(transaction.timeBounds.minTime, 10) || 0;
+  const maxTime = Number.parseInt(transaction.timeBounds.maxTime, 10) || 0;
+  if (now < minTime - gracePeriod || now > maxTime + gracePeriod) {
+    throw new Error("The transaction has expired");
   }
 
   // verify nonce value

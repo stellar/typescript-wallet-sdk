@@ -11,6 +11,7 @@ import {
   TransactionBuilder as SdkTransactionBuilder,
   Operation,
   BASE_FEE,
+  xdr as StellarXdr,
 } from "@stellar/stellar-sdk";
 import { randomBytes } from "crypto";
 import axios from "axios";
@@ -28,6 +29,7 @@ import {
   InvalidTokenError,
   ExpiredTokenError,
   ChallengeValidationFailedError,
+  NetworkPassphraseMismatchError,
 } from "../src/walletSdk/Exceptions";
 
 const createToken = (payload: Record<string, unknown>): string => {
@@ -257,16 +259,18 @@ describe("Sep10 challenge validation", () => {
     serverSigningKey,
     challengeXdr,
     token,
+    responseNetworkPassphrase = networkPassphrase,
   }: {
     serverSigningKey?: string;
     challengeXdr: string;
     token: string;
+    responseNetworkPassphrase?: string;
   }) => {
     const httpClient = axios.create();
     sinon.stub(httpClient, "get").resolves({
       data: {
         transaction: challengeXdr,
-        network_passphrase: networkPassphrase,
+        network_passphrase: responseNetworkPassphrase,
       },
     });
     const postStub = sinon.stub(httpClient, "post").resolves({
@@ -888,6 +892,88 @@ describe("Sep10 challenge validation", () => {
         ChallengeValidationFailedError,
       );
       expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject a challenge with missing timebounds", async () => {
+      const { xdr: txXdr, clientKeypair } = buildChallenge();
+
+      // Strip timebounds by setting preconditions to PRECOND_NONE in the XDR
+      const envelope = StellarXdr.TransactionEnvelope.fromXDR(txXdr, "base64");
+      envelope.v1().tx().cond(StellarXdr.Preconditions.precondNone());
+      const noTimeboundsXdr = envelope.toXDR().toString("base64");
+
+      const { sep10, accountKp, postStub } = authenticateWithoutKey(
+        noTimeboundsXdr,
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+  });
+
+  describe("network passphrase mismatch", () => {
+    it("should reject when server returns a different network passphrase", async () => {
+      const { xdr, serverKeypair, clientKeypair } = buildChallenge();
+      const accountKp = SigningKeypair.fromSecret(clientKeypair.secret());
+      const now = Math.floor(Date.now() / 1000);
+      const token = createToken({
+        iss: webAuthEndpoint,
+        sub: clientKeypair.publicKey(),
+        iat: now,
+        exp: now + 3600,
+      });
+      const { sep10, postStub } = setupSep10({
+        serverSigningKey: serverKeypair.publicKey(),
+        challengeXdr: xdr,
+        token,
+        responseNetworkPassphrase: Networks.PUBLIC,
+      });
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        NetworkPassphraseMismatchError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should accept when server returns matching network passphrase", async () => {
+      const { xdr, serverKeypair, clientKeypair } = buildChallenge();
+      const accountKp = SigningKeypair.fromSecret(clientKeypair.secret());
+      const now = Math.floor(Date.now() / 1000);
+      const token = createToken({
+        iss: webAuthEndpoint,
+        sub: clientKeypair.publicKey(),
+        iat: now,
+        exp: now + 3600,
+      });
+      const { sep10 } = setupSep10({
+        serverSigningKey: serverKeypair.publicKey(),
+        challengeXdr: xdr,
+        token,
+        responseNetworkPassphrase: networkPassphrase,
+      });
+      const authToken = await sep10.authenticate({ accountKp });
+      expect(authToken.account).toBe(clientKeypair.publicKey());
+    });
+
+    it("should accept when server omits network passphrase", async () => {
+      const { xdr, serverKeypair, clientKeypair } = buildChallenge();
+      const accountKp = SigningKeypair.fromSecret(clientKeypair.secret());
+      const now = Math.floor(Date.now() / 1000);
+      const token = createToken({
+        iss: webAuthEndpoint,
+        sub: clientKeypair.publicKey(),
+        iat: now,
+        exp: now + 3600,
+      });
+      const { sep10 } = setupSep10({
+        serverSigningKey: serverKeypair.publicKey(),
+        challengeXdr: xdr,
+        token,
+        responseNetworkPassphrase: undefined,
+      });
+      const authToken = await sep10.authenticate({ accountKp });
+      expect(authToken.account).toBe(clientKeypair.publicKey());
     });
   });
 });
