@@ -1,3 +1,12 @@
+# Release notes - Typescript Wallet SDK - 1.10.0
+
+### Added
+* Validate SEP-10 challenge transaction (#228)
+
+### Fixed
+* Fix broken JWT expiration check in SEP-10 authentication (#226)
+* Fix TypeError crash in SEP-7 replace parameter parsing (#227)
+
 # Release notes - Typescript Wallet SDK - 1.9.0
 
 ### Added
