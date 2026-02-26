@@ -3,8 +3,11 @@ import {
   Keypair,
   Account,
   Asset,
+  Memo,
+  MuxedAccount,
   Networks,
   StellarToml,
+  Transaction,
   TransactionBuilder as SdkTransactionBuilder,
   Operation,
   BASE_FEE,
@@ -135,62 +138,119 @@ describe("Sep10 challenge validation", () => {
     applicationConfiguration: new ApplicationConfiguration(),
   });
 
-  const buildChallengeXdr = ({
-    serverKeypair,
-    clientKeypair,
+  /*
+   * Flexible challenge transaction builder for testing each validation check.
+   *
+   * Builds a SEP-10 challenge transaction with configurable properties so each
+   * test can violate exactly one validation rule while keeping everything else
+   * correct.
+   */
+  const buildChallenge = ({
+    serverKeypair = Keypair.random(),
+    clientKeypair = Keypair.random(),
+    clientSource,
     challengeHomeDomain = homeDomain,
-    addPaymentOperation = false,
+    sequence = "-1",
+    nonce = randomBytes(48).toString("base64"),
+    omitNonce = false,
+    memo,
+    useExplicitTimebounds = false,
+    minTime = 0,
+    maxTime = 0,
+    timeout = 300,
+    firstOpType = "manageData" as string,
+    omitFirstOpSource = false,
+    includeWebAuthDomain = true,
+    webAuthDomainValue = webAuthDomain,
+    additionalOps = [] as any[],
+    shouldSign = true,
   }: {
-    serverKeypair: Keypair;
-    clientKeypair: Keypair;
+    serverKeypair?: Keypair;
+    clientKeypair?: Keypair;
+    clientSource?: string;
     challengeHomeDomain?: string;
-    addPaymentOperation?: boolean;
-  }): string => {
-    const serverAccount = new Account(serverKeypair.publicKey(), "-1");
-    const value = randomBytes(48).toString("base64");
+    sequence?: string;
+    nonce?: string;
+    omitNonce?: boolean;
+    memo?: any;
+    useExplicitTimebounds?: boolean;
+    minTime?: number;
+    maxTime?: number;
+    timeout?: number;
+    firstOpType?: string;
+    omitFirstOpSource?: boolean;
+    includeWebAuthDomain?: boolean;
+    webAuthDomainValue?: string | null;
+    additionalOps?: any[];
+    shouldSign?: boolean;
+  } = {}) => {
+    const serverAccount = new Account(serverKeypair.publicKey(), sequence);
 
-    const builder = new SdkTransactionBuilder(serverAccount, {
+    const builderOpts: any = {
       fee: BASE_FEE,
       networkPassphrase,
-    })
-      .addOperation(
-        Operation.manageData({
-          name: `${challengeHomeDomain} auth`,
-          value,
-          source: clientKeypair.publicKey(),
-        }),
-      )
-      .addOperation(
-        Operation.manageData({
-          name: "web_auth_domain",
-          value: webAuthDomain,
-          source: serverAccount.accountId(),
-        }),
-      );
+    };
+    if (memo) {
+      builderOpts.memo = memo;
+    }
+    if (useExplicitTimebounds) {
+      builderOpts.timebounds = { minTime, maxTime };
+    }
 
-    if (addPaymentOperation) {
+    const builder = new SdkTransactionBuilder(serverAccount, builderOpts);
+
+    if (firstOpType === "payment") {
       builder.addOperation(
         Operation.payment({
           destination: serverKeypair.publicKey(),
           asset: Asset.native(),
           amount: "1",
+          ...(omitFirstOpSource
+            ? {}
+            : { source: clientSource ?? clientKeypair.publicKey() }),
         }),
       );
+    } else if (firstOpType === "manageData") {
+      const mdOpts: any = {
+        name: `${challengeHomeDomain} auth`,
+      };
+      if (omitNonce) {
+        mdOpts.value = null;
+      } else {
+        mdOpts.value = nonce;
+      }
+      if (!omitFirstOpSource) {
+        mdOpts.source = clientSource ?? clientKeypair.publicKey();
+      }
+      builder.addOperation(Operation.manageData(mdOpts));
+    }
+    if (includeWebAuthDomain) {
+      const waOpts: any = {
+        name: "web_auth_domain",
+        source: serverAccount.accountId(),
+      };
+      if (webAuthDomainValue === null) {
+        waOpts.value = null;
+      } else {
+        waOpts.value = webAuthDomainValue;
+      }
+      builder.addOperation(Operation.manageData(waOpts));
     }
 
-    const challengeTx = builder.setTimeout(300).build();
-    challengeTx.sign(serverKeypair);
-    return challengeTx.toXDR();
-  };
+    for (const op of additionalOps) {
+      builder.addOperation(op);
+    }
 
-  const createJwt = (clientKeypair: Keypair): string => {
-    const now = Math.floor(Date.now() / 1000);
-    return createToken({
-      iss: webAuthEndpoint,
-      sub: clientKeypair.publicKey(),
-      iat: now,
-      exp: now + 3600,
-    });
+    if (!useExplicitTimebounds) {
+      builder.setTimeout(timeout);
+    }
+
+    const tx = builder.build();
+    if (shouldSign) {
+      tx.sign(serverKeypair);
+    }
+
+    return { xdr: tx.toXDR(), serverKeypair, clientKeypair };
   };
 
   const setupSep10 = ({
@@ -198,7 +258,7 @@ describe("Sep10 challenge validation", () => {
     challengeXdr,
     token,
   }: {
-    serverSigningKey: string;
+    serverSigningKey?: string;
     challengeXdr: string;
     token: string;
   }) => {
@@ -218,135 +278,617 @@ describe("Sep10 challenge validation", () => {
       webAuthEndpoint,
       homeDomain,
       httpClient,
-      serverSigningKey,
+      ...(serverSigningKey ? { serverSigningKey } : {}),
     });
 
     return { sep10, postStub };
+  };
+
+  const createJwt = (clientKeypair: Keypair): string => {
+    const now = Math.floor(Date.now() / 1000);
+    return createToken({
+      iss: webAuthEndpoint,
+      sub: clientKeypair.publicKey(),
+      iat: now,
+      exp: now + 3600,
+    });
   };
 
   afterEach(() => {
     sinon.restore();
   });
 
-  it("should accept a valid challenge transaction", async () => {
-    const serverKeypair = Keypair.random();
-    const clientKeypair = Keypair.random();
-    const accountKp = SigningKeypair.fromSecret(clientKeypair.secret());
-    const challengeXdr = buildChallengeXdr({
-      serverKeypair,
-      clientKeypair,
+  // ============================================================
+  // WITH serverSigningKey — uses WebAuth.readChallengeTx from SDK
+  // ============================================================
+  describe("with serverSigningKey", () => {
+    const authenticateWithKey = (
+      challengeXdr: string,
+      serverPublicKey: string,
+      clientKeypair: Keypair,
+    ) => {
+      const accountKp = SigningKeypair.fromSecret(clientKeypair.secret());
+      const token = createJwt(clientKeypair);
+      const { sep10, postStub } = setupSep10({
+        serverSigningKey: serverPublicKey,
+        challengeXdr,
+        token,
+      });
+      return { sep10, accountKp, postStub };
+    };
+
+    it("should accept a valid challenge", async () => {
+      const { xdr, serverKeypair, clientKeypair } = buildChallenge();
+      const { sep10, accountKp } = authenticateWithKey(
+        xdr,
+        serverKeypair.publicKey(),
+        clientKeypair,
+      );
+      const authToken = await sep10.authenticate({ accountKp });
+      expect(authToken.account).toBe(clientKeypair.publicKey());
     });
-    const token = createJwt(clientKeypair);
 
-    const { sep10 } = setupSep10({
-      serverSigningKey: serverKeypair.publicKey(),
-      challengeXdr,
-      token,
+    it("should reject when signed by wrong server key", async () => {
+      const { xdr, clientKeypair } = buildChallenge();
+      const { sep10, accountKp, postStub } = authenticateWithKey(
+        xdr,
+        Keypair.random().publicKey(),
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
     });
 
-    const authToken = await sep10.authenticate({ accountKp });
+    it("should reject invalid XDR", async () => {
+      const clientKeypair = Keypair.random();
+      const { sep10, accountKp, postStub } = authenticateWithKey(
+        "not-valid-xdr",
+        Keypair.random().publicKey(),
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
 
-    expect(authToken.account).toBe(clientKeypair.publicKey());
+    it("should reject a FeeBumpTransaction", async () => {
+      const { xdr: innerXdr, serverKeypair, clientKeypair } = buildChallenge();
+      const innerTx = new Transaction(innerXdr, networkPassphrase);
+      const feeBump = SdkTransactionBuilder.buildFeeBumpTransaction(
+        serverKeypair,
+        BASE_FEE,
+        innerTx,
+        networkPassphrase,
+      );
+      feeBump.sign(serverKeypair);
+
+      const { sep10, accountKp, postStub } = authenticateWithKey(
+        feeBump.toXDR(),
+        serverKeypair.publicKey(),
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject non-zero sequence number", async () => {
+      const { xdr, serverKeypair, clientKeypair } = buildChallenge({
+        sequence: "99",
+      });
+      const { sep10, accountKp, postStub } = authenticateWithKey(
+        xdr,
+        serverKeypair.publicKey(),
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject a challenge with no operations", async () => {
+      const serverKeypair = Keypair.random();
+      const clientKeypair = Keypair.random();
+      const serverAccount = new Account(serverKeypair.publicKey(), "-1");
+      const tx = new SdkTransactionBuilder(serverAccount, {
+        fee: BASE_FEE,
+        networkPassphrase,
+      })
+        .setTimeout(300)
+        .build();
+      tx.sign(serverKeypair);
+
+      const { sep10, accountKp, postStub } = authenticateWithKey(
+        tx.toXDR(),
+        serverKeypair.publicKey(),
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject first operation without source account", async () => {
+      const { xdr, serverKeypair, clientKeypair } = buildChallenge({
+        omitFirstOpSource: true,
+      });
+      const { sep10, accountKp, postStub } = authenticateWithKey(
+        xdr,
+        serverKeypair.publicKey(),
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject memo with muxed client account", async () => {
+      const clientKeypair = Keypair.random();
+      const baseAccount = new Account(clientKeypair.publicKey(), "0");
+      const muxed = new MuxedAccount(baseAccount, "123");
+
+      const { xdr, serverKeypair } = buildChallenge({
+        clientKeypair,
+        clientSource: muxed.accountId(),
+        memo: Memo.id("456"),
+      });
+      const { sep10, accountKp, postStub } = authenticateWithKey(
+        xdr,
+        serverKeypair.publicKey(),
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject non-id memo type", async () => {
+      const { xdr, serverKeypair, clientKeypair } = buildChallenge({
+        memo: Memo.text("test"),
+      });
+      const { sep10, accountKp, postStub } = authenticateWithKey(
+        xdr,
+        serverKeypair.publicKey(),
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject first operation that is not manageData", async () => {
+      const { xdr, serverKeypair, clientKeypair } = buildChallenge({
+        firstOpType: "payment",
+      });
+      const { sep10, accountKp, postStub } = authenticateWithKey(
+        xdr,
+        serverKeypair.publicKey(),
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject infinite timebounds (maxTime=0)", async () => {
+      const { xdr, serverKeypair, clientKeypair } = buildChallenge({
+        useExplicitTimebounds: true,
+        minTime: 0,
+        maxTime: 0,
+      });
+      const { sep10, accountKp, postStub } = authenticateWithKey(
+        xdr,
+        serverKeypair.publicKey(),
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject expired timebounds", async () => {
+      const now = Math.floor(Date.now() / 1000);
+      const { xdr, serverKeypair, clientKeypair } = buildChallenge({
+        useExplicitTimebounds: true,
+        minTime: now - 7200,
+        maxTime: now - 3600,
+      });
+      const { sep10, accountKp, postStub } = authenticateWithKey(
+        xdr,
+        serverKeypair.publicKey(),
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject missing nonce value", async () => {
+      const { xdr, serverKeypair, clientKeypair } = buildChallenge({
+        omitNonce: true,
+      });
+      const { sep10, accountKp, postStub } = authenticateWithKey(
+        xdr,
+        serverKeypair.publicKey(),
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject wrong nonce length", async () => {
+      const { xdr, serverKeypair, clientKeypair } = buildChallenge({
+        nonce: randomBytes(16).toString("base64"),
+      });
+      const { sep10, accountKp, postStub } = authenticateWithKey(
+        xdr,
+        serverKeypair.publicKey(),
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject wrong home domain", async () => {
+      const { xdr, serverKeypair, clientKeypair } = buildChallenge({
+        challengeHomeDomain: "evil.example.com",
+      });
+      const { sep10, accountKp, postStub } = authenticateWithKey(
+        xdr,
+        serverKeypair.publicKey(),
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject subsequent non-manageData operation", async () => {
+      const serverKeypair = Keypair.random();
+      const { xdr, clientKeypair } = buildChallenge({
+        serverKeypair,
+        additionalOps: [
+          Operation.payment({
+            destination: serverKeypair.publicKey(),
+            asset: Asset.native(),
+            amount: "1",
+          }),
+        ],
+      });
+      const { sep10, accountKp, postStub } = authenticateWithKey(
+        xdr,
+        serverKeypair.publicKey(),
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject null web_auth_domain value", async () => {
+      const { xdr, serverKeypair, clientKeypair } = buildChallenge({
+        webAuthDomainValue: null,
+      });
+      const { sep10, accountKp, postStub } = authenticateWithKey(
+        xdr,
+        serverKeypair.publicKey(),
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject mismatched web_auth_domain", async () => {
+      const { xdr, serverKeypair, clientKeypair } = buildChallenge({
+        webAuthDomainValue: "evil.example.com",
+      });
+      const { sep10, accountKp, postStub } = authenticateWithKey(
+        xdr,
+        serverKeypair.publicKey(),
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
   });
 
-  it("should reject a challenge signed by the wrong server key", async () => {
-    const serverKeypair = Keypair.random();
-    const clientKeypair = Keypair.random();
-    const accountKp = SigningKeypair.fromSecret(clientKeypair.secret());
-    const challengeXdr = buildChallengeXdr({
-      serverKeypair,
-      clientKeypair,
-    });
-    const token = createJwt(clientKeypair);
+  // ============================================================
+  // WITHOUT serverSigningKey — uses local readChallengeTx
+  // ============================================================
+  describe("without serverSigningKey (local readChallengeTx)", () => {
+    const authenticateWithoutKey = (
+      challengeXdr: string,
+      clientKeypair: Keypair,
+    ) => {
+      const accountKp = SigningKeypair.fromSecret(clientKeypair.secret());
+      const token = createJwt(clientKeypair);
+      const { sep10, postStub } = setupSep10({
+        challengeXdr,
+        token,
+      });
+      return { sep10, accountKp, postStub };
+    };
 
-    const { sep10, postStub } = setupSep10({
-      serverSigningKey: Keypair.random().publicKey(),
-      challengeXdr,
-      token,
-    });
-
-    await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
-      ChallengeValidationFailedError,
-    );
-    expect(postStub.notCalled).toBe(true);
-  });
-
-  it("should reject a challenge containing a non-manageData operation", async () => {
-    const serverKeypair = Keypair.random();
-    const clientKeypair = Keypair.random();
-    const accountKp = SigningKeypair.fromSecret(clientKeypair.secret());
-    const challengeXdr = buildChallengeXdr({
-      serverKeypair,
-      clientKeypair,
-      addPaymentOperation: true,
-    });
-    const token = createJwt(clientKeypair);
-
-    const { sep10, postStub } = setupSep10({
-      serverSigningKey: serverKeypair.publicKey(),
-      challengeXdr,
-      token,
+    it("should accept a valid challenge", async () => {
+      const { xdr, clientKeypair } = buildChallenge();
+      const { sep10, accountKp } = authenticateWithoutKey(xdr, clientKeypair);
+      const authToken = await sep10.authenticate({ accountKp });
+      expect(authToken.account).toBe(clientKeypair.publicKey());
     });
 
-    await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
-      ChallengeValidationFailedError,
-    );
-    expect(postStub.notCalled).toBe(true);
-  });
-
-  it("should skip validation and succeed when no serverSigningKey is provided", async () => {
-    const serverKeypair = Keypair.random();
-    const clientKeypair = Keypair.random();
-    const accountKp = SigningKeypair.fromSecret(clientKeypair.secret());
-    const challengeXdr = buildChallengeXdr({
-      serverKeypair,
-      clientKeypair,
-    });
-    const token = createJwt(clientKeypair);
-
-    const httpClient = axios.create();
-    sinon.stub(httpClient, "get").resolves({
-      data: {
-        transaction: challengeXdr,
-        network_passphrase: networkPassphrase,
-      },
-    });
-    sinon.stub(httpClient, "post").resolves({
-      data: { token },
+    it("should reject invalid XDR", async () => {
+      const clientKeypair = Keypair.random();
+      const { sep10, accountKp, postStub } = authenticateWithoutKey(
+        "not-valid-xdr",
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
     });
 
-    const sep10 = new Sep10({
-      cfg,
-      webAuthEndpoint,
-      homeDomain,
-      httpClient,
+    it("should reject a FeeBumpTransaction", async () => {
+      const { xdr: innerXdr, serverKeypair, clientKeypair } = buildChallenge();
+      const innerTx = new Transaction(innerXdr, networkPassphrase);
+      const feeBump = SdkTransactionBuilder.buildFeeBumpTransaction(
+        serverKeypair,
+        BASE_FEE,
+        innerTx,
+        networkPassphrase,
+      );
+      feeBump.sign(serverKeypair);
+
+      const { sep10, accountKp, postStub } = authenticateWithoutKey(
+        feeBump.toXDR(),
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
     });
 
-    const authToken = await sep10.authenticate({ accountKp });
-    expect(authToken.account).toBe(clientKeypair.publicKey());
-  });
-
-  it("should reject a challenge with the wrong home domain", async () => {
-    const serverKeypair = Keypair.random();
-    const clientKeypair = Keypair.random();
-    const accountKp = SigningKeypair.fromSecret(clientKeypair.secret());
-    const challengeXdr = buildChallengeXdr({
-      serverKeypair,
-      clientKeypair,
-      challengeHomeDomain: "malicious.stellar.org",
-    });
-    const token = createJwt(clientKeypair);
-
-    const { sep10, postStub } = setupSep10({
-      serverSigningKey: serverKeypair.publicKey(),
-      challengeXdr,
-      token,
+    it("should reject non-zero sequence number", async () => {
+      const { xdr, clientKeypair } = buildChallenge({ sequence: "99" });
+      const { sep10, accountKp, postStub } = authenticateWithoutKey(
+        xdr,
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
     });
 
-    await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
-      ChallengeValidationFailedError,
-    );
-    expect(postStub.notCalled).toBe(true);
+    it("should reject a challenge with no operations", async () => {
+      const serverKeypair = Keypair.random();
+      const clientKeypair = Keypair.random();
+      const serverAccount = new Account(serverKeypair.publicKey(), "-1");
+      const tx = new SdkTransactionBuilder(serverAccount, {
+        fee: BASE_FEE,
+        networkPassphrase,
+      })
+        .setTimeout(300)
+        .build();
+      tx.sign(serverKeypair);
+
+      const { sep10, accountKp, postStub } = authenticateWithoutKey(
+        tx.toXDR(),
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject first operation without source account", async () => {
+      const { xdr, clientKeypair } = buildChallenge({
+        omitFirstOpSource: true,
+      });
+      const { sep10, accountKp, postStub } = authenticateWithoutKey(
+        xdr,
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject memo with muxed client account", async () => {
+      const clientKeypair = Keypair.random();
+      const baseAccount = new Account(clientKeypair.publicKey(), "0");
+      const muxed = new MuxedAccount(baseAccount, "123");
+
+      const { xdr } = buildChallenge({
+        clientKeypair,
+        clientSource: muxed.accountId(),
+        memo: Memo.id("456"),
+      });
+      const { sep10, accountKp, postStub } = authenticateWithoutKey(
+        xdr,
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject non-id memo type", async () => {
+      const { xdr, clientKeypair } = buildChallenge({
+        memo: Memo.text("test"),
+      });
+      const { sep10, accountKp, postStub } = authenticateWithoutKey(
+        xdr,
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject first operation that is not manageData", async () => {
+      const { xdr, clientKeypair } = buildChallenge({
+        firstOpType: "payment",
+      });
+      const { sep10, accountKp, postStub } = authenticateWithoutKey(
+        xdr,
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject infinite timebounds (maxTime=0)", async () => {
+      const { xdr, clientKeypair } = buildChallenge({
+        useExplicitTimebounds: true,
+        minTime: 0,
+        maxTime: 0,
+      });
+      const { sep10, accountKp, postStub } = authenticateWithoutKey(
+        xdr,
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject expired timebounds", async () => {
+      const now = Math.floor(Date.now() / 1000);
+      const { xdr, clientKeypair } = buildChallenge({
+        useExplicitTimebounds: true,
+        minTime: now - 7200,
+        maxTime: now - 3600,
+      });
+      const { sep10, accountKp, postStub } = authenticateWithoutKey(
+        xdr,
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject missing nonce value", async () => {
+      const { xdr, clientKeypair } = buildChallenge({ omitNonce: true });
+      const { sep10, accountKp, postStub } = authenticateWithoutKey(
+        xdr,
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject wrong nonce length", async () => {
+      const { xdr, clientKeypair } = buildChallenge({
+        nonce: randomBytes(16).toString("base64"),
+      });
+      const { sep10, accountKp, postStub } = authenticateWithoutKey(
+        xdr,
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject wrong home domain", async () => {
+      const { xdr, clientKeypair } = buildChallenge({
+        challengeHomeDomain: "evil.example.com",
+      });
+      const { sep10, accountKp, postStub } = authenticateWithoutKey(
+        xdr,
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject subsequent non-manageData operation", async () => {
+      const serverKeypair = Keypair.random();
+      const { xdr, clientKeypair } = buildChallenge({
+        serverKeypair,
+        additionalOps: [
+          Operation.payment({
+            destination: serverKeypair.publicKey(),
+            asset: Asset.native(),
+            amount: "1",
+          }),
+        ],
+      });
+      const { sep10, accountKp, postStub } = authenticateWithoutKey(
+        xdr,
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject null web_auth_domain value", async () => {
+      const { xdr, clientKeypair } = buildChallenge({
+        webAuthDomainValue: null,
+      });
+      const { sep10, accountKp, postStub } = authenticateWithoutKey(
+        xdr,
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
+
+    it("should reject mismatched web_auth_domain", async () => {
+      const { xdr, clientKeypair } = buildChallenge({
+        webAuthDomainValue: "evil.example.com",
+      });
+      const { sep10, accountKp, postStub } = authenticateWithoutKey(
+        xdr,
+        clientKeypair,
+      );
+      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
+        ChallengeValidationFailedError,
+      );
+      expect(postStub.notCalled).toBe(true);
+    });
   });
 });
 
