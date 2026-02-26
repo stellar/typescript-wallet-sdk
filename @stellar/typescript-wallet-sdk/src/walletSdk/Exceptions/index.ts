@@ -280,6 +280,15 @@ export class Sep38PriceOnlyOneAmountError extends Error {
   }
 }
 
+export class MissingSigningKeyError extends Error {
+  constructor() {
+    super(
+      "Anchor's stellar.toml does not contain a SIGNING_KEY, which is required for SEP-10 authentication",
+    );
+    Object.setPrototypeOf(this, MissingSigningKeyError.prototype);
+  }
+}
+
 export class ChallengeValidationFailedError extends Error {
   constructor(cause: Error) {
     super(`SEP-10 challenge validation failed: ${cause.message}`);

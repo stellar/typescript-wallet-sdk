@@ -21,7 +21,7 @@ wallet sdk, and two modules for extending functionality:
 
 You will need
 
-- Node (>=18): https://nodejs.org/en/download/
+- Node (>=20): https://nodejs.org/en/download/
 - Yarn (v1.22.5 or newer): https://classic.yarnpkg.com/en/docs/install
 
 ## Install and Build the Project

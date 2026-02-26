@@ -12,7 +12,7 @@ jobs:
           @stellar/typescript-wallet-sdk/test/docker/docker-compose.yml up -d
       - uses: actions/setup-node@v2
         with:
-          node-version: 18
+          node-version: 20
       - run: yarn install
       - run: yarn build
       - run: yarn test:recovery:ci

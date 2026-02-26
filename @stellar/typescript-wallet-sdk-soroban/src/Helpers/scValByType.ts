@@ -1,4 +1,4 @@
-import { StrKey, scValToNative, xdr } from "@stellar/stellar-sdk";
+import { Address, StrKey, scValToNative, xdr } from "@stellar/stellar-sdk";
 
 /* eslint-disable jsdoc/require-returns-type */
 /**
@@ -30,7 +30,7 @@ export const scValByType = (scVal: xdr.ScVal) => {
       if (addressType.name === "scAddressTypeAccount") {
         return StrKey.encodeEd25519PublicKey(address.accountId().ed25519());
       }
-      return StrKey.encodeContract(address.contractId());
+      return Address.fromScAddress(address).toString();
     }
 
     case xdr.ScValType.scvBool(): {

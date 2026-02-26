@@ -11,7 +11,6 @@ import {
   TransactionBuilder as SdkTransactionBuilder,
   Operation,
   BASE_FEE,
-  xdr as StellarXdr,
 } from "@stellar/stellar-sdk";
 import { randomBytes } from "crypto";
 import axios from "axios";
@@ -30,6 +29,7 @@ import {
   ExpiredTokenError,
   ChallengeValidationFailedError,
   NetworkPassphraseMismatchError,
+  MissingSigningKeyError,
 } from "../src/walletSdk/Exceptions";
 
 const createToken = (payload: Record<string, unknown>): string => {
@@ -261,7 +261,7 @@ describe("Sep10 challenge validation", () => {
     token,
     responseNetworkPassphrase = networkPassphrase,
   }: {
-    serverSigningKey?: string;
+    serverSigningKey: string;
     challengeXdr: string;
     token: string;
     responseNetworkPassphrase?: string;
@@ -282,7 +282,7 @@ describe("Sep10 challenge validation", () => {
       webAuthEndpoint,
       homeDomain,
       httpClient,
-      ...(serverSigningKey ? { serverSigningKey } : {}),
+      serverSigningKey,
     });
 
     return { sep10, postStub };
@@ -618,301 +618,6 @@ describe("Sep10 challenge validation", () => {
     });
   });
 
-  // ============================================================
-  // WITHOUT serverSigningKey — uses local readChallengeTx
-  // ============================================================
-  describe("without serverSigningKey (local readChallengeTx)", () => {
-    const authenticateWithoutKey = (
-      challengeXdr: string,
-      clientKeypair: Keypair,
-    ) => {
-      const accountKp = SigningKeypair.fromSecret(clientKeypair.secret());
-      const token = createJwt(clientKeypair);
-      const { sep10, postStub } = setupSep10({
-        challengeXdr,
-        token,
-      });
-      return { sep10, accountKp, postStub };
-    };
-
-    it("should accept a valid challenge", async () => {
-      const { xdr, clientKeypair } = buildChallenge();
-      const { sep10, accountKp } = authenticateWithoutKey(xdr, clientKeypair);
-      const authToken = await sep10.authenticate({ accountKp });
-      expect(authToken.account).toBe(clientKeypair.publicKey());
-    });
-
-    it("should reject invalid XDR", async () => {
-      const clientKeypair = Keypair.random();
-      const { sep10, accountKp, postStub } = authenticateWithoutKey(
-        "not-valid-xdr",
-        clientKeypair,
-      );
-      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
-        ChallengeValidationFailedError,
-      );
-      expect(postStub.notCalled).toBe(true);
-    });
-
-    it("should reject a FeeBumpTransaction", async () => {
-      const { xdr: innerXdr, serverKeypair, clientKeypair } = buildChallenge();
-      const innerTx = new Transaction(innerXdr, networkPassphrase);
-      const feeBump = SdkTransactionBuilder.buildFeeBumpTransaction(
-        serverKeypair,
-        BASE_FEE,
-        innerTx,
-        networkPassphrase,
-      );
-      feeBump.sign(serverKeypair);
-
-      const { sep10, accountKp, postStub } = authenticateWithoutKey(
-        feeBump.toXDR(),
-        clientKeypair,
-      );
-      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
-        ChallengeValidationFailedError,
-      );
-      expect(postStub.notCalled).toBe(true);
-    });
-
-    it("should reject non-zero sequence number", async () => {
-      const { xdr, clientKeypair } = buildChallenge({ sequence: "99" });
-      const { sep10, accountKp, postStub } = authenticateWithoutKey(
-        xdr,
-        clientKeypair,
-      );
-      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
-        ChallengeValidationFailedError,
-      );
-      expect(postStub.notCalled).toBe(true);
-    });
-
-    it("should reject a challenge with no operations", async () => {
-      const serverKeypair = Keypair.random();
-      const clientKeypair = Keypair.random();
-      const serverAccount = new Account(serverKeypair.publicKey(), "-1");
-      const tx = new SdkTransactionBuilder(serverAccount, {
-        fee: BASE_FEE,
-        networkPassphrase,
-      })
-        .setTimeout(300)
-        .build();
-      tx.sign(serverKeypair);
-
-      const { sep10, accountKp, postStub } = authenticateWithoutKey(
-        tx.toXDR(),
-        clientKeypair,
-      );
-      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
-        ChallengeValidationFailedError,
-      );
-      expect(postStub.notCalled).toBe(true);
-    });
-
-    it("should reject first operation without source account", async () => {
-      const { xdr, clientKeypair } = buildChallenge({
-        omitFirstOpSource: true,
-      });
-      const { sep10, accountKp, postStub } = authenticateWithoutKey(
-        xdr,
-        clientKeypair,
-      );
-      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
-        ChallengeValidationFailedError,
-      );
-      expect(postStub.notCalled).toBe(true);
-    });
-
-    it("should reject memo with muxed client account", async () => {
-      const clientKeypair = Keypair.random();
-      const baseAccount = new Account(clientKeypair.publicKey(), "0");
-      const muxed = new MuxedAccount(baseAccount, "123");
-
-      const { xdr } = buildChallenge({
-        clientKeypair,
-        clientSource: muxed.accountId(),
-        memo: Memo.id("456"),
-      });
-      const { sep10, accountKp, postStub } = authenticateWithoutKey(
-        xdr,
-        clientKeypair,
-      );
-      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
-        ChallengeValidationFailedError,
-      );
-      expect(postStub.notCalled).toBe(true);
-    });
-
-    it("should reject non-id memo type", async () => {
-      const { xdr, clientKeypair } = buildChallenge({
-        memo: Memo.text("test"),
-      });
-      const { sep10, accountKp, postStub } = authenticateWithoutKey(
-        xdr,
-        clientKeypair,
-      );
-      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
-        ChallengeValidationFailedError,
-      );
-      expect(postStub.notCalled).toBe(true);
-    });
-
-    it("should reject first operation that is not manageData", async () => {
-      const { xdr, clientKeypair } = buildChallenge({
-        firstOpType: "payment",
-      });
-      const { sep10, accountKp, postStub } = authenticateWithoutKey(
-        xdr,
-        clientKeypair,
-      );
-      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
-        ChallengeValidationFailedError,
-      );
-      expect(postStub.notCalled).toBe(true);
-    });
-
-    it("should reject infinite timebounds (maxTime=0)", async () => {
-      const { xdr, clientKeypair } = buildChallenge({
-        useExplicitTimebounds: true,
-        minTime: 0,
-        maxTime: 0,
-      });
-      const { sep10, accountKp, postStub } = authenticateWithoutKey(
-        xdr,
-        clientKeypair,
-      );
-      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
-        ChallengeValidationFailedError,
-      );
-      expect(postStub.notCalled).toBe(true);
-    });
-
-    it("should reject expired timebounds", async () => {
-      const now = Math.floor(Date.now() / 1000);
-      const { xdr, clientKeypair } = buildChallenge({
-        useExplicitTimebounds: true,
-        minTime: now - 7200,
-        maxTime: now - 3600,
-      });
-      const { sep10, accountKp, postStub } = authenticateWithoutKey(
-        xdr,
-        clientKeypair,
-      );
-      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
-        ChallengeValidationFailedError,
-      );
-      expect(postStub.notCalled).toBe(true);
-    });
-
-    it("should reject missing nonce value", async () => {
-      const { xdr, clientKeypair } = buildChallenge({ omitNonce: true });
-      const { sep10, accountKp, postStub } = authenticateWithoutKey(
-        xdr,
-        clientKeypair,
-      );
-      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
-        ChallengeValidationFailedError,
-      );
-      expect(postStub.notCalled).toBe(true);
-    });
-
-    it("should reject wrong nonce length", async () => {
-      const { xdr, clientKeypair } = buildChallenge({
-        nonce: randomBytes(16).toString("base64"),
-      });
-      const { sep10, accountKp, postStub } = authenticateWithoutKey(
-        xdr,
-        clientKeypair,
-      );
-      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
-        ChallengeValidationFailedError,
-      );
-      expect(postStub.notCalled).toBe(true);
-    });
-
-    it("should reject wrong home domain", async () => {
-      const { xdr, clientKeypair } = buildChallenge({
-        challengeHomeDomain: "evil.example.com",
-      });
-      const { sep10, accountKp, postStub } = authenticateWithoutKey(
-        xdr,
-        clientKeypair,
-      );
-      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
-        ChallengeValidationFailedError,
-      );
-      expect(postStub.notCalled).toBe(true);
-    });
-
-    it("should reject subsequent non-manageData operation", async () => {
-      const serverKeypair = Keypair.random();
-      const { xdr, clientKeypair } = buildChallenge({
-        serverKeypair,
-        additionalOps: [
-          Operation.payment({
-            destination: serverKeypair.publicKey(),
-            asset: Asset.native(),
-            amount: "1",
-          }),
-        ],
-      });
-      const { sep10, accountKp, postStub } = authenticateWithoutKey(
-        xdr,
-        clientKeypair,
-      );
-      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
-        ChallengeValidationFailedError,
-      );
-      expect(postStub.notCalled).toBe(true);
-    });
-
-    it("should reject null web_auth_domain value", async () => {
-      const { xdr, clientKeypair } = buildChallenge({
-        webAuthDomainValue: null,
-      });
-      const { sep10, accountKp, postStub } = authenticateWithoutKey(
-        xdr,
-        clientKeypair,
-      );
-      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
-        ChallengeValidationFailedError,
-      );
-      expect(postStub.notCalled).toBe(true);
-    });
-
-    it("should reject mismatched web_auth_domain", async () => {
-      const { xdr, clientKeypair } = buildChallenge({
-        webAuthDomainValue: "evil.example.com",
-      });
-      const { sep10, accountKp, postStub } = authenticateWithoutKey(
-        xdr,
-        clientKeypair,
-      );
-      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
-        ChallengeValidationFailedError,
-      );
-      expect(postStub.notCalled).toBe(true);
-    });
-
-    it("should reject a challenge with missing timebounds", async () => {
-      const { xdr: txXdr, clientKeypair } = buildChallenge();
-
-      // Strip timebounds by setting preconditions to PRECOND_NONE in the XDR
-      const envelope = StellarXdr.TransactionEnvelope.fromXDR(txXdr, "base64");
-      envelope.v1().tx().cond(StellarXdr.Preconditions.precondNone());
-      const noTimeboundsXdr = envelope.toXDR().toString("base64");
-
-      const { sep10, accountKp, postStub } = authenticateWithoutKey(
-        noTimeboundsXdr,
-        clientKeypair,
-      );
-      await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
-        ChallengeValidationFailedError,
-      );
-      expect(postStub.notCalled).toBe(true);
-    });
-  });
-
   describe("network passphrase mismatch", () => {
     it("should reject when server returns a different network passphrase", async () => {
       const { xdr, serverKeypair, clientKeypair } = buildChallenge();
@@ -983,7 +688,7 @@ describe("Anchor.sep10() signing key handling", () => {
     sinon.restore();
   });
 
-  it("should succeed when TOML has no SIGNING_KEY", async () => {
+  it("should throw MissingSigningKeyError when TOML has no SIGNING_KEY", async () => {
     sinon.stub(StellarToml.Resolver, "resolve").resolves({
       WEB_AUTH_ENDPOINT: "https://testanchor.stellar.org/auth",
       DOCUMENTATION: {},
@@ -1001,8 +706,7 @@ describe("Anchor.sep10() signing key handling", () => {
       language: "en",
     });
 
-    const sep10 = await anchor.sep10();
-    expect(sep10).toBeDefined();
+    await expect(anchor.sep10()).rejects.toThrow(MissingSigningKeyError);
   });
 
   it("should succeed when TOML has SIGNING_KEY", async () => {
