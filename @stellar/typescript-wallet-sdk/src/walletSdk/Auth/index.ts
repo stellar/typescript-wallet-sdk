@@ -173,9 +173,9 @@ export class Sep10 {
       );
     }
 
-    const webAuthDomain = new URL(this.webAuthEndpoint).hostname;
-
     try {
+      const webAuthDomain = new URL(this.webAuthEndpoint).hostname;
+
       if (this.serverSigningKey) {
         WebAuth.readChallengeTx(
           challengeResponse.transaction,
