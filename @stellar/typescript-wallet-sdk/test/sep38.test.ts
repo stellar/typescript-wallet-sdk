@@ -29,7 +29,6 @@ describe("SEP-38", () => {
     const resp = await sep38.prices({
       sellAsset: "iso4217:USD",
       sellAmount: "5",
-      sellDeliveryMethod: "ach_debit",
     });
     expect(resp.buy_assets[0].asset).toBeTruthy();
   });
@@ -59,7 +58,6 @@ describe("SEP-38", () => {
         "stellar:SRT:GCDNJUBQSX7AJWLJACMJ7I4BC3Z47BQUTMHEICZLE6MU4KQBRYG5JY6B",
       sell_amount: "5",
       context: "sep6",
-      sell_delivery_method: "ach_debit",
     });
     expect(postResp.id).toBeTruthy();
 

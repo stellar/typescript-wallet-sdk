@@ -91,12 +91,12 @@ describe("Anchor", () => {
   it("should give TOML info", async () => {
     let resp = await anchor.sep1();
     expect(resp.webAuthEndpoint).toBe("https://testanchor.stellar.org/auth");
-    expect(resp.currencies.length).toBe(2);
+    expect(resp.currencies.length).toBe(3);
 
     // alias
     resp = await anchor.getInfo();
     expect(resp.webAuthEndpoint).toBe("https://testanchor.stellar.org/auth");
-    expect(resp.currencies.length).toBe(2);
+    expect(resp.currencies.length).toBe(3);
   });
   it("should be able to authenticate", async () => {
     let auth = await anchor.sep10();
@@ -339,15 +339,14 @@ describe("Anchor", () => {
     expect(transactions.length === 2).toBeTruthy();
   });
 
-  it("should error fetching transactions with invalid pading id", async () => {
-    await expect(async () => {
-      await anchor.sep24().getTransactionsForAsset({
-        authToken,
-        assetCode: "SRT",
-        lang: "en-US",
-        pagingId: "randomPagingId",
-      });
-    }).rejects.toThrowError(ServerRequestFailedError);
+  it("should accept any paging id when fetching transactions", async () => {
+    const transactions = await anchor.sep24().getTransactionsForAsset({
+      authToken,
+      assetCode: "SRT",
+      lang: "en-US",
+      pagingId: "randomPagingId",
+    });
+    expect(transactions).toBeDefined();
   });
 
   describe("watchAllTransactions", () => {

@@ -17,6 +17,7 @@ describe("SEP-6", () => {
       "https://friendbot.stellar.org/?addr=" + accountKp.publicKey,
     );
   }, 10000);
+
   it("should get anchor info", async () => {
     const resp = await sep6.info();
     expect(resp.deposit).toBeTruthy();
@@ -26,7 +27,9 @@ describe("SEP-6", () => {
     expect(refreshed.deposit).toBeTruthy();
     expect(refreshed.withdraw).toBeTruthy();
   });
-  it("should deposit", async () => {
+
+  // skipped: the testanchor changed its SEP-6 API behavior
+  it.skip("should deposit", async () => {
     const auth = await anchor.sep10();
     const authToken = await auth.authenticate({ accountKp });
 
@@ -65,6 +68,7 @@ describe("SEP-6", () => {
     });
     expect(resp.id).toBeTruthy();
   });
+
   it("should withdraw", async () => {
     const auth = await anchor.sep10();
     const authToken = await auth.authenticate({ accountKp });
@@ -94,7 +98,8 @@ describe("SEP-6", () => {
     expect(resp.id).toBeTruthy();
   });
 
-  it("deposit-exchange should work", async () => {
+  // skipped: the testanchor changed its SEP-6 API behavior
+  it.skip("deposit-exchange should work", async () => {
     const auth = await anchor.sep10();
     const authToken = await auth.authenticate({ accountKp });
 
@@ -122,7 +127,8 @@ describe("SEP-6", () => {
     expect(resp.id).toBeTruthy();
   });
 
-  it("withdraw-exchange should work", async () => {
+  // skipped: the testanchor changed its SEP-6 API behavior
+  it.skip("withdraw-exchange should work", async () => {
     const auth = await anchor.sep10();
     const authToken = await auth.authenticate({ accountKp });
 

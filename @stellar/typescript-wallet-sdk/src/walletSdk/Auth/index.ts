@@ -245,7 +245,11 @@ export const validateToken = (token: string) => {
   if (!parsedToken) {
     throw new InvalidTokenError();
   }
-  const exp = parsedToken.payload?.exp;
+  const payload =
+    typeof parsedToken.payload === "string"
+      ? JSON.parse(parsedToken.payload)
+      : parsedToken.payload;
+  const exp = payload?.exp;
   if (typeof exp === "number" && exp < Math.floor(Date.now() / 1000)) {
     throw new ExpiredTokenError(exp);
   }

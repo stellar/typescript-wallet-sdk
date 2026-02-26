@@ -37,11 +37,17 @@ export class AuthToken {
     const authToken = new AuthToken();
 
     const decoded = decode(str);
-    authToken.issuer = decoded.payload.iss;
-    authToken.principalAccount = decoded.payload.sub;
-    authToken.issuedAt = decoded.payload.iat;
-    authToken.expiresAt = decoded.payload.exp;
-    authToken.clientDomain = decoded.payload.client_domain;
+    // jws.decode only auto-parses payload as JSON when header contains
+    // typ:"JWT". Some anchors omit typ, returning a raw JSON string instead.
+    const payload =
+      typeof decoded.payload === "string"
+        ? JSON.parse(decoded.payload)
+        : decoded.payload;
+    authToken.issuer = payload.iss;
+    authToken.principalAccount = payload.sub;
+    authToken.issuedAt = payload.iat;
+    authToken.expiresAt = payload.exp;
+    authToken.clientDomain = payload.client_domain;
     authToken.token = str;
     return authToken;
   };
