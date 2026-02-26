@@ -14,8 +14,6 @@ describe("Test browser build", () => {
           const browser = await b.instance.launch();
           const page = await browser.newPage();
 
-          await page.goto("https://stellar.org");
-
           await page.addScriptTag({
             path: "./lib/bundle_browser.js",
           });
