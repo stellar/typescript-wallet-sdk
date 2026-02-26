@@ -53,7 +53,7 @@ services:
     environment:
       SIGNING_KEY: SDYHSG4V2JP5H66N2CXBFCOBTAUFWXGJVPKWY6OXSIPMYW743N62QX6U
       JWK: '{"kty":"EC","crv":"P-256","alg":"ES256","x":"dzqvhrMYwbmv7kcZK6L1oOATMFXG9wLFlnKfHf3E7FM","y":"Vb_wmcX-Zq2Hg2LFoXCEVWMwdJ01q41pSnxC3psunUY","d":"ivOMB4Wscz8ShvhwWDRyd-JJVfSMsjsz1oU3sNc-XJo"}'
-      DOMAIN: test-domain
+      DOMAIN: localhost
       AUTH_HOME_DOMAIN: test-domain
       JWT_ISSUER: test
       PORT: 8001
@@ -65,7 +65,7 @@ services:
     environment:
       SIGNING_KEY: SCAS7BUKVDL44A2BAP23RVAM6XXHB24YRCANQGDTP24HP7T6LPUFIGGU # Use a different key for the second web auth server
       JWK: '{"kty":"EC","crv":"P-256","alg":"ES256","x":"dzqvhrMYwbmv7kcZK6L1oOATMFXG9wLFlnKfHf3E7FM","y":"Vb_wmcX-Zq2Hg2LFoXCEVWMwdJ01q41pSnxC3psunUY","d":"ivOMB4Wscz8ShvhwWDRyd-JJVfSMsjsz1oU3sNc-XJo"}'
-      DOMAIN: test-domain
+      DOMAIN: localhost
       AUTH_HOME_DOMAIN: test-domain
       JWT_ISSUER: test
       PORT: 8003
