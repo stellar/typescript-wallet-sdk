@@ -1,3 +1,18 @@
+# Release notes - Typescript Wallet SDK - 2.0.0
+
+### BREAKING CHANGES
+* Minimum Node.js version bumped from 18 to 20 (#233)
+* Upgraded `@stellar/stellar-sdk` from `13.0.0-beta.1` to `14.5.0` (#233)
+* `serverSigningKey` is now required for SEP-10 authentication (#233)
+* `RecoveryServer.signingKey` is now required in the type definition (#233)
+
+### Added
+* `MissingSigningKeyError` — thrown when anchor's `stellar.toml` does not contain a `SIGNING_KEY` (#233)
+* `ChallengeValidationFailedError` and `NetworkPassphraseMismatchError` error classes for clearer SEP-10 error handling (#233)
+
+### Removed
+* Local `readChallengeTx` fallback function (#233)
+
 # Release notes - Typescript Wallet SDK - 1.10.0
 
 ### Added

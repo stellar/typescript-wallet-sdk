@@ -1,3 +1,12 @@
+# Release notes - Typescript Wallet SDK Key Manager - 2.0.0
+
+### BREAKING CHANGES
+* Minimum Node.js version bumped from 18 to 20 (#233)
+* Upgraded `@stellar/stellar-sdk` from `13.0.0-beta.1` to `14.5.0` (#233)
+
+### Changed
+* SEP-10 challenge validation errors now throw plain `Error` instead of `InvalidChallengeError` (upstream SDK change) (#233)
+
 # Release notes - Typescript Wallet SDK Key Manager - 1.10.0
 * Version bump
 

@@ -1,3 +1,12 @@
+# Release notes - Typescript Wallet SDK Soroban - 2.0.0
+
+### BREAKING CHANGES
+* Minimum Node.js version bumped from 18 to 20 (#233)
+* Upgraded `@stellar/stellar-sdk` from `13.0.0-beta.1` to `14.5.0` (#233)
+
+### Fixed
+* Fixed XDR type compatibility for SDK v14 — replaced `StrKey.encodeContract(contractId())` with `Address.fromScAddress()` to handle `Hash` type change from `Buffer` to `Opaque[]` (#233)
+
 # Release notes - Typescript Wallet SDK Soroban - 1.10.0
 * Version bump
 
