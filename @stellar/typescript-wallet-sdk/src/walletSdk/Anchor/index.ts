@@ -109,6 +109,7 @@ export class Anchor {
       webAuthEndpoint: tomlInfo.webAuthEndpoint,
       homeDomain: this.homeDomain,
       httpClient: this.httpClient,
+      serverSigningKey: tomlInfo.signingKey,
     });
   }
 

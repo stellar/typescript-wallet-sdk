@@ -280,6 +280,22 @@ export class Sep38PriceOnlyOneAmountError extends Error {
   }
 }
 
+export class ChallengeValidationFailedError extends Error {
+  constructor(cause: Error) {
+    super(`SEP-10 challenge validation failed: ${cause.message}`);
+    Object.setPrototypeOf(this, ChallengeValidationFailedError.prototype);
+  }
+}
+
+export class NetworkPassphraseMismatchError extends Error {
+  constructor(expected: string, received: string) {
+    super(
+      `Network passphrase mismatch: expected "${expected}" but server returned "${received}"`,
+    );
+    Object.setPrototypeOf(this, NetworkPassphraseMismatchError.prototype);
+  }
+}
+
 export class ChallengeTxnIncorrectSequenceError extends Error {
   constructor() {
     super("Challenge transaction sequence number must be 0");
