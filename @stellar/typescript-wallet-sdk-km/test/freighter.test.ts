@@ -121,7 +121,7 @@ describe("freighterHandler", () => {
         key,
         custom: { networkPassphrase: Networks.TESTNET },
       }),
-    ).rejects.toThrow("Non-ledger key sent to ledger handler");
+    ).rejects.toThrow("Non-Freighter key sent to Freighter handler");
   });
 
   it("throws when freighter returns an error response", async () => {

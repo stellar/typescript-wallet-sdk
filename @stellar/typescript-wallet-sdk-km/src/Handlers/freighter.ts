@@ -18,9 +18,7 @@ export const freighterHandler: KeyTypeHandler = {
 
     if (key.privateKey !== "") {
       throw new Error(
-        `Non-ledger key sent to ledger handler: ${JSON.stringify(
-          key.publicKey,
-        )}`,
+        `Non-Freighter key sent to Freighter handler: ${key.publicKey}`,
       );
     }
 

@@ -573,19 +573,25 @@ describe("XDR integer boundary values (Protocol 26 strict validation)", () => {
     expect(scValByType(u32Zero)).toEqual("0");
   });
 
-  it("should handle i64 boundary values", () => {
-    const i64Max = xdr.ScVal.scvI64(new xdr.Int64(Number.MAX_SAFE_INTEGER));
+  it("should handle i64 min and max boundary values", () => {
+    const i64Max = xdr.ScVal.scvI64(
+      xdr.Int64.fromString("9223372036854775807"),
+    );
     const parsedMax = scValByType(i64Max);
-    expect(parsedMax).toEqual(String(Number.MAX_SAFE_INTEGER));
+    expect(parsedMax).toEqual("9223372036854775807");
 
-    const i64Min = xdr.ScVal.scvI64(new xdr.Int64(Number.MIN_SAFE_INTEGER));
+    const i64Min = xdr.ScVal.scvI64(
+      xdr.Int64.fromString("-9223372036854775808"),
+    );
     const parsedMin = scValByType(i64Min);
-    expect(parsedMin).toEqual(String(Number.MIN_SAFE_INTEGER));
+    expect(parsedMin).toEqual("-9223372036854775808");
   });
 
-  it("should handle u64 max safe integer value", () => {
-    const u64Val = xdr.ScVal.scvU64(new xdr.Uint64(Number.MAX_SAFE_INTEGER));
-    const parsed = scValByType(u64Val);
-    expect(parsed).toEqual(String(Number.MAX_SAFE_INTEGER));
+  it("should handle u64 max boundary value", () => {
+    const u64Max = xdr.ScVal.scvU64(
+      xdr.Uint64.fromString("18446744073709551615"),
+    );
+    const parsed = scValByType(u64Max);
+    expect(parsed).toEqual("18446744073709551615");
   });
 });
