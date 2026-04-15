@@ -24,23 +24,35 @@ export const freighterHandler: KeyTypeHandler = {
       );
     }
 
+    const networkPassphrase =
+      (custom && custom.networkPassphrase) || key.network || Networks.PUBLIC;
+
     try {
-      const response = await freighterApi.signTransaction(
-        transaction.toXDR(),
-        custom && custom.network ? custom.network : undefined,
-      );
+      const response = await freighterApi.signTransaction(transaction.toXDR(), {
+        networkPassphrase,
+        address: custom && custom.address ? custom.address : undefined,
+      });
+
+      if (response.error) {
+        throw new Error(
+          response.error.message || "Freighter returned an error",
+        );
+      }
 
       // fromXDR() returns type "Transaction | FeeBumpTransaction" and
       // signTransaction() doesn't like "| FeeBumpTransaction" type, so casting
       // to "Transaction" type.
       return TransactionBuilder.fromXDR(
-        response,
-        Networks.PUBLIC,
+        response.signedTxXdr,
+        networkPassphrase,
       ) as Transaction;
     } catch (error) {
-      const errorMsg = error.toString();
+      if (error instanceof Error) {
+        throw error;
+      }
+      const errorMsg = String(error);
       throw new Error(
-        `We couldn’t sign the transaction with Freighter. ${errorMsg}.`,
+        `We couldn't sign the transaction with Freighter. ${errorMsg}.`,
       );
     }
   },
