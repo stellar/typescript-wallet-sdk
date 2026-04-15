@@ -339,14 +339,15 @@ describe("Anchor", () => {
     expect(transactions.length === 2).toBeTruthy();
   });
 
-  it("should accept any paging id when fetching transactions", async () => {
-    const transactions = await anchor.sep24().getTransactionsForAsset({
-      authToken,
-      assetCode: "SRT",
-      lang: "en-US",
-      pagingId: "randomPagingId",
-    });
-    expect(transactions).toBeDefined();
+  it("should pass through paging id to the server", async () => {
+    await expect(
+      anchor.sep24().getTransactionsForAsset({
+        authToken,
+        assetCode: "SRT",
+        lang: "en-US",
+        pagingId: "randomPagingId",
+      }),
+    ).rejects.toThrow(ServerRequestFailedError);
   });
 
   describe("watchAllTransactions", () => {
