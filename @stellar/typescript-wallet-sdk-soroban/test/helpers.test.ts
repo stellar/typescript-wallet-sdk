@@ -553,3 +553,64 @@ describe("getInvocationDetails for a Soroban Authorized Invocation tree", () => 
     expect(subDetail4.asset).toBeUndefined();
   });
 });
+
+describe("XDR integer boundary values (Protocol 26 strict validation)", () => {
+  it("should handle i32 min and max boundary values", () => {
+    const i32Min = xdr.ScVal.scvI32(-2147483648);
+    expect(scValByType(i32Min)).toEqual("-2147483648");
+
+    const i32Max = xdr.ScVal.scvI32(2147483647);
+    expect(scValByType(i32Max)).toEqual("2147483647");
+  });
+
+  it("should handle u32 max boundary value", () => {
+    const u32Max = xdr.ScVal.scvU32(4294967295);
+    expect(scValByType(u32Max)).toEqual("4294967295");
+  });
+
+  it("should handle u32 zero value", () => {
+    const u32Zero = xdr.ScVal.scvU32(0);
+    expect(scValByType(u32Zero)).toEqual("0");
+  });
+
+  it("should handle i64 boundary values", () => {
+    const i64Max = xdr.ScVal.scvI64(new xdr.Int64(Number.MAX_SAFE_INTEGER));
+    const parsedMax = scValByType(i64Max);
+    expect(parsedMax).toEqual(String(Number.MAX_SAFE_INTEGER));
+
+    const i64Min = xdr.ScVal.scvI64(new xdr.Int64(Number.MIN_SAFE_INTEGER));
+    const parsedMin = scValByType(i64Min);
+    expect(parsedMin).toEqual(String(Number.MIN_SAFE_INTEGER));
+  });
+
+  it("should handle u64 max safe integer value", () => {
+    const u64Val = xdr.ScVal.scvU64(new xdr.Uint64(Number.MAX_SAFE_INTEGER));
+    const parsed = scValByType(u64Val);
+    expect(parsed).toEqual(String(Number.MAX_SAFE_INTEGER));
+  });
+
+  it("should accept u32 overflow without validation", () => {
+    // NOTE: SDK v15 does not enforce u32 range; value is stored as-is.
+    // Protocol 26 strict validation should reject this at submission time.
+    const val = xdr.ScVal.scvU32(4294967296);
+    expect(scValByType(val)).toEqual("4294967296");
+  });
+
+  it("should accept u32 negative value without validation", () => {
+    // NOTE: SDK v15 does not enforce u32 range; value is stored as-is.
+    const val = xdr.ScVal.scvU32(-1);
+    expect(scValByType(val)).toEqual("-1");
+  });
+
+  it("should accept i32 overflow without validation", () => {
+    // NOTE: SDK v15 does not enforce i32 range; value is stored as-is.
+    const val = xdr.ScVal.scvI32(2147483648);
+    expect(scValByType(val)).toEqual("2147483648");
+  });
+
+  it("should accept i32 underflow without validation", () => {
+    // NOTE: SDK v15 does not enforce i32 range; value is stored as-is.
+    const val = xdr.ScVal.scvI32(-2147483649);
+    expect(scValByType(val)).toEqual("-2147483649");
+  });
+});
