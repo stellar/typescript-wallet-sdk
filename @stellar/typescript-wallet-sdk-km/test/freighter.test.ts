@@ -118,7 +118,31 @@ describe("freighterHandler", () => {
         key,
         custom: { networkPassphrase },
       }),
-    ).rejects.toThrow("User declined");
+    ).rejects.toThrow(
+      "We couldn't sign the transaction with Freighter. Freighter signTransaction failed: User declined (code 1).",
+    );
+  });
+
+  it("throws with error code when freighter error has no message", async () => {
+    const networkPassphrase = Networks.TESTNET;
+    const tx = buildTestTransaction(networkPassphrase);
+    const key = makeFreighterKey();
+
+    mockSignTransaction.mockResolvedValue({
+      signedTxXdr: "",
+      signerAddress: "",
+      error: { message: "", code: 3 },
+    });
+
+    await expect(
+      freighterHandler.signTransaction({
+        transaction: tx,
+        key,
+        custom: { networkPassphrase },
+      }),
+    ).rejects.toThrow(
+      "We couldn't sign the transaction with Freighter. Freighter signTransaction failed with code 3.",
+    );
   });
 
   it("propagates errors when freighter signTransaction rejects", async () => {
@@ -134,7 +158,9 @@ describe("freighterHandler", () => {
         key,
         custom: { networkPassphrase },
       }),
-    ).rejects.toThrow("Extension not installed");
+    ).rejects.toThrow(
+      "We couldn't sign the transaction with Freighter. Extension not installed.",
+    );
   });
 
   describe("network passphrase resolution", () => {
