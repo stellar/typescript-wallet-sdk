@@ -2,6 +2,7 @@
 
 ### BREAKING CHANGES
 * Upgraded `@stellar/stellar-sdk` from `14.5.0` to `15.0.1` — Protocol 26 support
+* `TransactionBase.networkPassphrase` setter now throws to enforce immutability (upstream change)
 * XDR integer strict validation: i64/u64 `fromString()` throws on overflow/underflow, i32/u32 throws at XDR serialization (upstream change)
 
 ### Added
