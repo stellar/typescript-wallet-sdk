@@ -2,7 +2,6 @@
 
 ### BREAKING CHANGES
 * Upgraded `@stellar/stellar-sdk` from `14.5.0` to `15.0.1` — Protocol 26 support
-* XDR integer construction now throws on overflow/underflow (upstream change)
 
 ### Added
 * XDR integer boundary tests

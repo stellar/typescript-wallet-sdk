@@ -88,6 +88,29 @@ describe("freighterHandler", () => {
     });
   });
 
+  it("passes custom.address through to freighter", async () => {
+    const networkPassphrase = Networks.TESTNET;
+    const tx = buildTestTransaction(networkPassphrase);
+    const key = makeFreighterKey();
+    const address = Keypair.random().publicKey();
+
+    mockSignTransaction.mockResolvedValue({
+      signedTxXdr: tx.toXDR(),
+      signerAddress: address,
+    });
+
+    await freighterHandler.signTransaction({
+      transaction: tx,
+      key,
+      custom: { networkPassphrase, address },
+    });
+
+    expect(mockSignTransaction).toHaveBeenCalledWith(tx.toXDR(), {
+      networkPassphrase,
+      address,
+    });
+  });
+
   it("throws when key has a non-empty privateKey", async () => {
     const tx = buildTestTransaction(Networks.TESTNET);
     const key = makeFreighterKey({ privateKey: "SECRET_KEY_VALUE" });
@@ -119,7 +142,7 @@ describe("freighterHandler", () => {
         custom: { networkPassphrase },
       }),
     ).rejects.toThrow(
-      "We couldn't sign the transaction with Freighter. Freighter signTransaction failed: User declined (code 1).",
+      "Freighter signTransaction failed: User declined (code 1)",
     );
   });
 
@@ -140,9 +163,7 @@ describe("freighterHandler", () => {
         key,
         custom: { networkPassphrase },
       }),
-    ).rejects.toThrow(
-      "We couldn't sign the transaction with Freighter. Freighter signTransaction failed with code 3.",
-    );
+    ).rejects.toThrow("Freighter signTransaction failed with code 3");
   });
 
   it("propagates errors when freighter signTransaction rejects", async () => {
@@ -158,9 +179,7 @@ describe("freighterHandler", () => {
         key,
         custom: { networkPassphrase },
       }),
-    ).rejects.toThrow(
-      "We couldn't sign the transaction with Freighter. Extension not installed.",
-    );
+    ).rejects.toThrow("Extension not installed");
   });
 
   describe("network passphrase resolution", () => {

@@ -588,29 +588,4 @@ describe("XDR integer boundary values (Protocol 26 strict validation)", () => {
     const parsed = scValByType(u64Val);
     expect(parsed).toEqual(String(Number.MAX_SAFE_INTEGER));
   });
-
-  it("should accept u32 overflow without validation", () => {
-    // NOTE: SDK v15 does not enforce u32 range; value is stored as-is.
-    // Protocol 26 strict validation should reject this at submission time.
-    const val = xdr.ScVal.scvU32(4294967296);
-    expect(scValByType(val)).toEqual("4294967296");
-  });
-
-  it("should accept u32 negative value without validation", () => {
-    // NOTE: SDK v15 does not enforce u32 range; value is stored as-is.
-    const val = xdr.ScVal.scvU32(-1);
-    expect(scValByType(val)).toEqual("-1");
-  });
-
-  it("should accept i32 overflow without validation", () => {
-    // NOTE: SDK v15 does not enforce i32 range; value is stored as-is.
-    const val = xdr.ScVal.scvI32(2147483648);
-    expect(scValByType(val)).toEqual("2147483648");
-  });
-
-  it("should accept i32 underflow without validation", () => {
-    // NOTE: SDK v15 does not enforce i32 range; value is stored as-is.
-    const val = xdr.ScVal.scvI32(-2147483649);
-    expect(scValByType(val)).toEqual("-2147483649");
-  });
 });

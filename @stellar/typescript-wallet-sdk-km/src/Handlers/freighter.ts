@@ -50,7 +50,10 @@ export const freighterHandler: KeyTypeHandler = {
         networkPassphrase,
       ) as Transaction;
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
+      if (error instanceof Error) {
+        throw error;
+      }
+      const errorMsg = String(error);
       throw new Error(
         `We couldn't sign the transaction with Freighter. ${errorMsg}.`,
       );
