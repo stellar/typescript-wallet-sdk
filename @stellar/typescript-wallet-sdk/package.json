@@ -1,6 +1,6 @@
 {
   "name": "@stellar/typescript-wallet-sdk",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "engines": {
     "node": ">=20"
   },
@@ -47,7 +47,7 @@
   "dependencies": {
     "@stablelib/base64": "^2.0.0",
     "@stablelib/utf8": "^2.0.0",
-    "@stellar/stellar-sdk": "14.5.0",
+    "@stellar/stellar-sdk": "15.0.1",
     "axios": "^1.4.0",
     "base64url": "^3.0.1",
     "https-browserify": "^1.0.0",
