@@ -594,4 +594,30 @@ describe("XDR integer boundary values (Protocol 26 strict validation)", () => {
     const parsed = scValByType(u64Max);
     expect(parsed).toEqual("18446744073709551615");
   });
+
+  it("should throw on i64 overflow", () => {
+    expect(() => xdr.Int64.fromString("9223372036854775808")).toThrow();
+  });
+
+  it("should throw on i64 underflow", () => {
+    expect(() => xdr.Int64.fromString("-9223372036854775809")).toThrow();
+  });
+
+  it("should throw on u64 overflow", () => {
+    expect(() => xdr.Uint64.fromString("18446744073709551616")).toThrow();
+  });
+
+  it("should throw on u64 negative value", () => {
+    expect(() => xdr.Uint64.fromString("-1")).toThrow();
+  });
+
+  it("should throw on i32 overflow at serialization", () => {
+    const val = xdr.ScVal.scvI32(2147483648);
+    expect(() => val.toXDR()).toThrow("XDR Write Error");
+  });
+
+  it("should throw on u32 overflow at serialization", () => {
+    const val = xdr.ScVal.scvU32(4294967296);
+    expect(() => val.toXDR()).toThrow("XDR Write Error");
+  });
 });
