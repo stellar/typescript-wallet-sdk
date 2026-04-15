@@ -1,3 +1,10 @@
+# Release notes - Typescript Wallet SDK - 3.0.0
+
+### BREAKING CHANGES
+* Upgraded `@stellar/stellar-sdk` from `14.5.0` to `15.0.1` — Protocol 26 support
+* XDR integer construction now throws on overflow/underflow (upstream change)
+* `TransactionBase.networkPassphrase` setter now throws to enforce immutability (upstream change)
+
 # Release notes - Typescript Wallet SDK - 2.0.0
 
 ### BREAKING CHANGES

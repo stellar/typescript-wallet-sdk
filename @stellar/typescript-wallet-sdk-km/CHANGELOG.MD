@@ -1,3 +1,16 @@
+# Release notes - Typescript Wallet SDK Key Manager - 3.0.0
+
+### BREAKING CHANGES
+* Upgraded `@stellar/stellar-sdk` from `14.5.0` to `15.0.1` — Protocol 26 support
+* Upgraded `@stellar/freighter-api` from `^2.0.0` to `^6.0.1`
+* Freighter handler: `custom.network` replaced with `custom.networkPassphrase`
+
+### Fixed
+* Freighter handler now uses correct network passphrase for XDR deserialization instead of hardcoded `Networks.PUBLIC`
+
+### Added
+* Freighter handler test coverage
+
 # Release notes - Typescript Wallet SDK Key Manager - 2.0.0
 
 ### BREAKING CHANGES
