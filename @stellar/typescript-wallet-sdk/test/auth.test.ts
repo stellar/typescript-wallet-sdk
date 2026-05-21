@@ -16,7 +16,7 @@ import { randomBytes } from "crypto";
 import axios from "axios";
 import sinon from "sinon";
 
-import { validateToken, Sep10, WalletSigner } from "../src/walletSdk/Auth";
+import { validateToken, Sep10, type WalletSigner } from "../src/walletSdk/Auth";
 import {
   Config,
   StellarConfiguration,
