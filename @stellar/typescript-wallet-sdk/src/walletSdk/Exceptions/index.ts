@@ -354,6 +354,15 @@ export class DefaultSignerDomainAccountError extends Error {
   }
 }
 
+export class DomainSigningModifiedError extends Error {
+  constructor() {
+    super(
+      "Domain signer returned a transaction whose body differs from the original challenge. Only the client_domain signature should be added.",
+    );
+    Object.setPrototypeOf(this, DomainSigningModifiedError.prototype);
+  }
+}
+
 export class AuthHeaderSigningKeypairRequiredError extends Error {
   constructor() {
     super("Must be SigningKeypair to sign auth header");

@@ -16,7 +16,7 @@ import { randomBytes } from "crypto";
 import axios from "axios";
 import sinon from "sinon";
 
-import { validateToken, Sep10 } from "../src/walletSdk/Auth";
+import { validateToken, Sep10, WalletSigner } from "../src/walletSdk/Auth";
 import {
   Config,
   StellarConfiguration,
@@ -30,6 +30,7 @@ import {
   ChallengeValidationFailedError,
   NetworkPassphraseMismatchError,
   MissingSigningKeyError,
+  DomainSigningModifiedError,
 } from "../src/walletSdk/Exceptions";
 
 const createToken = (payload: Record<string, unknown>): string => {
@@ -614,6 +615,108 @@ describe("Sep10 challenge validation", () => {
       await expect(sep10.authenticate({ accountKp })).rejects.toThrow(
         ChallengeValidationFailedError,
       );
+      expect(postStub.notCalled).toBe(true);
+    });
+  });
+
+  describe("client_domain signing integrity", () => {
+    const buildClientDomainChallenge = (clientKeypair: Keypair) => {
+      const clientDomainKeypair = Keypair.random();
+      return buildChallenge({
+        clientKeypair,
+        additionalOps: [
+          Operation.manageData({
+            name: "client_domain",
+            value: "wallet.example.com",
+            source: clientDomainKeypair.publicKey(),
+          }),
+        ],
+      });
+    };
+
+    it("should accept when domain signer returns the same transaction with an appended signature", async () => {
+      const clientKeypair = Keypair.random();
+      const { xdr, serverKeypair } = buildClientDomainChallenge(clientKeypair);
+
+      const accountKp = SigningKeypair.fromSecret(clientKeypair.secret());
+      const token = createJwt(clientKeypair);
+      const { sep10 } = setupSep10({
+        serverSigningKey: serverKeypair.publicKey(),
+        challengeXdr: xdr,
+        token,
+      });
+
+      const walletSigner: WalletSigner = {
+        signWithClientAccount: ({ transaction, accountKp: kp }) => {
+          transaction.sign(kp.keypair);
+          return transaction;
+        },
+        // eslint-disable-next-line @typescript-eslint/require-await
+        signWithDomainAccount: async ({ transactionXDR }) => {
+          const tx = SdkTransactionBuilder.fromXDR(
+            transactionXDR,
+            networkPassphrase,
+          ) as Transaction;
+          tx.sign(Keypair.random());
+          return tx;
+        },
+      };
+
+      const authToken = await sep10.authenticate({
+        accountKp,
+        clientDomain: "wallet.example.com",
+        walletSigner,
+      });
+      expect(authToken.account).toBe(clientKeypair.publicKey());
+    });
+
+    it("should reject when domain signer returns a transaction with a different body", async () => {
+      const clientKeypair = Keypair.random();
+      const { xdr, serverKeypair } = buildClientDomainChallenge(clientKeypair);
+
+      const accountKp = SigningKeypair.fromSecret(clientKeypair.secret());
+      const token = createJwt(clientKeypair);
+      const { sep10, postStub } = setupSep10({
+        serverSigningKey: serverKeypair.publicKey(),
+        challengeXdr: xdr,
+        token,
+      });
+
+      const differentSource = new Account(clientKeypair.publicKey(), "0");
+      const differentTx = new SdkTransactionBuilder(differentSource, {
+        fee: BASE_FEE,
+        networkPassphrase,
+      })
+        .addOperation(
+          Operation.payment({
+            destination: Keypair.random().publicKey(),
+            asset: Asset.native(),
+            amount: "100",
+          }),
+        )
+        .setTimeout(300)
+        .build();
+
+      const signWithClientAccountSpy = sinon.spy(
+        ({ transaction, accountKp: kp }) => {
+          transaction.sign(kp.keypair);
+          return transaction;
+        },
+      );
+      const walletSigner: WalletSigner = {
+        signWithClientAccount: signWithClientAccountSpy,
+        // eslint-disable-next-line @typescript-eslint/require-await
+        signWithDomainAccount: async () => differentTx,
+      };
+
+      await expect(
+        sep10.authenticate({
+          accountKp,
+          clientDomain: "wallet.example.com",
+          walletSigner,
+        }),
+      ).rejects.toThrow(DomainSigningModifiedError);
+      expect(signWithClientAccountSpy.notCalled).toBe(true);
       expect(postStub.notCalled).toBe(true);
     });
   });

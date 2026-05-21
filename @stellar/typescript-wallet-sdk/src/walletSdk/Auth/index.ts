@@ -12,6 +12,7 @@ import {
   ExpiredTokenError,
   ChallengeValidationFailedError,
   NetworkPassphraseMismatchError,
+  DomainSigningModifiedError,
 } from "../Exceptions";
 import {
   AuthenticateParams,
@@ -189,15 +190,27 @@ export class Sep10 {
       networkPassphrase,
     ) as Transaction;
 
-    // check if verifying client domain as well
-    for (const op of transaction.operations) {
-      if (op.type === "manageData" && op.name === "client_domain") {
-        transaction = await walletSigner.signWithDomainAccount({
-          transactionXDR: challengeResponse.transaction,
-          networkPassphrase,
-          accountKp,
-        });
+    const hasClientDomain = transaction.operations.some(
+      (op) => op.type === "manageData" && op.name === "client_domain",
+    );
+
+    if (hasClientDomain) {
+      const originalHash = transaction.hash();
+      const returned = await walletSigner.signWithDomainAccount({
+        transactionXDR: challengeResponse.transaction,
+        networkPassphrase,
+        accountKp,
+      });
+
+      // Transaction.hash() covers the envelope body but excludes signatures, so
+      // a domain signer that only appends its signature preserves the hash. Any
+      // change to the operations, source account, memo, or other body fields
+      // changes the hash and is rejected here.
+      if (!returned.hash().equals(originalHash)) {
+        throw new DomainSigningModifiedError();
       }
+
+      transaction = returned;
     }
 
     walletSigner.signWithClientAccount({ transaction, accountKp });
