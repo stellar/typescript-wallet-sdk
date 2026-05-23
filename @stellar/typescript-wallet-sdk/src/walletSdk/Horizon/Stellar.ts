@@ -24,6 +24,13 @@ import {
 import { getResultCode } from "../Utils/getResultCode";
 import { SigningKeypair } from "./Account";
 
+const SUBMIT_504_MAX_RETRIES = 5;
+const SUBMIT_504_BASE_DELAY_MS = 1000;
+const SUBMIT_504_MAX_DELAY_MS = 30000;
+
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
+
 /**
  * Interaction with the Stellar Network.
  * Do not create this object directly, use the Wallet class.
@@ -127,21 +134,33 @@ export class Stellar {
   async submitTransaction(
     signedTransaction: Transaction | FeeBumpTransaction,
   ): Promise<boolean> {
-    try {
-      const response = await this.server.submitTransaction(signedTransaction);
-      if (!response.successful) {
-        throw new TransactionSubmitFailedError(response);
-      }
-      return true;
-    } catch (e) {
-      if (e.response.status === 504) {
-        // in case of 504, keep retrying this tx until submission succeeds or we get a different error
+    let lastError: unknown;
+    for (let attempt = 0; attempt <= SUBMIT_504_MAX_RETRIES; attempt++) {
+      try {
+        const response = await this.server.submitTransaction(signedTransaction);
+        if (!response.successful) {
+          throw new TransactionSubmitFailedError(response);
+        }
+        return true;
+      } catch (e) {
+        if (e?.response?.status !== 504) {
+          throw e;
+        }
+        lastError = e;
+        if (attempt === SUBMIT_504_MAX_RETRIES) {
+          break;
+        }
         // https://developers.stellar.org/api/errors/http-status-codes/horizon-specific/timeout
         // https://developers.stellar.org/docs/encyclopedia/error-handling#timeouts
-        return await this.submitTransaction(signedTransaction);
+        const cappedDelay = Math.min(
+          SUBMIT_504_BASE_DELAY_MS * 2 ** attempt,
+          SUBMIT_504_MAX_DELAY_MS,
+        );
+        const jitter = Math.random() * (cappedDelay / 2);
+        await sleep(cappedDelay + jitter);
       }
-      throw e;
     }
+    throw lastError;
   }
 
   /**
