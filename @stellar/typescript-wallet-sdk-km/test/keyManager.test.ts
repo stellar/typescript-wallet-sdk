@@ -192,6 +192,64 @@ describe("KeyManager", () => {
     }
   });
 
+  test("removeKey clears the in-memory cache", async () => {
+    const testStore = new MemoryKeyStore();
+    const testKeyManager = new KeyManager({
+      keyStore: testStore,
+      shouldCache: true,
+    });
+    const network = Networks.TESTNET;
+
+    testKeyManager.registerEncrypter(IdentityEncrypter);
+
+    const keypair = Keypair.master(network);
+    const password = "test";
+
+    const keyMetadata = await testKeyManager.storeKey({
+      key: {
+        type: KeyType.plaintextKey,
+        publicKey: keypair.publicKey(),
+        privateKey: keypair.secret(),
+        network,
+      },
+      password,
+      encrypterName: "IdentityEncrypter",
+    });
+
+    // Sanity check: with the cached key, signing succeeds.
+    const source = new Account(
+      "GBBM6BKZPEHWYO3E3YKREDPQXMS4VK35YLNU7NFBRI26RAN7GI5POFBB",
+      "0",
+    );
+    const transaction = new TransactionBuilder(source, {
+      fee: "100",
+      networkPassphrase: network,
+    })
+      .addOperation(Operation.inflation({}))
+      .setTimeout(TimeoutInfinite)
+      .build();
+
+    await testKeyManager.signTransaction({
+      transaction,
+      id: keyMetadata.id,
+      password,
+    });
+
+    // Remove the key, then attempt to sign again. If the cache is still
+    // serving the deleted key, signing succeeds and this test fails.
+    await testKeyManager.removeKey(keyMetadata.id);
+
+    await expect(
+      testKeyManager.signTransaction({
+        transaction,
+        id: keyMetadata.id,
+        password,
+      }),
+    ).rejects.toThrow(
+      `Couldn't sign the transaction: no key with id '${keyMetadata.id}' found.`,
+    );
+  });
+
   test("Sign transactions", async () => {
     // set up the manager
     const testStore = new MemoryKeyStore();
@@ -1114,9 +1172,7 @@ describe("fetchAuthToken", () => {
 
       expect("This test failed: transaction didn't cause error").toBe(null);
     } catch (e) {
-      expect(e.toString()).toMatch(
-        `Transaction not signed by server`,
-      );
+      expect(e.toString()).toMatch(`Transaction not signed by server`);
     }
   });
 

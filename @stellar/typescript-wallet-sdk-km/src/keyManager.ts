@@ -466,8 +466,13 @@ export class KeyManager {
   }
 
   private _writeIndexCache(id: string, key: Key | undefined) {
-    if (this.shouldCache && key) {
+    if (!this.shouldCache) {
+      return;
+    }
+    if (key) {
       this.keyCache[id] = key;
+    } else {
+      delete this.keyCache[id];
     }
   }
 }
