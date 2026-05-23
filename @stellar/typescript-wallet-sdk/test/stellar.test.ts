@@ -14,6 +14,7 @@ import {
 } from "../src/walletSdk/Asset";
 import { TransactionStatus, WithdrawTransaction } from "../src/walletSdk/Types";
 import {
+  TransactionSubmitWithFeeIncreaseFailedError,
   WithdrawalTxMissingDestinationError,
   WithdrawalTxMissingMemoError,
   WithdrawalTxNotPendingUserTransferStartError,
@@ -156,6 +157,51 @@ describe("Stellar", () => {
     });
     expect(txn).toBeTruthy();
     expect(txn.fee).toBe("200");
+  });
+
+  it("should enforce maxFee across multiple submitWithFeeIncrease retries", async () => {
+    const txTooLateRejection = {
+      response: {
+        status: 400,
+        statusText: "Bad Request",
+        data: {
+          extras: {
+            result_codes: { transaction: "tx_too_late" },
+          },
+        },
+      },
+    };
+
+    // Always reject with tx_too_late so the fee climbs on every retry. With the
+    // fix the maxFee cap is honored across all retries and submitWithFeeIncrease
+    // eventually throws; without it the cap is dropped after the first retry and
+    // the recursion never stops. Restore the spy in a finally block: a leaked
+    // mock on submitTransaction would turn the next test's real submission into
+    // a no-op.
+    const submitStub = jest
+      .spyOn(stellar, "submitTransaction")
+      .mockRejectedValue(txTooLateRejection);
+
+    const buildingFunction = (builder) =>
+      builder.transfer(kp.publicKey, new NativeAssetId(), "2");
+
+    try {
+      await expect(
+        stellar.submitWithFeeIncrease({
+          sourceAddress: kp,
+          timeout: 180,
+          baseFeeIncrease: 100,
+          buildingFunction,
+          baseFee: 100,
+          maxFee: 250,
+        }),
+      ).rejects.toThrow(TransactionSubmitWithFeeIncreaseFailedError);
+      // The cap is enforced only after several retries, proving it survives
+      // past the first retry (the bug being fixed).
+      expect(submitStub.mock.calls.length).toBeGreaterThan(1);
+    } finally {
+      submitStub.mockRestore();
+    }
   });
 
   it("should add and remove asset support", async () => {
