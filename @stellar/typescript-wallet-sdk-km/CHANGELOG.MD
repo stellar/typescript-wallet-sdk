@@ -1,3 +1,8 @@
+# Release notes - Typescript Wallet SDK Key Manager - 3.0.1
+
+### Fixed
+* `KeyManager.removeKey`: the in-memory cache entry is now actually deleted when `shouldCache: true`, instead of being left stale by a no-op write (#238)
+
 # Release notes - Typescript Wallet SDK Key Manager - 3.0.0
 
 ### BREAKING CHANGES

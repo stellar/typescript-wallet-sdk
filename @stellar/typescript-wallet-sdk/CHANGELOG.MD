@@ -1,3 +1,10 @@
+# Release notes - Typescript Wallet SDK - 3.0.1
+
+### Fixed
+* SEP-10: verify the auth server returns the same challenge body after `client_domain` re-signing, instead of trusting a server-supplied transaction (#237)
+* `submitWithFeeIncrease`: forward `maxFee` across recursive retries so the cap is enforced on every retry, not just the first (#238)
+* `submitTransaction`: replace the unbounded recursive 504 retry with a bounded equal-jitter exponential backoff loop, avoiding stack overflow during sustained Horizon outages (#238)
+
 # Release notes - Typescript Wallet SDK - 3.0.0
 
 ### BREAKING CHANGES
