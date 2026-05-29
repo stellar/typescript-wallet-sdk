@@ -282,8 +282,9 @@ describe("Stellar", () => {
       const tx = {} as Transaction;
       const promise = stellar.submitTransaction(tx);
 
-      // First retry waits SUBMIT_504_BASE_DELAY_MS = 1000ms (jitter stubbed to 0).
-      await clock.tickAsync(1000);
+      // Equal-jitter sleep at attempt 0 with Math.random stubbed to 0 is
+      // cappedDelay/2 = 1000/2 = 500ms.
+      await clock.tickAsync(500);
 
       await expect(promise).resolves.toBe(true);
       expect(serverStub).toHaveBeenCalledTimes(2);
@@ -311,9 +312,9 @@ describe("Stellar", () => {
       // the test runner mid-tick.
       promise.catch(() => undefined);
 
-      // Sum of capped exponential delays with zero jitter:
-      // 1000 + 2000 + 4000 + 8000 + 16000 = 31000ms.
-      await clock.tickAsync(31000);
+      // Sum of equal-jitter sleeps (cappedDelay/2) with Math.random stubbed
+      // to 0: 500 + 1000 + 2000 + 4000 + 8000 = 15500ms.
+      await clock.tickAsync(15500);
 
       await expect(promise).rejects.toMatchObject({
         response: { status: 504 },

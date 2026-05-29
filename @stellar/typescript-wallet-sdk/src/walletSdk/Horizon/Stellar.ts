@@ -152,12 +152,17 @@ export class Stellar {
         }
         // https://developers.stellar.org/api/errors/http-status-codes/horizon-specific/timeout
         // https://developers.stellar.org/docs/encyclopedia/error-handling#timeouts
+        // Equal-jitter backoff: each attempt waits at least half the capped
+        // exponential delay (a deterministic, progressive floor) plus a random
+        // amount up to the other half. Keeps the schedule predictable while
+        // smoothing correlated retries across many clients during a Horizon
+        // outage. Total sleep stays within SUBMIT_504_MAX_DELAY_MS.
         const cappedDelay = Math.min(
           SUBMIT_504_BASE_DELAY_MS * 2 ** attempt,
           SUBMIT_504_MAX_DELAY_MS,
         );
-        const jitter = Math.random() * (cappedDelay / 2);
-        await sleep(cappedDelay + jitter);
+        const half = cappedDelay / 2;
+        await sleep(half + Math.random() * half);
       }
     }
     throw lastError;
