@@ -223,7 +223,7 @@ export class Stellar {
       if (resultCode === "tx_too_late") {
         const newFee = parseInt(transaction.fee) + baseFeeIncrease;
 
-        if (maxFee !== undefined && newFee > maxFee) {
+        if (maxFee && newFee > maxFee) {
           throw new TransactionSubmitWithFeeIncreaseFailedError(maxFee, e);
         }
 
