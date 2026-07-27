@@ -1909,7 +1909,13 @@ describe("AuthHeaderSigner", () => {
   it("full sep-10 auth using header token should work", async () => {
     const wallet = Wallet.TestNet();
     const accountKp = wallet.stellar().account().createKeypair();
-    wallet.stellar().fundTestnetAccount(accountKp.publicKey);
+    // Await funding so the request settles before the test ends; without this
+    // the fire-and-forget promise can reject after teardown and leak.
+    try {
+      await wallet.stellar().fundTestnetAccount(accountKp.publicKey);
+    } catch (e) {
+      // Account may already be funded; funding errors are not relevant here.
+    }
 
     const anchor = wallet.anchor({ homeDomain: "testanchor.stellar.org" });
     const auth = await anchor.sep10();
