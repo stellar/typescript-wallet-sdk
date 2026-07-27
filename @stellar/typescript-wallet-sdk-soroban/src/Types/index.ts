@@ -29,6 +29,9 @@ export interface FnArgsCreateWasm {
   salt: string;
   hash: string;
   address: string;
+  // Present for CreateContractV2 host functions, which deploy a contract and
+  // invoke its constructor with these arguments.
+  constructorArgs?: xdr.ScVal[];
 }
 
 export interface FnArgsCreateSac {
