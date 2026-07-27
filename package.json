@@ -10,7 +10,7 @@
     "prepare": "husky install",
     "lint": "eslint . --ext .ts",
     "test": "jest --watchAll",
-    "test:ci": "jest --ci",
+    "test:ci": "jest --ci --runInBand",
     "test:e2e:ci": "yarn workspace @stellar/typescript-wallet-sdk test:e2e:ci",
     "test:recovery:ci": "yarn workspace @stellar/typescript-wallet-sdk test:recovery:ci",
     "test:anchorplatform:ci": "yarn workspace @stellar/typescript-wallet-sdk test:anchorplatform:ci",
