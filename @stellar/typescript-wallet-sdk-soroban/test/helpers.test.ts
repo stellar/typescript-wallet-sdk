@@ -565,6 +565,37 @@ describe("getInvocationDetails for a CreateContractV2 host function", () => {
     expect(scValByType(detail.constructorArgs[0])).toBe("init");
     expect(Number(scValByType(detail.constructorArgs[1]))).toBe(42);
   });
+
+  it("decodes a CreateContractV2 invocation with a Stellar Asset executable including its constructor args", () => {
+    const assetId = randomKey();
+    const constructorArgs = [xdr.ScVal.scvString("init"), xdr.ScVal.scvU32(42)];
+
+    const v2Invocation = new xdr.SorobanAuthorizedInvocation({
+      function:
+        xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeCreateContractV2HostFn(
+          new xdr.CreateContractArgsV2({
+            contractIdPreimage:
+              xdr.ContractIdPreimage.contractIdPreimageFromAsset(
+                new Asset("TEST", assetId).toXDRObject(),
+              ),
+            executable: xdr.ContractExecutable.contractExecutableStellarAsset(),
+            constructorArgs,
+          }),
+        ),
+      subInvocations: [],
+    });
+
+    const detailsList = getInvocationDetails(v2Invocation);
+
+    expect(detailsList.length).toBe(1);
+
+    const [detail] = detailsList;
+    expect(detail.type).toBe("sac");
+    expect(detail.asset).toBe(`TEST:${assetId}`);
+    expect(detail.constructorArgs.length).toBe(2);
+    expect(scValByType(detail.constructorArgs[0])).toBe("init");
+    expect(Number(scValByType(detail.constructorArgs[1]))).toBe(42);
+  });
 });
 
 describe("XDR integer boundary values (Protocol 26 strict validation)", () => {

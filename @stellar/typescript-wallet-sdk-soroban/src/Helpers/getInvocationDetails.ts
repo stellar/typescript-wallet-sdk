@@ -33,6 +33,10 @@ const getCreateContractArgs = (
   preimage: xdr.ContractIdPreimage,
   constructorArgs?: xdr.ScVal[],
 ): InvocationArgs => {
+  // constructorArgs is a sibling of `executable` in CreateContractV2, so it can
+  // accompany either executable variant and is surfaced on both.
+  const extra = constructorArgs ? { constructorArgs } : {};
+
   switch (executable.switch().value) {
     // contractExecutableWasm
     case 0: {
@@ -43,7 +47,7 @@ const getCreateContractArgs = (
         salt: details.salt().toString("hex"),
         hash: executable.wasmHash().toString("hex"),
         address: Address.fromScAddress(details.address()).toString(),
-        ...(constructorArgs ? { constructorArgs } : {}),
+        ...extra,
       };
     }
 
@@ -52,6 +56,7 @@ const getCreateContractArgs = (
       return {
         type: "sac",
         asset: Asset.fromOperation(preimage.fromAsset()).toString(),
+        ...extra,
       };
 
     default:

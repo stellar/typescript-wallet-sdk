@@ -29,14 +29,17 @@ export interface FnArgsCreateWasm {
   salt: string;
   hash: string;
   address: string;
-  // Present for CreateContractV2 host functions, which deploy a contract and
-  // invoke its constructor with these arguments.
+  // Present (possibly empty) for CreateContractV2 host functions; absent for
+  // the legacy CreateContractHostFn.
   constructorArgs?: xdr.ScVal[];
 }
 
 export interface FnArgsCreateSac {
   type: "sac";
   asset: string;
+  // Present (possibly empty) for CreateContractV2 host functions; absent for
+  // the legacy CreateContractHostFn.
+  constructorArgs?: xdr.ScVal[];
 }
 
 export type InvocationArgs = FnArgsInvoke | FnArgsCreateWasm | FnArgsCreateSac;
