@@ -4,18 +4,22 @@ import { InvocationArgs } from "Types";
 
 /**
  * Extract invocation args and params from a Soroban authorized invocation
- * tree up to its immediate sub invocations.
+ * tree, walking every sub invocation at any depth.
  *
  * @param {xdr.SorobanAuthorizedInvocation} invocationTree - The invocation tree.
  *
- * @returns {InvocationArgs[]} A list of user friendly invocation args and params.
+ * @returns {InvocationArgs[]} A depth-first list of user friendly invocation
+ * args and params for the root invocation and all of its nested sub
+ * invocations.
  */
 export const getInvocationDetails = (
   invocationTree: xdr.SorobanAuthorizedInvocation,
 ): InvocationArgs[] => {
   const invocations = [
     getInvocationArgs(invocationTree),
-    ...invocationTree.subInvocations().map(getInvocationArgs),
+    ...invocationTree
+      .subInvocations()
+      .flatMap((subInvocation) => getInvocationDetails(subInvocation)),
   ];
   return invocations.filter(isInvocationArg);
 };
@@ -23,6 +27,42 @@ export const getInvocationDetails = (
 const isInvocationArg = (
   invocation: InvocationArgs | undefined,
 ): invocation is InvocationArgs => !!invocation;
+
+const getCreateContractArgs = (
+  executable: xdr.ContractExecutable,
+  preimage: xdr.ContractIdPreimage,
+  constructorArgs?: xdr.ScVal[],
+): InvocationArgs => {
+  // constructorArgs is a sibling of `executable` in CreateContractV2, so it can
+  // accompany either executable variant and is surfaced on both.
+  const extra = constructorArgs ? { constructorArgs } : {};
+
+  switch (executable.switch().value) {
+    // contractExecutableWasm
+    case 0: {
+      const details = preimage.fromAddress();
+
+      return {
+        type: "wasm",
+        salt: details.salt().toString("hex"),
+        hash: executable.wasmHash().toString("hex"),
+        address: Address.fromScAddress(details.address()).toString(),
+        ...extra,
+      };
+    }
+
+    // contractExecutableStellarAsset
+    case 1:
+      return {
+        type: "sac",
+        asset: Asset.fromOperation(preimage.fromAsset()).toString(),
+        ...extra,
+      };
+
+    default:
+      throw new Error(`unknown creation type: ${JSON.stringify(executable)}`);
+  }
+};
 
 export const getInvocationArgs = (
   invocation: xdr.SorobanAuthorizedInvocation,
@@ -44,34 +84,20 @@ export const getInvocationArgs = (
     // sorobanAuthorizedFunctionTypeCreateContractHostFn
     case 1: {
       const _invocation = fn.createContractHostFn();
-      const [exec, preimage] = [
+      return getCreateContractArgs(
         _invocation.executable(),
         _invocation.contractIdPreimage(),
-      ];
+      );
+    }
 
-      switch (exec.switch().value) {
-        // contractExecutableWasm
-        case 0: {
-          const details = preimage.fromAddress();
-
-          return {
-            type: "wasm",
-            salt: details.salt().toString("hex"),
-            hash: exec.wasmHash().toString("hex"),
-            address: Address.fromScAddress(details.address()).toString(),
-          };
-        }
-
-        // contractExecutableStellarAsset
-        case 1:
-          return {
-            type: "sac",
-            asset: Asset.fromOperation(preimage.fromAsset()).toString(),
-          };
-
-        default:
-          throw new Error(`unknown creation type: ${JSON.stringify(exec)}`);
-      }
+    // sorobanAuthorizedFunctionTypeCreateContractV2HostFn
+    case 2: {
+      const _invocation = fn.createContractV2HostFn();
+      return getCreateContractArgs(
+        _invocation.executable(),
+        _invocation.contractIdPreimage(),
+        _invocation.constructorArgs(),
+      );
     }
 
     default: {
