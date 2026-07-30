@@ -1,7 +1,7 @@
 import {
   Operation,
   TransactionBuilder as StellarTransactionBuilder,
-  Account as StellarAccount,
+  TransactionSource,
   Transaction,
   Horizon,
   Memo,
@@ -40,14 +40,14 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
    * Creates a new instance of the TransactionBuilder class for constructing Stellar transactions.
    * @constructor
    * @param {Config} cfg - Configuration object for Stellar operations.
-   * @param {StellarAccount} sourceAccount - The source account for the transaction.
+   * @param {TransactionSource} sourceAccount - The source account for the transaction.
    * @param {number} [baseFee] - The base fee for the transaction. If not given will use the config base fee.
    * @param {Memo} [memo] - The memo for the transaction.
    * @param {Horizon.Server.Timebounds} [timebounds] - The timebounds for the transaction. If not given will use the config timebounds.
    */
   constructor(
     cfg: Config,
-    sourceAccount: StellarAccount,
+    sourceAccount: TransactionSource,
     baseFee?: number,
     memo?: Memo,
     timebounds?: Horizon.Server.Timebounds,
@@ -266,18 +266,21 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
       throw new WithdrawalTxMissingMemoError();
     }
 
-    if (transaction.withdraw_memo_type === "hash") {
-      try {
+    // The memo type/value come from the anchor (untrusted input). stellar-sdk
+    // validates them when the Memo is constructed and throws on anything
+    // malformed, so map any failure to a domain WithdrawalTxMemoError for both
+    // the hash and non-hash paths rather than leaking the raw SDK error.
+    try {
+      if (transaction.withdraw_memo_type === "hash") {
         const buffer = Buffer.from(transaction.withdraw_memo, "base64");
-        const memo = Memo.hash(buffer.toString("hex"));
-        this.setMemo(memo);
-      } catch {
-        throw new WithdrawalTxMemoError();
+        this.setMemo(Memo.hash(buffer.toString("hex")));
+      } else {
+        this.setMemo(
+          new Memo(transaction.withdraw_memo_type, transaction.withdraw_memo),
+        );
       }
-    } else {
-      this.setMemo(
-        new Memo(transaction.withdraw_memo_type, transaction.withdraw_memo),
-      );
+    } catch {
+      throw new WithdrawalTxMemoError();
     }
 
     return this.transfer(

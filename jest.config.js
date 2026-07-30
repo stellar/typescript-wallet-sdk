@@ -1,5 +1,16 @@
 const commonConfigs = {
-  transformIgnorePatterns: [`/node_modules/(?!${["@stablelib"].join("|")})`],
+  // @stellar/stellar-sdk v16 pulls in several ESM-only packages (directly or
+  // transitively) that must be transformed by babel-jest to run under Jest's
+  // CommonJS runtime.
+  transformIgnorePatterns: [
+    `/node_modules/(?!${[
+      "@stablelib",
+      "@noble",
+      "uint8array-extras",
+      "smol-toml",
+      "eventsource",
+    ].join("|")})`,
+  ],
   transform: {
     "^.+\\.(js|jsx|ts|tsx|mjs)$": ["babel-jest"],
   },

@@ -1,4 +1,5 @@
 import {
+  Account,
   Keypair,
   Memo,
   MemoText,
@@ -22,6 +23,7 @@ import {
 import { TransactionStatus, WithdrawTransaction } from "../src/walletSdk/Types";
 import {
   TransactionSubmitWithFeeIncreaseFailedError,
+  WithdrawalTxMemoError,
   WithdrawalTxMissingDestinationError,
   WithdrawalTxMissingMemoError,
   WithdrawalTxNotPendingUserTransferStartError,
@@ -752,4 +754,67 @@ describe("Account Modifying", () => {
     const accResp = await stellar.server.loadAccount(accountKp.publicKey);
     expect(parseInt(accResp.balances[0].balance)).toBeGreaterThan(19998);
   }, 30000);
+});
+
+// Hermetic (no network): stellar-sdk v16 tightened Memo validation, so a
+// malformed anchor-supplied withdrawal memo now throws when the Memo is
+// constructed. transferWithdrawalTransaction must map that to the domain
+// WithdrawalTxMemoError for every memo type, not just "hash".
+describe("transferWithdrawalTransaction memo validation", () => {
+  const localKp = SigningKeypair.fromSecret(
+    "SAS372GXRG6U7FW6W2PRVELKPOJG2FZZUADCIELWU2U3A45TNWXEQUV5",
+  );
+  let stellarLocal: Stellar;
+
+  beforeEach(() => {
+    stellarLocal = Wallet.TestNet().stellar();
+    sinon
+      .stub(stellarLocal.server, "loadAccount")
+      .resolves(new Account(localKp.publicKey, "1") as any);
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  const buildWithdrawal = (memoType: string, memo: string) =>
+    ({
+      status: TransactionStatus.pending_user_transfer_start,
+      withdraw_anchor_account: localKp.publicKey,
+      withdraw_memo_type: memoType,
+      withdraw_memo: memo,
+      amount_in: "10",
+    } as unknown as WithdrawTransaction);
+
+  const usdc = () => new IssuedAssetId("USDC", localKp.publicKey);
+
+  it("maps a malformed hash memo to WithdrawalTxMemoError", async () => {
+    const builder = await stellarLocal.transaction({ sourceAddress: localKp });
+    expect(() =>
+      builder.transferWithdrawalTransaction(
+        buildWithdrawal("hash", "not-a-valid-hash"),
+        usdc(),
+      ),
+    ).toThrow(WithdrawalTxMemoError);
+  });
+
+  it("maps a malformed id memo to WithdrawalTxMemoError", async () => {
+    const builder = await stellarLocal.transaction({ sourceAddress: localKp });
+    expect(() =>
+      builder.transferWithdrawalTransaction(
+        buildWithdrawal("id", "not-a-number"),
+        usdc(),
+      ),
+    ).toThrow(WithdrawalTxMemoError);
+  });
+
+  it("maps an over-long text memo to WithdrawalTxMemoError", async () => {
+    const builder = await stellarLocal.transaction({ sourceAddress: localKp });
+    expect(() =>
+      builder.transferWithdrawalTransaction(
+        buildWithdrawal("text", "x".repeat(29)),
+        usdc(),
+      ),
+    ).toThrow(WithdrawalTxMemoError);
+  });
 });

@@ -1,5 +1,5 @@
 import {
-  Account as StellarAccount,
+  TransactionSource,
   Horizon,
   Transaction,
   TransactionBuilder as StellarTransactionBuilder,
@@ -75,7 +75,7 @@ export class Stellar {
     memo,
     timebounds,
   }: TransactionParams): Promise<TransactionBuilder> {
-    let sourceAccount: StellarAccount;
+    let sourceAccount: TransactionSource;
     try {
       sourceAccount = await this.cfg.stellar.server.loadAccount(
         sourceAddress.publicKey,
