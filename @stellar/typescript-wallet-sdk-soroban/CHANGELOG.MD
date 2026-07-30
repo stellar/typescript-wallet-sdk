@@ -1,3 +1,9 @@
+# Release notes - Typescript Wallet SDK Soroban - 3.0.2
+
+### Added
+* `getInvocationDetails` now walks the authorization tree to arbitrary depth (depth-first), so operations nested below the immediate sub-invocations are included in the returned list (#241)
+* `getInvocationArgs` now decodes the `CreateContractV2` host function, surfacing its constructor arguments via a new optional `constructorArgs` field on `FnArgsCreateWasm` and `FnArgsCreateSac` (#241)
+
 # Release notes - Typescript Wallet SDK Soroban - 3.0.1
 * Version bump
 
