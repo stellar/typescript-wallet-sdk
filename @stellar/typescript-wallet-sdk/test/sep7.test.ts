@@ -316,6 +316,25 @@ describe("Sep7Base", () => {
     expect(await uri.verifySignature()).toBe(false);
     expect(resolveSpy).not.toHaveBeenCalled();
   });
+
+  it("verifySignature() returns false and never resolves the toml when origin_domain has an injected CRLF", async () => {
+    // 'stellar.org%0d%0aevil.com' URL-decodes to 'stellar.org\r\nevil.com'.
+    const uriStr =
+      "web+stellar:tx?xdr=test&origin_domain=stellar.org%0d%0aevil.com&signature=sig";
+    const uri = new Sep7Tx(uriStr);
+
+    const resolveSpy = jest
+      .spyOn(StellarToml.Resolver, "resolve")
+      .mockResolvedValue({
+        URI_REQUEST_SIGNING_KEY: testKp1.publicKey,
+      });
+    // jest.spyOn() re-spying on an already-mocked function preserves the
+    // existing call history, so clear it to accurately assert non-invocation.
+    resolveSpy.mockClear();
+
+    expect(await uri.verifySignature()).toBe(false);
+    expect(resolveSpy).not.toHaveBeenCalled();
+  });
 });
 
 describe("Sep7Tx", () => {
