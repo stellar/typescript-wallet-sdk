@@ -1,5 +1,9 @@
 import { Keypair, Networks, StellarToml } from "@stellar/stellar-sdk";
-import { Sep7OperationType, URI_MSG_MAX_LENGTH } from "../Types";
+import {
+  Sep7OperationType,
+  URI_MSG_MAX_LENGTH,
+  isValidFullyQualifiedDomainName,
+} from "../Types";
 import { Sep7LongMsgError } from "../Exceptions";
 
 /**
@@ -231,6 +235,15 @@ export abstract class Sep7Base {
 
     // we can fail fast if neither of them are set since we can't verify without both
     if (!originDomain || !signature) {
+      return false;
+    }
+
+    // SEP-7 step 3: "If the origin_domain is not a valid fully qualified
+    // domain name, do not allow the user to sign the transaction." This must
+    // be enforced before resolving the stellar.toml, otherwise a malformed
+    // origin_domain (e.g. containing userinfo, a port, or a path) could
+    // redirect the trust-anchoring TOML fetch to an attacker-controlled host.
+    if (!isValidFullyQualifiedDomainName(originDomain)) {
       return false;
     }
 

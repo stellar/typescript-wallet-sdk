@@ -8,6 +8,7 @@ import {
   WEB_STELLAR_SCHEME,
   URI_MSG_MAX_LENGTH,
   URI_REPLACE_MAX_LENGTH,
+  isValidFullyQualifiedDomainName,
 } from "../Types";
 import {
   Sep7InvalidUriError,
@@ -42,6 +43,7 @@ export const isValidSep7Uri = (uri: string): IsValidSep7UriResult => {
     url.searchParams.get("network_passphrase") || Networks.PUBLIC;
   const destination = url.searchParams.get("destination");
   const msg = url.searchParams.get("msg");
+  const originDomain = url.searchParams.get("origin_domain");
 
   if (![Sep7OperationType.tx, Sep7OperationType.pay].includes(type)) {
     return {
@@ -95,6 +97,18 @@ export const isValidSep7Uri = (uri: string): IsValidSep7UriResult => {
     return {
       result: false,
       reason: `the 'msg' parameter should be no longer than ${URI_MSG_MAX_LENGTH} characters`,
+    };
+  }
+
+  // 'origin_domain' is optional (SEP-7), but when present it must be a valid
+  // fully qualified domain name (SEP-7 step 3), otherwise a malformed value
+  // could later redirect the trust-anchoring stellar.toml fetch in
+  // Sep7Base.verifySignature() to an attacker-controlled host.
+  if (originDomain && !isValidFullyQualifiedDomainName(originDomain)) {
+    return {
+      result: false,
+      reason:
+        "the provided 'origin_domain' parameter is not a valid fully qualified domain name",
     };
   }
 
