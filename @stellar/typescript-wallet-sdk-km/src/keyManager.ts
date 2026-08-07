@@ -246,8 +246,11 @@ export class KeyManager {
    * `params.clientDomain` is set, you need to provide a function that will add
    * the signature identified by the SIGNING_KEY present on your client domain's
    * toml file. The callback may only append signatures: the returned
-   * transaction's body hash is compared against the validated challenge and a
-   * `DomainSigningModifiedError` is thrown if they differ.
+   * transaction's hash is compared against the validated challenge and a
+   * `DomainSigningModifiedError` is thrown if they differ. That hash covers
+   * the operations, source account, sequence number, memo and network
+   * passphrase, but not the signatures, so appending a signature is the only
+   * change the callback can make.
    * @param {string} [params.account] The authenticating public key. If not
    * provided, then the signers's public key will be used instead.
    * @returns {Promise<string>} authToken JWT.
