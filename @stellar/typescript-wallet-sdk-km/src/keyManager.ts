@@ -1,5 +1,6 @@
 import { Networks, Transaction, WebAuth } from "@stellar/stellar-sdk";
 
+import { DomainSigningModifiedError } from "./Exceptions";
 import { freighterHandler } from "./Handlers/freighter";
 import { albedoHandler } from "./Handlers/albedo";
 import { ledgerHandler } from "./Handlers/ledger";
@@ -244,7 +245,12 @@ export class KeyManager {
    * @param {Function} params.onChallengeTransactionSignature When
    * `params.clientDomain` is set, you need to provide a function that will add
    * the signature identified by the SIGNING_KEY present on your client domain's
-   * toml file.
+   * toml file. The callback may only append signatures: the returned
+   * transaction's hash is compared against the validated challenge and a
+   * `DomainSigningModifiedError` is thrown if they differ. That hash covers
+   * the operations, source account, sequence number, memo and network
+   * passphrase, but not the signatures, so appending a signature is the only
+   * change the callback can make.
    * @param {string} [params.account] The authenticating public key. If not
    * provided, then the signers's public key will be used instead.
    * @returns {Promise<string>} authToken JWT.
@@ -362,9 +368,22 @@ export class KeyManager {
       new URL(authServer).hostname,
     ).tx;
 
+    const originalHash = transaction.hash();
+
     // Add extra signatures.
     // By default, the input transaction is returned as it is.
-    transaction = await onChallengeTransactionSignature(transaction);
+    const returned = await onChallengeTransactionSignature(transaction);
+
+    // Transaction.hash() covers the envelope body and the network passphrase but
+    // excludes signatures, so a callback that only appends the client_domain
+    // signature preserves the hash. Any change to the operations, source
+    // account, sequence number, memo or network changes the hash and is
+    // rejected here, so the validated challenge is what actually gets signed.
+    if (!returned.hash().equals(originalHash)) {
+      throw new DomainSigningModifiedError();
+    }
+
+    transaction = returned;
 
     const keyHandler = this.keyHandlerMap[key.type];
 
