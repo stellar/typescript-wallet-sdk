@@ -1,6 +1,6 @@
 {
   "name": "@stellar/typescript-wallet-sdk-soroban",
-  "version": "3.0.3",
+  "version": "4.0.0",
   "engines": {
     "node": ">=22"
   },
