@@ -2,7 +2,7 @@
   "name": "@stellar/typescript-wallet-sdk-km",
   "version": "3.0.3",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "browser": "./lib/bundle_browser.js",
   "main": "./lib/bundle.js",
@@ -38,7 +38,7 @@
     "@stablelib/base64": "^2.0.0",
     "@stablelib/utf8": "^2.0.0",
     "@stellar/freighter-api": "6.0.1",
-    "@stellar/stellar-sdk": "15.0.1",
+    "@stellar/stellar-sdk": "16.2.0",
     "@trezor/connect-plugin-stellar": "^9.0.2",
     "bignumber.js": "^9.1.2",
     "scrypt-async": "^2.0.1",

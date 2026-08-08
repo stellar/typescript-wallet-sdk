@@ -1,8 +1,9 @@
 import axios from "axios";
 import { Horizon } from "@stellar/stellar-sdk";
+import sinon from "sinon";
 
 import { AccountService, SigningKeypair, Wallet } from "../src";
-import { HORIZON_ORDER } from "../src/walletSdk/Types";
+import { HORIZON_ORDER, HORIZON_LIMIT_DEFAULT } from "../src/walletSdk/Types";
 import { IssuedAssetId } from "../src/walletSdk/Asset";
 
 let accountService: AccountService;
@@ -95,5 +96,60 @@ describe("Horizon", () => {
           type === Horizon.HorizonApi.OperationResponseType.changeTrust,
       ),
     ).toBeTruthy();
+  });
+});
+
+// Hermetic (no network) — kept out of the "Horizon" describe so its
+// friendbot/loadAccount beforeAll does not run.
+describe("AccountService.getHistory cursor handling", () => {
+  const accountAddress =
+    "GBBM6BKZPEHWYO3E3YKREDPQXMS4VK35YLNU7NFBRI26RAN7GI5POFBB";
+  let service: AccountService;
+  let fakeBuilder: Record<string, sinon.SinonStub>;
+
+  beforeEach(() => {
+    service = Wallet.TestNet().stellar().account();
+    fakeBuilder = {
+      forAccount: sinon.stub(),
+      limit: sinon.stub(),
+      order: sinon.stub(),
+      includeFailed: sinon.stub(),
+      cursor: sinon.stub(),
+      call: sinon.stub().resolves({ records: [] }),
+    };
+    // Every chained method returns the builder itself.
+    ["forAccount", "limit", "order", "includeFailed", "cursor"].forEach((m) =>
+      fakeBuilder[m].returns(fakeBuilder),
+    );
+    sinon
+      .stub(
+        service["server"] as unknown as { operations: () => unknown },
+        "operations",
+      )
+      .returns(fakeBuilder);
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  // Regression guard for the v16 URLSearchParams change: passing an undefined
+  // cursor into the call builder would serialize "cursor=undefined" and Horizon
+  // responds 400, so getHistory must omit .cursor() when none is provided.
+  it("omits .cursor() when no cursor is provided", async () => {
+    await service.getHistory({ accountAddress });
+
+    expect(fakeBuilder.cursor.called).toBe(false);
+    expect(fakeBuilder.call.calledOnce).toBe(true);
+    expect(fakeBuilder.limit.calledWith(HORIZON_LIMIT_DEFAULT)).toBe(true);
+    expect(fakeBuilder.order.calledWith(HORIZON_ORDER.DESC)).toBe(true);
+    expect(fakeBuilder.includeFailed.calledWith(false)).toBe(true);
+  });
+
+  it("applies .cursor(value) when a cursor is provided", async () => {
+    await service.getHistory({ accountAddress, cursor: "abc123" });
+
+    expect(fakeBuilder.cursor.calledOnceWithExactly("abc123")).toBe(true);
+    expect(fakeBuilder.call.calledOnce).toBe(true);
   });
 });

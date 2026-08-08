@@ -96,13 +96,20 @@ export class AccountService {
       throw new OperationsLimitExceededError(HORIZON_LIMIT_MAX);
     }
 
-    return this.server
+    let builder = this.server
       .operations()
       .forAccount(accountAddress)
       .limit(limit)
       .order(order)
-      .cursor(cursor)
-      .includeFailed(includeFailed)
-      .call();
+      .includeFailed(includeFailed);
+
+    // Only set the cursor when provided. In stellar-sdk v16 the call builder
+    // serializes query params via URLSearchParams, so passing an undefined
+    // cursor would send the literal "cursor=undefined" and Horizon returns 400.
+    if (cursor) {
+      builder = builder.cursor(cursor);
+    }
+
+    return builder.call();
   }
 }

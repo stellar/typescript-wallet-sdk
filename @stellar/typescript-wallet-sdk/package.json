@@ -2,7 +2,7 @@
   "name": "@stellar/typescript-wallet-sdk",
   "version": "3.0.3",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "browser": "./lib/bundle_browser.js",
   "main": "./lib/bundle.js",
@@ -35,6 +35,7 @@
     "pretty-quick": "^2.0.1",
     "process": "^0.11.10",
     "sinon": "^15.1.0",
+    "smol-toml": "^1.7.1",
     "stream-browserify": "^3.0.0",
     "ts-jest": "^29.0.5",
     "ts-loader": "^9.4.2",
@@ -47,7 +48,7 @@
   "dependencies": {
     "@stablelib/base64": "^2.0.0",
     "@stablelib/utf8": "^2.0.0",
-    "@stellar/stellar-sdk": "15.0.1",
+    "@stellar/stellar-sdk": "16.2.0",
     "axios": "^1.4.0",
     "base64url": "^3.0.1",
     "https-browserify": "^1.0.0",
