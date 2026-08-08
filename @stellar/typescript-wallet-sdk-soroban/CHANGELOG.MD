@@ -1,3 +1,6 @@
+# Release notes - Typescript Wallet SDK Soroban - 3.0.3
+* Version bump
+
 # Release notes - Typescript Wallet SDK Soroban - 3.0.2
 
 ### Added

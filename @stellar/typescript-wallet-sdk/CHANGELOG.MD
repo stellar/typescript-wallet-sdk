@@ -1,3 +1,11 @@
+# Release notes - Typescript Wallet SDK - 3.0.3
+
+### Fixed
+* Validate SEP-7 origin_domain as a fully qualified domain name (#244)
+
+### Added
+* `Types.isValidFullyQualifiedDomainName` and `Types.FULLY_QUALIFIED_DOMAIN_NAME_REGEX` (#244)
+
 # Release notes - Typescript Wallet SDK - 3.0.2
 * Version bump
 

@@ -1,3 +1,11 @@
+# Release notes - Typescript Wallet SDK Key Manager - 3.0.3
+
+### Fixed
+* Verify SEP-10 challenge body integrity after domain signing in key manager (#245)
+
+### Added
+* `DomainSigningModifiedError`, exported from the package root (#245)
+
 # Release notes - Typescript Wallet SDK Key Manager - 3.0.2
 * Version bump
 
