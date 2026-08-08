@@ -226,6 +226,115 @@ describe("Sep7Base", () => {
 
     expect(await uri.verifySignature()).toBe(true);
   });
+
+  it("verifySignature() returns false and never resolves the toml when origin_domain has userinfo (RFC 3986 confusion)", async () => {
+    const uriStr =
+      "web+stellar:tx?xdr=test&origin_domain=stellar.org%40evil.com&signature=sig";
+    const uri = new Sep7Tx(uriStr);
+
+    const resolveSpy = jest
+      .spyOn(StellarToml.Resolver, "resolve")
+      .mockResolvedValue({
+        URI_REQUEST_SIGNING_KEY: testKp1.publicKey,
+      });
+    // jest.spyOn() re-spying on an already-mocked function preserves the
+    // existing call history, so clear it to accurately assert non-invocation.
+    resolveSpy.mockClear();
+
+    expect(await uri.verifySignature()).toBe(false);
+    expect(resolveSpy).not.toHaveBeenCalled();
+  });
+
+  it("verifySignature() returns false and never resolves the toml when origin_domain has a port", async () => {
+    const uriStr =
+      "web+stellar:tx?xdr=test&origin_domain=example.com%3A8443&signature=sig";
+    const uri = new Sep7Tx(uriStr);
+
+    const resolveSpy = jest
+      .spyOn(StellarToml.Resolver, "resolve")
+      .mockResolvedValue({
+        URI_REQUEST_SIGNING_KEY: testKp1.publicKey,
+      });
+    // jest.spyOn() re-spying on an already-mocked function preserves the
+    // existing call history, so clear it to accurately assert non-invocation.
+    resolveSpy.mockClear();
+
+    expect(await uri.verifySignature()).toBe(false);
+    expect(resolveSpy).not.toHaveBeenCalled();
+  });
+
+  it("verifySignature() returns false and never resolves the toml when origin_domain has a path", async () => {
+    const uriStr =
+      "web+stellar:tx?xdr=test&origin_domain=example.com%2Fpath&signature=sig";
+    const uri = new Sep7Tx(uriStr);
+
+    const resolveSpy = jest
+      .spyOn(StellarToml.Resolver, "resolve")
+      .mockResolvedValue({
+        URI_REQUEST_SIGNING_KEY: testKp1.publicKey,
+      });
+    // jest.spyOn() re-spying on an already-mocked function preserves the
+    // existing call history, so clear it to accurately assert non-invocation.
+    resolveSpy.mockClear();
+
+    expect(await uri.verifySignature()).toBe(false);
+    expect(resolveSpy).not.toHaveBeenCalled();
+  });
+
+  it("verifySignature() returns false and never resolves the toml when origin_domain is a raw IPv4 address", async () => {
+    const uriStr =
+      "web+stellar:tx?xdr=test&origin_domain=127.0.0.1&signature=sig";
+    const uri = new Sep7Tx(uriStr);
+
+    const resolveSpy = jest
+      .spyOn(StellarToml.Resolver, "resolve")
+      .mockResolvedValue({
+        URI_REQUEST_SIGNING_KEY: testKp1.publicKey,
+      });
+    // jest.spyOn() re-spying on an already-mocked function preserves the
+    // existing call history, so clear it to accurately assert non-invocation.
+    resolveSpy.mockClear();
+
+    expect(await uri.verifySignature()).toBe(false);
+    expect(resolveSpy).not.toHaveBeenCalled();
+  });
+
+  it("verifySignature() returns false and never resolves the toml when origin_domain is 'localhost'", async () => {
+    const uriStr =
+      "web+stellar:tx?xdr=test&origin_domain=localhost&signature=sig";
+    const uri = new Sep7Tx(uriStr);
+
+    const resolveSpy = jest
+      .spyOn(StellarToml.Resolver, "resolve")
+      .mockResolvedValue({
+        URI_REQUEST_SIGNING_KEY: testKp1.publicKey,
+      });
+    // jest.spyOn() re-spying on an already-mocked function preserves the
+    // existing call history, so clear it to accurately assert non-invocation.
+    resolveSpy.mockClear();
+
+    expect(await uri.verifySignature()).toBe(false);
+    expect(resolveSpy).not.toHaveBeenCalled();
+  });
+
+  it("verifySignature() returns false and never resolves the toml when origin_domain has an injected CRLF", async () => {
+    // 'stellar.org%0d%0aevil.com' URL-decodes to 'stellar.org\r\nevil.com'.
+    const uriStr =
+      "web+stellar:tx?xdr=test&origin_domain=stellar.org%0d%0aevil.com&signature=sig";
+    const uri = new Sep7Tx(uriStr);
+
+    const resolveSpy = jest
+      .spyOn(StellarToml.Resolver, "resolve")
+      .mockResolvedValue({
+        URI_REQUEST_SIGNING_KEY: testKp1.publicKey,
+      });
+    // jest.spyOn() re-spying on an already-mocked function preserves the
+    // existing call history, so clear it to accurately assert non-invocation.
+    resolveSpy.mockClear();
+
+    expect(await uri.verifySignature()).toBe(false);
+    expect(resolveSpy).not.toHaveBeenCalled();
+  });
 });
 
 describe("Sep7Tx", () => {
@@ -589,6 +698,32 @@ describe("sep7Parser", () => {
     ).toBe(true);
   });
 
+  it("isValidSep7Uri(uri) returns true when 'origin_domain' is absent", () => {
+    expect(
+      isValidSep7Uri(
+        "web+stellar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.1234567&memo=skdjfasf&msg=pay%20me%20with%20lumens",
+      ).result,
+    ).toBe(true);
+  });
+
+  it("isValidSep7Uri(uri) returns true when 'origin_domain' is a valid fully qualified domain name", () => {
+    expect(
+      isValidSep7Uri(
+        "web+stellar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.1234567&memo=skdjfasf&msg=pay%20me%20with%20lumens&origin_domain=someDomain.com",
+      ).result,
+    ).toBe(true);
+  });
+
+  it("isValidSep7Uri(uri) returns 'false' with 'reason' when 'origin_domain' is not a valid fully qualified domain name", () => {
+    const validation = isValidSep7Uri(
+      "web+stellar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.1234567&memo=skdjfasf&msg=pay%20me%20with%20lumens&origin_domain=stellar.org%40evil.com",
+    );
+    expect(validation.result).toBe(false);
+    expect(validation.reason).toBe(
+      "the provided 'origin_domain' parameter is not a valid fully qualified domain name",
+    );
+  });
+
   it("isValidSep7Uri(uri) returns 'false' with 'reason' when it is not valid in some way", () => {
     const validation1 = isValidSep7Uri(
       "not-a-stellar-uri:tx?xdr=AAAAAP%2Byw%2BZEuNg533pUmwlYxfrq6%2FBoMJqiJ8vuQhf6rHWmAAAAZAB8NHAAAAABAAAAAAAAAAAAAAABAAAAAAAAAAYAAAABSFVHAAAAAABAH0wIyY3BJBS2qHdRPAV80M8hF7NBpxRjXyjuT9kEbH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FAAAAAAAAAAA%3D&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fa8f7asdfkjha&pubkey=GAU2ZSYYEYO5S5ZQSMMUENJ2TANY4FPXYGGIMU6GMGKTNVDG5QYFW6JS&msg=order%20number%2024",
@@ -834,7 +969,9 @@ describe("sep7Parser", () => {
 
   it("Sep7Tx.getReplacements() throws on replace param missing hints", () => {
     const uri = new Sep7Tx(
-      `web+stellar:tx?xdr=test&replace=${encodeURIComponent("sourceAccount:X")}`,
+      `web+stellar:tx?xdr=test&replace=${encodeURIComponent(
+        "sourceAccount:X",
+      )}`,
     );
 
     expect(() => uri.getReplacements()).toThrow(Sep7InvalidUriError);

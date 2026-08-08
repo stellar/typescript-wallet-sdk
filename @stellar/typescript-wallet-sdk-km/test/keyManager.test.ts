@@ -3,6 +3,7 @@ import {
   Networks,
   Keypair,
   Account,
+  Asset,
   TransactionBuilder,
   Operation,
   Transaction,
@@ -18,6 +19,7 @@ import randomBytes from "randombytes";
 import sinon from "sinon";
 
 import { KeyManager } from "../src";
+import { DomainSigningModifiedError } from "../src/Exceptions";
 import { KeyType } from "../src/Types";
 import {
   MemoryKeyStore,
@@ -777,6 +779,195 @@ describe("fetchAuthToken", () => {
 
     expect(verified).toBeTruthy();
     expect(res).toBe(token);
+  });
+
+  test("Rejects challenge signature callbacks that alter the body", async () => {
+    const authServer = "https://www.stellar.org/auth";
+    const password = "very secure password";
+
+    const keyNetwork = Networks.TESTNET;
+
+    const accountKey = Keypair.random();
+    const account = new Account(accountKey.publicKey(), "-1");
+
+    // set up the manager
+    const testStore = new MemoryKeyStore();
+    const testKeyManager = new KeyManager({
+      keyStore: testStore,
+    });
+
+    testKeyManager.registerEncrypter(IdentityEncrypter);
+
+    const keypair = Keypair.master(keyNetwork);
+
+    const value = randomBytes(48).toString("base64");
+
+    const tx = new TransactionBuilder(account, {
+      fee: BASE_FEE,
+      networkPassphrase: keyNetwork,
+    })
+      .addOperation(
+        Operation.manageData({
+          name: `stellar.org auth`,
+          value,
+          source: keypair.publicKey(),
+        }),
+      )
+      .addOperation(
+        Operation.manageData({
+          name: "web_auth_domain",
+          value: new URL(authServer).hostname,
+          source: account.accountId(),
+        }),
+      )
+      .setTimeout(300)
+      .build();
+
+    tx.sign(accountKey);
+
+    const fetchSpy = jest.spyOn(global, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          transaction: tx.toXDR(),
+          network_passphrase: keyNetwork,
+        }),
+      ),
+    );
+
+    const keyMetadata = await testKeyManager.storeKey({
+      key: {
+        type: KeyType.plaintextKey,
+        publicKey: keypair.publicKey(),
+        privateKey: keypair.secret(),
+        network: keyNetwork,
+      },
+      password,
+      encrypterName: "IdentityEncrypter",
+    });
+
+    // A callback in the client domain signer's position that returns an
+    // entirely different, submittable transaction instead of appending its
+    // signature to the challenge it was given.
+    const substituted = new TransactionBuilder(
+      new Account(keypair.publicKey(), "1"),
+      {
+        fee: BASE_FEE,
+        networkPassphrase: keyNetwork,
+      },
+    )
+      .addOperation(
+        Operation.payment({
+          destination: Keypair.random().publicKey(),
+          asset: Asset.native(),
+          amount: "100",
+        }),
+      )
+      .setTimeout(300)
+      .build();
+
+    await expect(
+      testKeyManager.fetchAuthToken({
+        id: keyMetadata.id,
+        password,
+        authServer,
+        authServerKey: account.accountId(),
+        authServerHomeDomains: ["stellar.org"],
+        onChallengeTransactionSignature: () => Promise.resolve(substituted),
+      }),
+    ).rejects.toThrow(DomainSigningModifiedError);
+
+    // The challenge was fetched, but nothing was signed or posted back.
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(substituted.signatures.length).toEqual(0);
+  });
+
+  test("Rejects challenge signature callbacks that alter the network", async () => {
+    const authServer = "https://www.stellar.org/auth";
+    const password = "very secure password";
+
+    const keyNetwork = Networks.TESTNET;
+
+    const accountKey = Keypair.random();
+    const account = new Account(accountKey.publicKey(), "-1");
+
+    // set up the manager
+    const testStore = new MemoryKeyStore();
+    const testKeyManager = new KeyManager({
+      keyStore: testStore,
+    });
+
+    testKeyManager.registerEncrypter(IdentityEncrypter);
+
+    const keypair = Keypair.master(keyNetwork);
+
+    const value = randomBytes(48).toString("base64");
+
+    const buildChallenge = (networkPassphrase: string) => {
+      const challenge = new TransactionBuilder(account, {
+        fee: BASE_FEE,
+        networkPassphrase,
+      })
+        .addOperation(
+          Operation.manageData({
+            name: `stellar.org auth`,
+            value,
+            source: keypair.publicKey(),
+          }),
+        )
+        .addOperation(
+          Operation.manageData({
+            name: "web_auth_domain",
+            value: new URL(authServer).hostname,
+            source: account.accountId(),
+          }),
+        )
+        .setTimeout(300)
+        .build();
+
+      challenge.sign(accountKey);
+
+      return challenge;
+    };
+
+    const tx = buildChallenge(keyNetwork);
+
+    // Same body, different network. The signing hash is derived from the
+    // returned transaction's own passphrase, so without the guard a key
+    // registered for TESTNET would produce a PUBLIC-valid signature.
+    const otherNetworkTx = buildChallenge(Networks.PUBLIC);
+
+    const fetchSpy = jest.spyOn(global, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          transaction: tx.toXDR(),
+          network_passphrase: keyNetwork,
+        }),
+      ),
+    );
+
+    const keyMetadata = await testKeyManager.storeKey({
+      key: {
+        type: KeyType.plaintextKey,
+        publicKey: keypair.publicKey(),
+        privateKey: keypair.secret(),
+        network: keyNetwork,
+      },
+      password,
+      encrypterName: "IdentityEncrypter",
+    });
+
+    await expect(
+      testKeyManager.fetchAuthToken({
+        id: keyMetadata.id,
+        password,
+        authServer,
+        authServerKey: account.accountId(),
+        authServerHomeDomains: ["stellar.org"],
+        onChallengeTransactionSignature: () => Promise.resolve(otherNetworkTx),
+      }),
+    ).rejects.toThrow(DomainSigningModifiedError);
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
   test("Can use a challenge token", async () => {
