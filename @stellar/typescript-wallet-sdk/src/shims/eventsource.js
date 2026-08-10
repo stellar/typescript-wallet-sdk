@@ -14,8 +14,19 @@ let realModule;
 
 const load = () => {
   if (!realModule) {
-    // eslint-disable-next-line global-require
-    realModule = require("eventsource-real");
+    try {
+      // eslint-disable-next-line global-require
+      realModule = require("eventsource-real");
+    } catch (cause) {
+      // CallBuilder.stream() catches this and retries on a timer, so make the
+      // error it reports to onerror self-explanatory.
+      throw new Error(
+        "Horizon streaming needs the DOM Event/EventTarget globals and a " +
+          "streaming fetch body, which React Native does not provide. Alias " +
+          '"eventsource" to a native SSE client (e.g. react-native-sse) to use ' +
+          `CallBuilder.stream(). Original error: ${cause.message}`,
+      );
+    }
   }
 
   return realModule;
