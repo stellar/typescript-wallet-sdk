@@ -19,6 +19,17 @@ module.exports = (env = { NODE: false }) => {
     },
     resolve: {
       extensions: [".js", ".json", ".ts"],
+      alias: {
+        // eventsource v4, reached via stellar-sdk's Horizon CallBuilder,
+        // subclasses the DOM globals Event and EventTarget at module scope, so
+        // importing this package threw "Property 'Event' doesn't exist" on React
+        // Native. Unlike the km and soroban packages, this one exposes
+        // Horizon.Server publicly, so stubbing eventsource out would break
+        // .stream() on web and Node. Defer its evaluation to first use instead.
+        eventsource$: path.resolve(__dirname, "src/shims/eventsource.js"),
+        // The facade's load target; "eventsource" would resolve back to itself.
+        "eventsource-real$": require.resolve("eventsource"),
+      },
       fallback: isBrowser
         ? {
             crypto: require.resolve("crypto-browserify"),
