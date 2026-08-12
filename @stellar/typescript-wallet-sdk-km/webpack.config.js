@@ -19,6 +19,14 @@ module.exports = (env = { NODE: false }) => {
     },
     resolve: {
       extensions: [".js", ".json", ".ts"],
+      alias: {
+        // stellar-sdk's root entry eagerly loads Horizon's CallBuilder, which
+        // requires eventsource v4. That module subclasses the DOM globals Event
+        // and EventTarget at module scope, so importing this package threw
+        // "Property 'Event' doesn't exist" on React Native (Hermes has neither).
+        // Horizon is unreachable from this package's API, so stub it out.
+        eventsource: false,
+      },
       fallback: isBrowser
         ? {
             crypto: require.resolve("crypto-browserify"),
