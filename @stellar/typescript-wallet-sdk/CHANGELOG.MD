@@ -1,3 +1,14 @@
+# Release notes - Typescript Wallet SDK - 4.0.0
+
+### BREAKING CHANGES
+* Upgraded `@stellar/stellar-sdk` from `15.0.1` to `16.2.0` (#243)
+* Minimum Node.js version raised from 20 to 22, as required by stellar-sdk v16 (#243)
+
+### Changed
+* `AccountService.getHistory` no longer sends an empty paging cursor. stellar-sdk v16 serializes query params via `URLSearchParams`, so an undefined cursor was sent as the literal `cursor=undefined` and Horizon returned a 400 (#243)
+* Withdrawal transactions now map malformed anchor-supplied memos to `WithdrawalTxMemoError` for every memo type (not just `hash`), matching v16's stricter `Memo` validation on untrusted input (#243)
+* Internal source-account typing now uses stellar-sdk v16's `TransactionSource` interface (#243)
+
 # Release notes - Typescript Wallet SDK - 3.0.3
 
 ### Fixed

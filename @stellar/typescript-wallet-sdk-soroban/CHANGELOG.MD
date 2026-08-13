@@ -1,3 +1,9 @@
+# Release notes - Typescript Wallet SDK Soroban - 4.0.0
+
+### BREAKING CHANGES
+* Upgraded `@stellar/stellar-sdk` from `15.0.1` to `16.2.0` (#243)
+* Minimum Node.js version raised from 20 to 22, as required by stellar-sdk v16 (#243)
+
 # Release notes - Typescript Wallet SDK Soroban - 3.0.3
 * Version bump
 
