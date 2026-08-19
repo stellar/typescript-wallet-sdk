@@ -319,6 +319,19 @@ export class ChallengeTxnInvalidSignatureError extends Error {
   }
 }
 
+export class ChallengeTxnClientAccountMismatchError extends Error {
+  constructor(expected: string, received: string) {
+    super(
+      `Challenge transaction client account mismatch: expected "${expected}" ` +
+        `but challenge was issued for "${received}"`,
+    );
+    Object.setPrototypeOf(
+      this,
+      ChallengeTxnClientAccountMismatchError.prototype,
+    );
+  }
+}
+
 export class AllowHttpOnNonTestnetError extends Error {
   constructor() {
     super("Can only allow Http on Testnet");
