@@ -8,6 +8,9 @@
 * Optional `homeDomain` on `SignChallengeTxnParams`, accepting a string or an array of strings for anchors serving multiple home domains. Defaults to `anchorDomain` (#250)
 * `ChallengeTxnClientAccountMismatchError`, exported via `Exceptions` (#250)
 
+### Deprecated
+* `ChallengeTxnInvalidSignatureError` is no longer thrown and will be removed in the next major release. Catch `ChallengeValidationFailedError` instead (#250)
+
 # Release notes - Typescript Wallet SDK - 4.0.0
 
 ### BREAKING CHANGES

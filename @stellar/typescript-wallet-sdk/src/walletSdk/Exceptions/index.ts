@@ -312,6 +312,12 @@ export class ChallengeTxnIncorrectSequenceError extends Error {
   }
 }
 
+/**
+ * @deprecated No longer thrown. `Server.signChallengeTransaction` now validates
+ * challenges with `WebAuth.readChallengeTx` and reports every failure, including
+ * an invalid server signature, as `ChallengeValidationFailedError`. This class
+ * will be removed in the next major release.
+ */
 export class ChallengeTxnInvalidSignatureError extends Error {
   constructor() {
     super("Invalid signature for challenge transaction");
