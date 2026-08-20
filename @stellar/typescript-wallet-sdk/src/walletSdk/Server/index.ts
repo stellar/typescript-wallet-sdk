@@ -8,6 +8,7 @@ import {
   TransactionBuilder,
   StellarToml,
   WebAuth,
+  extractBaseAddress,
 } from "@stellar/stellar-sdk";
 
 import { parseToml } from "../Utils";
@@ -37,7 +38,11 @@ import {
  * `<home domain> auth` operation must match the expected home domain, and any
  * `web_auth_domain` operation must match the anchor's `WEB_AUTH_ENDPOINT`.
  * The client account the challenge was issued for is then checked against
- * `accountKp`, so this helper only signs challenges meant for it.
+ * `accountKp`, so this helper only signs challenges meant for it. Muxed client
+ * accounts are supported: the comparison is made on the underlying `G...`
+ * address, since that is the key that signs. The muxed id itself is not pinned
+ * — a caller that needs to bind a specific subaccount should check the
+ * challenge's client account itself.
  *
  * @param {SignChallengeTxnParams} params - The Authentication params.
  * @param {AccountKeypair} params.accountKp - Keypair for the Stellar account signing the transaction.
@@ -86,7 +91,10 @@ export const signChallengeTransaction = async ({
     );
   }
 
-  if (clientAccountID !== accountKp.publicKey) {
+  // readChallengeTx returns the operation source verbatim, which is an `M...`
+  // address for a muxed client account. accountKp.publicKey is always the
+  // underlying `G...` key, so compare base addresses.
+  if (extractBaseAddress(clientAccountID) !== accountKp.publicKey) {
     throw new ChallengeTxnClientAccountMismatchError(
       accountKp.publicKey,
       clientAccountID,

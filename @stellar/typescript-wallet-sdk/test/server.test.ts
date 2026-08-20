@@ -4,6 +4,7 @@ import {
   Account,
   Asset,
   Keypair,
+  MuxedAccount,
   Operation,
   StellarToml,
   Transaction,
@@ -175,6 +176,47 @@ describe("signChallengeTransaction validation", () => {
         anchorDomain: anchorA,
       }),
     ).rejects.toThrow(ChallengeValidationFailedError);
+  });
+
+  it("should sign a challenge issued for a muxed account of the signing key", async () => {
+    // readChallengeTx returns the M... source verbatim; the underlying G... key
+    // is the correct signer, so this must be accepted.
+    const muxed = new MuxedAccount(
+      new Account(accountKp.publicKey, "0"),
+      "1234",
+    ).accountId();
+    expect(muxed.startsWith("M")).toBe(true);
+
+    const challengeTx = buildChallenge(anchorAKp, anchorA, muxed);
+
+    const signedResp = await Server.signChallengeTransaction({
+      accountKp,
+      challengeTx,
+      networkPassphrase,
+      anchorDomain: anchorA,
+    });
+
+    const signedTxn = TransactionBuilder.fromXDR(
+      signedResp.transaction,
+      networkPassphrase,
+    );
+    expect(signedTxn.signatures.length).toBe(2);
+  });
+
+  it("should reject a muxed challenge whose underlying key is not the signer", async () => {
+    const otherMuxed = new MuxedAccount(
+      new Account(Keypair.random().publicKey(), "0"),
+      "1234",
+    ).accountId();
+
+    await expect(
+      Server.signChallengeTransaction({
+        accountKp,
+        challengeTx: buildChallenge(anchorAKp, anchorA, otherMuxed),
+        networkPassphrase,
+        anchorDomain: anchorA,
+      }),
+    ).rejects.toThrow(ChallengeTxnClientAccountMismatchError);
   });
 
   it("should reject a challenge issued for a different account", async () => {
