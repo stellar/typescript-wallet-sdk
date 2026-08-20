@@ -36,7 +36,8 @@ import {
  * checks the full SEP-10 structure and binds the challenge to the expected
  * anchor: the transaction source must be the anchor's `SIGNING_KEY`, the
  * `<home domain> auth` operation must match the expected home domain, and any
- * `web_auth_domain` operation must match the anchor's `WEB_AUTH_ENDPOINT`.
+ * `web_auth_domain` operation must match the host of the anchor's
+ * `WEB_AUTH_ENDPOINT` (falling back to `anchorDomain` when the TOML omits it).
  * The client account the challenge was issued for is then checked against
  * `accountKp`, so this helper only signs challenges meant for it. Muxed client
  * accounts are supported: the comparison is made on the underlying `G...`
@@ -71,13 +72,15 @@ export const signChallengeTransaction = async ({
   const tomlResp = await StellarToml.Resolver.resolve(anchorDomain);
   const { signingKey, webAuthEndpoint } = parseToml(tomlResp);
 
-  const webAuthDomain = webAuthEndpoint
-    ? new URL(webAuthEndpoint).hostname
-    : anchorDomain;
-
   let tx: Transaction;
   let clientAccountID: string;
   try {
+    // Kept inside the try so a malformed WEB_AUTH_ENDPOINT surfaces as a
+    // ChallengeValidationFailedError rather than a raw TypeError.
+    const webAuthDomain = webAuthEndpoint
+      ? new URL(webAuthEndpoint).hostname
+      : anchorDomain;
+
     ({ tx, clientAccountID } = WebAuth.readChallengeTx(
       challengeTx,
       signingKey,

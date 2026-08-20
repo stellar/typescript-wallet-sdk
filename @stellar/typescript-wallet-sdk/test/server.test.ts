@@ -259,6 +259,24 @@ describe("signChallengeTransaction validation", () => {
     ).rejects.toThrow(ChallengeValidationFailedError);
   });
 
+  it("should wrap a malformed WEB_AUTH_ENDPOINT as a validation failure", async () => {
+    sinon.restore();
+    sinon.stub(StellarToml.Resolver, "resolve").resolves({
+      SIGNING_KEY: anchorAKp.publicKey(),
+      WEB_AUTH_ENDPOINT: "not a url",
+      DOCUMENTATION: {},
+    } as StellarToml.Api.StellarToml);
+
+    await expect(
+      Server.signChallengeTransaction({
+        accountKp,
+        challengeTx: buildChallenge(anchorAKp, anchorA, accountKp.publicKey),
+        networkPassphrase,
+        anchorDomain: anchorA,
+      }),
+    ).rejects.toThrow(ChallengeValidationFailedError);
+  });
+
   it("should accept an explicit homeDomain that differs from anchorDomain", async () => {
     const homeDomain = "wallet-home.example.com";
     const challengeTx = buildChallenge(
