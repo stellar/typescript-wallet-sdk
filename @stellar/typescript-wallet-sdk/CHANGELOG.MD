@@ -1,3 +1,16 @@
+# Release notes - Typescript Wallet SDK - 4.0.1
+
+### Changed
+* `Server.signChallengeTransaction`: validate the challenge with `WebAuth.readChallengeTx`, as `Sep10.sign` already does, and verify it was issued for `accountKp` before signing (#250)
+* `Server.signChallengeTransaction`: validation failures now throw `ChallengeValidationFailedError` instead of `ChallengeTxnInvalidSignatureError` (#250)
+
+### Added
+* Optional `homeDomain` on `SignChallengeTxnParams`, accepting a string or an array of strings for anchors serving multiple home domains. Defaults to `anchorDomain` (#250)
+* `ChallengeTxnClientAccountMismatchError`, exported via `Exceptions` (#250)
+
+### Deprecated
+* `ChallengeTxnInvalidSignatureError` is no longer thrown and will be removed in the next major release. Catch `ChallengeValidationFailedError` instead (#250)
+
 # Release notes - Typescript Wallet SDK - 4.0.0
 
 ### BREAKING CHANGES

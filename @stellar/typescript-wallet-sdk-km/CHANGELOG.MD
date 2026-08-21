@@ -1,3 +1,6 @@
+# Release notes - Typescript Wallet SDK Key Manager - 4.0.1
+* Version bump
+
 # Release notes - Typescript Wallet SDK Key Manager - 4.0.0
 
 ### BREAKING CHANGES

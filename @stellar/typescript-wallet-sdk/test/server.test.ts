@@ -1,6 +1,21 @@
 import axios from "axios";
-import { TransactionBuilder } from "@stellar/stellar-sdk";
+import sinon from "sinon";
+import {
+  Account,
+  Asset,
+  Keypair,
+  MuxedAccount,
+  Operation,
+  StellarToml,
+  Transaction,
+  TransactionBuilder,
+  WebAuth,
+} from "@stellar/stellar-sdk";
 import { Wallet, Server } from "../src";
+import {
+  ChallengeTxnClientAccountMismatchError,
+  ChallengeValidationFailedError,
+} from "../src/walletSdk/Exceptions";
 
 let wallet;
 let account;
@@ -76,5 +91,208 @@ describe("Server helpers", () => {
     const w2 = `{"id":"d64c5d56-de6d-492e-95dd-412fb86c1c14","kind":"withdrawal","status":"incomplete","amount_in":"0","amount_out":"0","amount_fee":"0","started_at":"2024-03-28T16:18:02Z","stellar_transaction_id":"","refunded":false,"from":"GAZDUFR2L47KHAKX4WSUX3IPZ7462T5E73MAZHXOWOCEBPAQYHT7E62F"}`;
     parsed = Server.parseAnchorTransaction(w2);
     expect(parsed.kind).toBe("withdrawal");
+  });
+});
+
+describe("signChallengeTransaction validation", () => {
+  const anchorA = "anchor-a.example.com";
+  const anchorB = "anchor-b.example.com";
+
+  let anchorAKp;
+  let anchorBKp;
+  let accountKp;
+
+  beforeEach(() => {
+    anchorAKp = Keypair.random();
+    anchorBKp = Keypair.random();
+    accountKp = Wallet.TestNet().stellar().account().createKeypair();
+
+    // anchorDomain always resolves to anchor A's stellar.toml
+    sinon.stub(StellarToml.Resolver, "resolve").resolves({
+      SIGNING_KEY: anchorAKp.publicKey(),
+      WEB_AUTH_ENDPOINT: `https://${anchorA}/auth`,
+      DOCUMENTATION: {},
+    } as StellarToml.Api.StellarToml);
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  // webAuthDomain defaults to anchor A, which is what the stubbed
+  // WEB_AUTH_ENDPOINT resolves to for anchorDomain.
+  const buildChallenge = (
+    serverKp,
+    homeDomain,
+    clientAccountID,
+    webAuthDomain = anchorA,
+  ) =>
+    WebAuth.buildChallengeTx(
+      serverKp,
+      clientAccountID,
+      homeDomain,
+      300,
+      networkPassphrase,
+      webAuthDomain,
+    );
+
+  it("should sign a challenge issued by the expected anchor", async () => {
+    const challengeTx = buildChallenge(anchorAKp, anchorA, accountKp.publicKey);
+
+    const signedResp = await Server.signChallengeTransaction({
+      accountKp,
+      challengeTx,
+      networkPassphrase,
+      anchorDomain: anchorA,
+    });
+
+    const signedTxn = TransactionBuilder.fromXDR(
+      signedResp.transaction,
+      networkPassphrase,
+    );
+    expect(signedTxn.signatures.length).toBe(2);
+  });
+
+  it("should reject a challenge issued by a different anchor", async () => {
+    // A relays a challenge that anchor B issued for the same account, ordering
+    // its own signature first so that signatures[0] matches the SIGNING_KEY
+    // published at anchorDomain. Only the home domain, web auth domain and
+    // transaction source bind the challenge to the anchor that issued it.
+    const relayed = TransactionBuilder.fromXDR(
+      buildChallenge(anchorBKp, anchorB, accountKp.publicKey, anchorB),
+      networkPassphrase,
+    ) as Transaction;
+
+    const anchorBSignature = relayed.signatures[0];
+    relayed.signatures.length = 0;
+    relayed.sign(anchorAKp);
+    relayed.signatures.push(anchorBSignature);
+
+    await expect(
+      Server.signChallengeTransaction({
+        accountKp,
+        challengeTx: relayed.toXDR(),
+        networkPassphrase,
+        anchorDomain: anchorA,
+      }),
+    ).rejects.toThrow(ChallengeValidationFailedError);
+  });
+
+  it("should sign a challenge issued for a muxed account of the signing key", async () => {
+    // readChallengeTx returns the M... source verbatim; the underlying G... key
+    // is the correct signer, so this must be accepted.
+    const muxed = new MuxedAccount(
+      new Account(accountKp.publicKey, "0"),
+      "1234",
+    ).accountId();
+    expect(muxed.startsWith("M")).toBe(true);
+
+    const challengeTx = buildChallenge(anchorAKp, anchorA, muxed);
+
+    const signedResp = await Server.signChallengeTransaction({
+      accountKp,
+      challengeTx,
+      networkPassphrase,
+      anchorDomain: anchorA,
+    });
+
+    const signedTxn = TransactionBuilder.fromXDR(
+      signedResp.transaction,
+      networkPassphrase,
+    );
+    expect(signedTxn.signatures.length).toBe(2);
+  });
+
+  it("should reject a muxed challenge whose underlying key is not the signer", async () => {
+    const otherMuxed = new MuxedAccount(
+      new Account(Keypair.random().publicKey(), "0"),
+      "1234",
+    ).accountId();
+
+    await expect(
+      Server.signChallengeTransaction({
+        accountKp,
+        challengeTx: buildChallenge(anchorAKp, anchorA, otherMuxed),
+        networkPassphrase,
+        anchorDomain: anchorA,
+      }),
+    ).rejects.toThrow(ChallengeTxnClientAccountMismatchError);
+  });
+
+  it("should reject a challenge issued for a different account", async () => {
+    const otherAccount = Keypair.random().publicKey();
+    const challengeTx = buildChallenge(anchorAKp, anchorA, otherAccount);
+
+    await expect(
+      Server.signChallengeTransaction({
+        accountKp,
+        challengeTx,
+        networkPassphrase,
+        anchorDomain: anchorA,
+      }),
+    ).rejects.toThrow(ChallengeTxnClientAccountMismatchError);
+  });
+
+  it("should reject a transaction that is not a SEP-10 challenge", async () => {
+    const notAChallenge = new TransactionBuilder(
+      new Account(anchorAKp.publicKey(), "-1"),
+      { fee: "100", networkPassphrase },
+    )
+      .addOperation(
+        Operation.payment({
+          destination: anchorAKp.publicKey(),
+          asset: Asset.native(),
+          amount: "1000",
+        }),
+      )
+      .setTimeout(300)
+      .build();
+    notAChallenge.sign(anchorAKp);
+
+    await expect(
+      Server.signChallengeTransaction({
+        accountKp,
+        challengeTx: notAChallenge.toXDR(),
+        networkPassphrase,
+        anchorDomain: anchorA,
+      }),
+    ).rejects.toThrow(ChallengeValidationFailedError);
+  });
+
+  it("should wrap a malformed WEB_AUTH_ENDPOINT as a validation failure", async () => {
+    sinon.restore();
+    sinon.stub(StellarToml.Resolver, "resolve").resolves({
+      SIGNING_KEY: anchorAKp.publicKey(),
+      WEB_AUTH_ENDPOINT: "not a url",
+      DOCUMENTATION: {},
+    } as StellarToml.Api.StellarToml);
+
+    await expect(
+      Server.signChallengeTransaction({
+        accountKp,
+        challengeTx: buildChallenge(anchorAKp, anchorA, accountKp.publicKey),
+        networkPassphrase,
+        anchorDomain: anchorA,
+      }),
+    ).rejects.toThrow(ChallengeValidationFailedError);
+  });
+
+  it("should accept an explicit homeDomain that differs from anchorDomain", async () => {
+    const homeDomain = "wallet-home.example.com";
+    const challengeTx = buildChallenge(
+      anchorAKp,
+      homeDomain,
+      accountKp.publicKey,
+    );
+
+    const signedResp = await Server.signChallengeTransaction({
+      accountKp,
+      challengeTx,
+      networkPassphrase,
+      anchorDomain: anchorA,
+      homeDomain,
+    });
+
+    expect(signedResp.networkPassphrase).toBe(networkPassphrase);
   });
 });

@@ -94,6 +94,11 @@ export type SignChallengeTxnParams = {
   challengeTx: string;
   networkPassphrase: string;
   anchorDomain: string;
+  /**
+   * The home domain(s) the challenge is expected to be scoped to. Defaults to
+   * `anchorDomain`. Pass an array for anchors that serve multiple home domains.
+   */
+  homeDomain?: string | string[];
 };
 
 export type SignChallengeTxnResponse = {
