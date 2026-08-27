@@ -368,7 +368,8 @@ export class Watcher {
 
         if (
           transaction.status.indexOf("pending") === 0 ||
-          transaction.status === TransactionStatus.incomplete
+          transaction.status === TransactionStatus.incomplete ||
+          transaction.status === TransactionStatus.on_hold
         ) {
           if (this._oneTransactionWatcher[assetCode][id]) {
             clearTimeout(this._oneTransactionWatcher[assetCode][id]);
