@@ -44,10 +44,21 @@ export type PathPayParams = {
   destinationAddress: string;
   sendAsset: StellarAssetId;
   destAsset: StellarAssetId;
-  sendAmount?: string;
-  destAmount?: string;
-  destMin?: string;
-  sendMax?: string;
-};
+} & (
+  | {
+      // Strict send: spend exactly sendAmount, receive at least destMin
+      sendAmount: string;
+      destMin: string;
+      destAmount?: never;
+      sendMax?: never;
+    }
+  | {
+      // Strict receive: deliver exactly destAmount, spend at most sendMax
+      destAmount: string;
+      sendMax: string;
+      sendAmount?: never;
+      destMin?: never;
+    }
+);
 
 export type CommonBuilder = TransactionBuilder | SponsoringBuilder;
