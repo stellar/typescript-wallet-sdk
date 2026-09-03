@@ -1,6 +1,7 @@
 import { AxiosInstance } from "axios";
 import { TransactionBuilder, Transaction, WebAuth } from "@stellar/stellar-sdk";
 import { decode } from "jws";
+import { areUint8ArraysEqual } from "uint8array-extras";
 
 import { Config } from "../";
 import {
@@ -185,7 +186,7 @@ export class Sep10 {
       );
     }
 
-    let transaction: Transaction = TransactionBuilder.fromXDR(
+    let transaction: Transaction = TransactionBuilder.fromXdr(
       challengeResponse.transaction,
       networkPassphrase,
     ) as Transaction;
@@ -206,7 +207,7 @@ export class Sep10 {
       // a domain signer that only appends its signature preserves the hash. Any
       // change to the operations, source account, memo, or other body fields
       // changes the hash and is rejected here.
-      if (!returned.hash().equals(originalHash)) {
+      if (!areUint8ArraysEqual(returned.hash(), originalHash)) {
         throw new DomainSigningModifiedError();
       }
 
@@ -220,7 +221,7 @@ export class Sep10 {
   private async getToken(signedTransaction: Transaction): Promise<AuthToken> {
     try {
       const resp = await this.httpClient.post(this.webAuthEndpoint, {
-        transaction: signedTransaction.toXDR(),
+        transaction: signedTransaction.toXdr(),
       });
       if (!resp.data.token) {
         throw new MissingTokenError();

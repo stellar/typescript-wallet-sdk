@@ -30,7 +30,7 @@ export class Sep7Tx extends Sep7Base {
    */
   static forTransaction(transaction: Transaction): Sep7Tx {
     const uri = new Sep7Tx();
-    uri.xdr = transaction.toEnvelope().toXDR().toString("base64");
+    uri.xdr = transaction.toEnvelope().toXdr("base64");
     uri.networkPassphrase = transaction.networkPassphrase as Networks;
     return uri;
   }

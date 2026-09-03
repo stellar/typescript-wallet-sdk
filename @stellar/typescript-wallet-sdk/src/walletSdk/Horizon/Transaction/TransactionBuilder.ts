@@ -284,8 +284,8 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
     // the hash and non-hash paths rather than leaking the raw SDK error.
     try {
       if (transaction.withdraw_memo_type === "hash") {
-        const buffer = Buffer.from(transaction.withdraw_memo, "base64");
-        this.setMemo(Memo.hash(buffer.toString("hex")));
+        const memoBytes = xdr.decodeBytes(transaction.withdraw_memo, "base64");
+        this.setMemo(Memo.hash(xdr.encodeBytes(memoBytes, "hex")));
       } else {
         this.setMemo(
           new Memo(transaction.withdraw_memo_type, transaction.withdraw_memo),

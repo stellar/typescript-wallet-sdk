@@ -231,7 +231,7 @@ export abstract class AccountRecover {
       const resp = await this.httpClient.post(
         requestUrl,
         {
-          transaction: transaction.toXDR(),
+          transaction: transaction.toXdr(),
         },
         {
           headers: {
