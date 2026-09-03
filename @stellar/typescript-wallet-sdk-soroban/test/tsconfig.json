@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
     "esModuleInterop": true,
+    "skipLibCheck": true,
+    "target": "ES2020",
     "baseUrl": "./",
     "outDir": "lib",
     "declaration": true,
