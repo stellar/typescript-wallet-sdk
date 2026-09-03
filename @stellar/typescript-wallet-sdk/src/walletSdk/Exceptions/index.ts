@@ -182,6 +182,14 @@ export class PathPayOnlyOneAmountError extends Error {
   }
 }
 
+export class PathPayBoundRequiredError extends Error {
+  constructor(bound: "destMin" | "sendMax") {
+    const amount = bound === "destMin" ? "sendAmount" : "destAmount";
+    super(`${bound} is required when using ${amount}`);
+    Object.setPrototypeOf(this, PathPayBoundRequiredError.prototype);
+  }
+}
+
 export class WithdrawalTxMemoError extends Error {
   constructor() {
     super(`Error parsing withdrawal transaction memo`);

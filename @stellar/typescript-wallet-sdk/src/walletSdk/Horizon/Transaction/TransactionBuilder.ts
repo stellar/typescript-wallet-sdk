@@ -23,7 +23,10 @@ import {
   TransactionStatus,
   PathPayParams,
 } from "../../Types";
-import { PathPayOnlyOneAmountError } from "../../Exceptions";
+import {
+  PathPayBoundRequiredError,
+  PathPayOnlyOneAmountError,
+} from "../../Exceptions";
 import { CommonTransactionBuilder } from "./CommonTransactionBuilder";
 import { SponsoringBuilder } from "./SponsoringBuilder";
 
@@ -140,19 +143,19 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
    * @param {string} params.destinationAddress - The destination Stellar address to which the payment is sent.
    * @param {StellarAssetId} params.sendAsset - The asset to be sent.
    * @param {StellarAssetId} params.destAsset - The asset the destination will receive.
-   * @param {string} [params.sendAmount] - The amount to be sent. Must specify either sendAmount or destAmount,
-   * but not both.
-   * @param {string} [params.destAmount] - The amount to be received by the destination. Must specify either sendAmount or destAmount,
-   * but not both.
-   * @param {string} [params.destMin] - The minimum amount of the destination asset to be receive. This is a
-   * protective measure, it allows you to specify a lower bound for an acceptable conversion. Only used
-   * if using sendAmount.
-   * (optional, default is ".0000001").
-   * @param {string} [params.sendMax] - The maximum amount of the destination asset to be sent. This is a
-   * protective measure, it allows you to specify an upper bound for an acceptable conversion. Only used
-   * if using destAmount.
-   * (optional, default is int64 max).
+   * @param {string} [params.sendAmount] - The amount of the send asset to be sent. Must specify either
+   * sendAmount or destAmount, but not both. Requires destMin.
+   * @param {string} [params.destAmount] - The amount of the destination asset to be received by the
+   * destination. Must specify either sendAmount or destAmount, but not both. Requires sendMax.
+   * @param {string} [params.destMin] - The minimum amount of the destination asset to receive. Required
+   * when using sendAmount. This is the slippage limit for the conversion: the payment fails if it would
+   * deliver less than this amount, instead of executing at a worse rate.
+   * @param {string} [params.sendMax] - The maximum amount of the send asset to spend. Required when using
+   * destAmount. This is the slippage limit for the conversion: the payment fails if it would cost more
+   * than this amount, instead of executing at a worse rate.
    *
+   * @throws {PathPayOnlyOneAmountError} If both or neither of sendAmount and destAmount are given.
+   * @throws {PathPayBoundRequiredError} If destMin is missing for sendAmount, or sendMax for destAmount.
    * @returns {TransactionBuilder} - Returns the current TransactionBuilder instance for method chaining.
    */
   pathPay({
@@ -168,23 +171,29 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
       throw new PathPayOnlyOneAmountError();
     }
     if (sendAmount) {
+      if (destMin === undefined) {
+        throw new PathPayBoundRequiredError("destMin");
+      }
       this.operations.push(
         Operation.pathPaymentStrictSend({
           destination: destinationAddress,
           sendAsset: sendAsset.toAsset(),
           sendAmount,
           destAsset: destAsset.toAsset(),
-          destMin: destMin || ".0000001",
+          destMin,
         }),
       );
     } else {
+      if (sendMax === undefined) {
+        throw new PathPayBoundRequiredError("sendMax");
+      }
       this.operations.push(
         Operation.pathPaymentStrictReceive({
           destination: destinationAddress,
           sendAsset: sendAsset.toAsset(),
           destAmount,
           destAsset: destAsset.toAsset(),
-          sendMax: sendMax || "922337203685.4775807",
+          sendMax,
         }),
       );
     }
@@ -198,14 +207,17 @@ export class TransactionBuilder extends CommonTransactionBuilder<TransactionBuil
    * @param {StellarAssetId} fromAsset - The source asset to be sent.
    * @param {StellarAssetId} toAsset - The destination asset to receive.
    * @param {string} amount - The amount of the source asset to be sent.
-   * @param {string} [destMin] - (Optional) The minimum amount of the destination asset to be received.
+   * @param {string} destMin - The minimum amount of the destination asset to receive. This is the
+   * slippage limit for the swap: it fails if the conversion would deliver less than this amount,
+   * instead of executing at a worse rate.
+   * @throws {PathPayBoundRequiredError} If destMin is missing.
    * @returns {TransactionBuilder} Returns the current instance of the TransactionBuilder for method chaining.
    */
   swap(
     fromAsset: StellarAssetId,
     toAsset: StellarAssetId,
     amount: string,
-    destMin?: string,
+    destMin: string,
   ): TransactionBuilder {
     this.pathPay({
       destinationAddress: this.sourceAddress,

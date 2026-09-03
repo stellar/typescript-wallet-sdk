@@ -1,8 +1,24 @@
 import axios from "axios";
-import { Horizon, MuxedAccount } from "@stellar/stellar-sdk";
+import {
+  Account,
+  Horizon,
+  Keypair,
+  MuxedAccount,
+  Operation,
+} from "@stellar/stellar-sdk";
 
-import { AccountService, SigningKeypair, Stellar, Wallet } from "../src";
+import {
+  AccountService,
+  ApplicationConfiguration,
+  Config,
+  SigningKeypair,
+  Stellar,
+  StellarConfiguration,
+  TransactionBuilder,
+  Wallet,
+} from "../src";
 import { IssuedAssetId, NativeAssetId } from "../src/walletSdk/Asset";
+import { PathPayBoundRequiredError } from "../src/walletSdk/Exceptions";
 
 describe("Muxed Transactions", () => {
   let wallet: Wallet;
@@ -289,6 +305,7 @@ describe("Path Payment", () => {
         sendAsset: new NativeAssetId(),
         destAsset: usdcAsset,
         sendAmount: "5",
+        destMin: "4.9",
       })
       .build();
     expect(txn.operations[0].type).toBe("pathPaymentStrictSend");
@@ -304,6 +321,7 @@ describe("Path Payment", () => {
         sendAsset: new NativeAssetId(),
         destAsset: usdcAsset,
         destAmount: "5",
+        sendMax: "5.1",
       })
       .build();
     expect(txn.operations[0].type).toBe("pathPaymentStrictReceive");
@@ -314,10 +332,95 @@ describe("Path Payment", () => {
       sourceAddress: sourceKp,
     });
     const txn = txBuilder
-      .swap(new NativeAssetId(), new NativeAssetId(), ".1")
+      .swap(new NativeAssetId(), new NativeAssetId(), ".1", ".1")
       .build();
     sourceKp.sign(txn);
     const success = await stellar.submitTransaction(txn);
     expect(success).toBe(true);
   }, 15000);
+});
+
+describe("Path Payment bounds", () => {
+  const usdcAsset = new IssuedAssetId(
+    "USDC",
+    "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+  );
+  const destination = Keypair.random().publicKey();
+
+  // Builds a TransactionBuilder offline so these tests never touch Horizon
+  const newBuilder = () =>
+    new TransactionBuilder(
+      new Config({
+        stellarConfiguration: StellarConfiguration.TestNet(),
+        applicationConfiguration: new ApplicationConfiguration(),
+      }),
+      new Account(Keypair.random().publicKey(), "0"),
+    );
+
+  it("throws when sendAmount is given without destMin", () => {
+    expect(() =>
+      newBuilder().pathPay({
+        destinationAddress: destination,
+        sendAsset: new NativeAssetId(),
+        destAsset: usdcAsset,
+        sendAmount: "5",
+      } as any),
+    ).toThrow(PathPayBoundRequiredError);
+  });
+
+  it("throws when destAmount is given without sendMax", () => {
+    expect(() =>
+      newBuilder().pathPay({
+        destinationAddress: destination,
+        sendAsset: new NativeAssetId(),
+        destAsset: usdcAsset,
+        destAmount: "5",
+      } as any),
+    ).toThrow(PathPayBoundRequiredError);
+  });
+
+  it("throws when swap is called without destMin", () => {
+    expect(() =>
+      (newBuilder() as any).swap(new NativeAssetId(), usdcAsset, "1"),
+    ).toThrow(PathPayBoundRequiredError);
+  });
+
+  it("uses the destMin given to pathPay", () => {
+    const txn = newBuilder()
+      .pathPay({
+        destinationAddress: destination,
+        sendAsset: new NativeAssetId(),
+        destAsset: usdcAsset,
+        sendAmount: "5",
+        destMin: "4.9",
+      })
+      .build();
+    const op = txn.operations[0] as Operation.PathPaymentStrictSend;
+    expect(op.type).toBe("pathPaymentStrictSend");
+    expect(op.destMin).toBe("4.9000000");
+  });
+
+  it("uses the sendMax given to pathPay", () => {
+    const txn = newBuilder()
+      .pathPay({
+        destinationAddress: destination,
+        sendAsset: new NativeAssetId(),
+        destAsset: usdcAsset,
+        destAmount: "5",
+        sendMax: "5.1",
+      })
+      .build();
+    const op = txn.operations[0] as Operation.PathPaymentStrictReceive;
+    expect(op.type).toBe("pathPaymentStrictReceive");
+    expect(op.sendMax).toBe("5.1000000");
+  });
+
+  it("uses the destMin given to swap", () => {
+    const txn = newBuilder()
+      .swap(new NativeAssetId(), usdcAsset, "1", "0.9")
+      .build();
+    const op = txn.operations[0] as Operation.PathPaymentStrictSend;
+    expect(op.type).toBe("pathPaymentStrictSend");
+    expect(op.destMin).toBe("0.9000000");
+  });
 });
