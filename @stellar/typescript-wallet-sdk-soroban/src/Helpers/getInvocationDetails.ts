@@ -17,9 +17,9 @@ export const getInvocationDetails = (
 ): InvocationArgs[] => {
   const invocations = [
     getInvocationArgs(invocationTree),
-    ...invocationTree
-      .subInvocations()
-      .flatMap((subInvocation) => getInvocationDetails(subInvocation)),
+    ...invocationTree.subInvocations.flatMap((subInvocation) =>
+      getInvocationDetails(subInvocation),
+    ),
   ];
   return invocations.filter(isInvocationArg);
 };
@@ -32,76 +32,93 @@ const getCreateContractArgs = (
   executable: xdr.ContractExecutable,
   preimage: xdr.ContractIdPreimage,
   constructorArgs?: xdr.ScVal[],
-): InvocationArgs => {
+): InvocationArgs | undefined => {
   // constructorArgs is a sibling of `executable` in CreateContractV2, so it can
-  // accompany either executable variant and is surfaced on both.
+  // accompany any executable variant and is surfaced on all of them.
   const extra = constructorArgs ? { constructorArgs } : {};
 
-  switch (executable.switch().value) {
-    // contractExecutableWasm
-    case 0: {
-      const details = preimage.fromAddress();
+  switch (executable.type) {
+    case "contractExecutableWasm": {
+      if (preimage.type !== "contractIdPreimageFromAddress") {
+        return undefined;
+      }
+      const details = preimage.fromAddress;
 
       return {
         type: "wasm",
-        salt: details.salt().toString("hex"),
-        hash: executable.wasmHash().toString("hex"),
-        address: Address.fromScAddress(details.address()).toString(),
+        salt: xdr.encodeBytes(details.salt.toBytes(), "hex"),
+        hash: xdr.encodeBytes(executable.wasmHash.toBytes(), "hex"),
+        address: Address.fromScAddress(details.address).toString(),
         ...extra,
       };
     }
 
-    // contractExecutableStellarAsset
-    case 1:
+    case "contractExecutableStellarAsset": {
+      if (preimage.type !== "contractIdPreimageFromAsset") {
+        return undefined;
+      }
       return {
         type: "sac",
-        asset: Asset.fromOperation(preimage.fromAsset()).toString(),
+        asset: Asset.fromOperation(preimage.fromAsset).toString(),
         ...extra,
       };
+    }
+
+    case "contractExecutableExternalRef": {
+      // CAP-85: the referenced code can change after signing, so deliberately
+      // surface the owner and tag but no hash.
+      const ref = executable.externalRef;
+      return {
+        type: "externalRef",
+        executableOwner: Address.fromScAddress(ref.executableOwner).toString(),
+        tag: ref.tag.toString(),
+        ...extra,
+      };
+    }
 
     default:
-      throw new Error(`unknown creation type: ${JSON.stringify(executable)}`);
+      // Degrade instead of throwing: an unrecognised future executable must not
+      // crash a wallet's transaction-review screen.
+      return undefined;
   }
 };
 
 export const getInvocationArgs = (
   invocation: xdr.SorobanAuthorizedInvocation,
 ): InvocationArgs | undefined => {
-  const fn = invocation.function();
+  const fn = invocation.function;
 
-  switch (fn.switch().value) {
-    // sorobanAuthorizedFunctionTypeContractFn
-    case 0: {
-      const _invocation = fn.contractFn();
-      const contractId = Address.fromScAddress(
-        _invocation.contractAddress(),
-      ).toString();
-      const fnName = _invocation.functionName().toString();
-      const args = _invocation.args();
-      return { fnName, contractId, args, type: "invoke" };
+  switch (fn.type) {
+    case "sorobanAuthorizedFunctionTypeContractFn": {
+      const _invocation = fn.contractFn;
+      return {
+        fnName: _invocation.functionName.toString(),
+        contractId: Address.fromScAddress(
+          _invocation.contractAddress,
+        ).toString(),
+        args: _invocation.args,
+        type: "invoke",
+      };
     }
 
-    // sorobanAuthorizedFunctionTypeCreateContractHostFn
-    case 1: {
-      const _invocation = fn.createContractHostFn();
+    case "sorobanAuthorizedFunctionTypeCreateContractHostFn": {
+      const _invocation = fn.createContractHostFn;
       return getCreateContractArgs(
-        _invocation.executable(),
-        _invocation.contractIdPreimage(),
+        _invocation.executable,
+        _invocation.contractIdPreimage,
       );
     }
 
-    // sorobanAuthorizedFunctionTypeCreateContractV2HostFn
-    case 2: {
-      const _invocation = fn.createContractV2HostFn();
+    case "sorobanAuthorizedFunctionTypeCreateContractV2HostFn": {
+      const _invocation = fn.createContractV2HostFn;
       return getCreateContractArgs(
-        _invocation.executable(),
-        _invocation.contractIdPreimage(),
-        _invocation.constructorArgs(),
+        _invocation.executable,
+        _invocation.contractIdPreimage,
+        _invocation.constructorArgs,
       );
     }
 
-    default: {
+    default:
       return undefined;
-    }
   }
 };

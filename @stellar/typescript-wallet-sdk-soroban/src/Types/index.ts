@@ -42,4 +42,19 @@ export interface FnArgsCreateSac {
   constructorArgs?: xdr.ScVal[];
 }
 
-export type InvocationArgs = FnArgsInvoke | FnArgsCreateWasm | FnArgsCreateSac;
+export interface FnArgsCreateExternalRef {
+  type: "externalRef";
+  // Contract that owns the referenced executable.
+  executableOwner: string;
+  // CAP-85 tag naming the executable within the owner contract.
+  tag: string;
+  // Present (possibly empty) for CreateContractV2 host functions; absent for
+  // the legacy CreateContractHostFn.
+  constructorArgs?: xdr.ScVal[];
+}
+
+export type InvocationArgs =
+  | FnArgsInvoke
+  | FnArgsCreateWasm
+  | FnArgsCreateSac
+  | FnArgsCreateExternalRef;

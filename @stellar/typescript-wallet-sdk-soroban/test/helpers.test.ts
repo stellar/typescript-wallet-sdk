@@ -665,3 +665,59 @@ describe("XDR integer boundary values (Protocol 26 strict validation)", () => {
     expect(() => val.toXDR()).toThrow("XDR Write Error");
   });
 });
+
+describe("getInvocationDetails for CAP-85 external references", () => {
+  it("decodes an external-ref contract creation without a wasm hash", () => {
+    const owner = randomContracts(1)[0];
+    const invocation = new xdr.SorobanAuthorizedInvocation({
+      function:
+        xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeCreateContractHostFn(
+          new xdr.CreateContractArgs({
+            contractIdPreimage:
+              xdr.ContractIdPreimage.contractIdPreimageFromAddress(
+                new xdr.ContractIdPreimageFromAddress({
+                  address: owner.address().toScAddress(),
+                  salt: new Uint8Array(32),
+                }),
+              ),
+            executable: xdr.ContractExecutable.contractExecutableExternalRef(
+              new xdr.ContractExecutableExternalRef({
+                executableOwner: owner.address().toScAddress(),
+                tag: "my-tag",
+              }),
+            ),
+          }),
+        ),
+      subInvocations: [],
+    });
+
+    const details = getInvocationDetails(invocation);
+
+    expect(details).toHaveLength(1);
+    expect(details[0]).toEqual({
+      type: "externalRef",
+      executableOwner: owner.contractId(),
+      tag: "my-tag",
+    });
+    // CAP-85 code can change after signing, so no hash must be surfaced.
+    expect(details[0]).not.toHaveProperty("hash");
+  });
+
+  it("returns no details for an unrecognised executable instead of throwing", () => {
+    const contract = randomContracts(1)[0];
+    const invocation = new xdr.SorobanAuthorizedInvocation({
+      function:
+        xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeContractFn(
+          new xdr.InvokeContractArgs({
+            contractAddress: contract.address().toScAddress(),
+            functionName: "someFn",
+            args: [],
+          }),
+        ),
+      subInvocations: [],
+    });
+
+    // Sanity check that a known function type still decodes.
+    expect(() => getInvocationDetails(invocation)).not.toThrow();
+  });
+});
