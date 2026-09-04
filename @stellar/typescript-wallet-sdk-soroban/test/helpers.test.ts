@@ -731,11 +731,16 @@ describe("getInvocationDetails for CAP-85 external references", () => {
 });
 
 describe("getInvocationDetails graceful degradation", () => {
-  // These four cases cover every `return undefined` path added by the v17
-  // migration. A wallet's transaction-review screen must degrade to "no
-  // details" rather than crash on an input it does not recognise.
+  // These five cases cover every arm that cannot decode its input: an
+  // unrecognised authorized function type, an unrecognised contract
+  // executable, and each of the three creation arms where a contract-id
+  // preimage does not match its paired executable. A wallet's
+  // transaction-review screen must never crash on an input it does not
+  // recognise, but it also must never silently drop the action from the
+  // list — each of these degrades to an explicit `unknown` entry instead, so
+  // a caller can choose to fail closed on its own terms.
 
-  it("returns no details for an unrecognised authorized function type", () => {
+  it("returns an unknown entry for an unrecognised authorized function type", () => {
     // Duck-typed: no real xdr union can carry a future variant name, which is
     // exactly the case the default arm exists for.
     const invocation = {
@@ -744,10 +749,16 @@ describe("getInvocationDetails graceful degradation", () => {
     } as unknown as xdr.SorobanAuthorizedInvocation;
 
     expect(() => getInvocationDetails(invocation)).not.toThrow();
-    expect(getInvocationDetails(invocation)).toEqual([]);
+    expect(getInvocationDetails(invocation)).toEqual([
+      {
+        type: "unknown",
+        reason: "unsupportedFunction",
+        functionType: "sorobanAuthorizedFunctionTypeFutureHostFn",
+      },
+    ]);
   });
 
-  it("returns no details for an unrecognised contract executable", () => {
+  it("returns an unknown entry for an unrecognised contract executable", () => {
     const owner = randomContracts(1)[0];
     const invocation = {
       function: {
@@ -767,10 +778,18 @@ describe("getInvocationDetails graceful degradation", () => {
     } as unknown as xdr.SorobanAuthorizedInvocation;
 
     expect(() => getInvocationDetails(invocation)).not.toThrow();
-    expect(getInvocationDetails(invocation)).toEqual([]);
+    expect(getInvocationDetails(invocation)).toEqual([
+      {
+        type: "unknown",
+        reason: "unsupportedExecutable",
+        functionType: "sorobanAuthorizedFunctionTypeCreateContractHostFn",
+        executableType: "contractExecutableFutureVariant",
+        preimageType: "contractIdPreimageFromAddress",
+      },
+    ]);
   });
 
-  it("returns no details for a wasm executable paired with a non-address preimage", () => {
+  it("returns an unknown entry for a wasm executable paired with a non-address preimage", () => {
     // On-chain impossible, but constructible — and reachable from any
     // untrusted XDR blob a wallet is asked to review.
     const invocation = new xdr.SorobanAuthorizedInvocation({
@@ -790,10 +809,18 @@ describe("getInvocationDetails graceful degradation", () => {
     });
 
     expect(() => getInvocationDetails(invocation)).not.toThrow();
-    expect(getInvocationDetails(invocation)).toEqual([]);
+    expect(getInvocationDetails(invocation)).toEqual([
+      {
+        type: "unknown",
+        reason: "executablePreimageMismatch",
+        functionType: "sorobanAuthorizedFunctionTypeCreateContractHostFn",
+        executableType: "contractExecutableWasm",
+        preimageType: "contractIdPreimageFromAsset",
+      },
+    ]);
   });
 
-  it("returns no details for an external-ref executable paired with a non-address preimage", () => {
+  it("returns an unknown entry for an external-ref executable paired with a non-address preimage", () => {
     // On-chain impossible, like the wasm case above: an external-ref
     // executable derives its contract ID from a deployer address plus salt,
     // so it can never be legitimately paired with an asset preimage.
@@ -818,10 +845,18 @@ describe("getInvocationDetails graceful degradation", () => {
     });
 
     expect(() => getInvocationDetails(invocation)).not.toThrow();
-    expect(getInvocationDetails(invocation)).toEqual([]);
+    expect(getInvocationDetails(invocation)).toEqual([
+      {
+        type: "unknown",
+        reason: "executablePreimageMismatch",
+        functionType: "sorobanAuthorizedFunctionTypeCreateContractHostFn",
+        executableType: "contractExecutableExternalRef",
+        preimageType: "contractIdPreimageFromAsset",
+      },
+    ]);
   });
 
-  it("returns no details for a Stellar Asset executable paired with a non-asset preimage", () => {
+  it("returns an unknown entry for a Stellar Asset executable paired with a non-asset preimage", () => {
     const contract = randomContracts(1)[0];
     const invocation = new xdr.SorobanAuthorizedInvocation({
       function:
@@ -841,10 +876,21 @@ describe("getInvocationDetails graceful degradation", () => {
     });
 
     expect(() => getInvocationDetails(invocation)).not.toThrow();
-    expect(getInvocationDetails(invocation)).toEqual([]);
+    expect(getInvocationDetails(invocation)).toEqual([
+      {
+        type: "unknown",
+        reason: "executablePreimageMismatch",
+        functionType: "sorobanAuthorizedFunctionTypeCreateContractHostFn",
+        executableType: "contractExecutableStellarAsset",
+        preimageType: "contractIdPreimageFromAddress",
+      },
+    ]);
   });
 
-  it("omits only the degrading entry when it is nested beside valid ones", () => {
+  it("keeps an unknown entry nested as a sub-invocation, in depth-first order beside its decodable siblings", () => {
+    // This is the case a signing view most needs to get right: an
+    // undecodable action nested below one the wallet *can* explain must
+    // still show up, not vanish behind a decodable sibling.
     const contract = randomContracts(1)[0];
     const invocation = {
       function:
@@ -866,8 +912,18 @@ describe("getInvocationDetails graceful degradation", () => {
     expect(() => getInvocationDetails(invocation)).not.toThrow();
 
     const details = getInvocationDetails(invocation);
-    expect(details).toHaveLength(1);
-    expect(details[0].fnName).toBe("outer");
+    expect(details).toHaveLength(2);
+    expect(details[0]).toEqual({
+      type: "invoke",
+      fnName: "outer",
+      contractId: contract.contractId(),
+      args: [],
+    });
+    expect(details[1]).toEqual({
+      type: "unknown",
+      reason: "unsupportedFunction",
+      functionType: "sorobanAuthorizedFunctionTypeFutureHostFn",
+    });
   });
 });
 

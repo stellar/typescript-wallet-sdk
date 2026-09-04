@@ -61,8 +61,23 @@ export interface FnArgsCreateExternalRef {
   constructorArgs?: xdr.ScVal[];
 }
 
+export interface FnArgsUnknown {
+  type: "unknown";
+  // Why this invocation could not be decoded.
+  reason:
+    | "unsupportedFunction"
+    | "unsupportedExecutable"
+    | "executablePreimageMismatch";
+  // XDR variant names involved, for diagnostics and for display in a
+  // transaction-review screen.
+  functionType: string;
+  executableType?: string;
+  preimageType?: string;
+}
+
 export type InvocationArgs =
   | FnArgsInvoke
   | FnArgsCreateWasm
   | FnArgsCreateSac
-  | FnArgsCreateExternalRef;
+  | FnArgsCreateExternalRef
+  | FnArgsUnknown;
