@@ -1,4 +1,13 @@
-import { Keypair, Networks, StellarToml } from "@stellar/stellar-sdk";
+import {
+  Account,
+  Asset,
+  BASE_FEE,
+  Keypair,
+  Networks,
+  Operation,
+  StellarToml,
+  TransactionBuilder,
+} from "@stellar/stellar-sdk";
 import {
   NativeAssetId,
   Sep7Pay,
@@ -998,5 +1007,63 @@ describe("sep7Parser", () => {
 
     const actual = sep7ReplacementsToString(replacements);
     expect(actual).toBe(expected);
+  });
+});
+
+describe("SEP-7 byte encoding regressions", () => {
+  const BASE64_ONLY = /^[A-Za-z0-9+/]+={0,2}$/;
+
+  it("produces a base64 signature, not comma-joined decimals", () => {
+    const keypair = Keypair.random();
+    const uri = Sep7Pay.forDestination(
+      "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO",
+    );
+
+    const signature = uri.addSignature(keypair);
+
+    expect(signature).toMatch(BASE64_ONLY);
+    expect(signature).not.toContain(",");
+    // An ed25519 signature is 64 bytes => 88 base64 characters with padding.
+    expect(signature).toHaveLength(88);
+  });
+
+  it("round-trips a signature through verification", async () => {
+    const keypair = Keypair.random();
+    const uri = Sep7Pay.forDestination(
+      "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO",
+    );
+    uri.originDomain = "place.domain.com";
+    uri.addSignature(keypair);
+
+    jest
+      .spyOn(StellarToml.Resolver, "resolve")
+      .mockResolvedValue({ URI_REQUEST_SIGNING_KEY: keypair.publicKey() });
+
+    await expect(uri.verifySignature()).resolves.toBe(true);
+  });
+
+  it("puts parseable XDR in the uri, not comma-joined decimals", () => {
+    const keypair = Keypair.random();
+    const account = new Account(keypair.publicKey(), "1");
+    const tx = new TransactionBuilder(account, {
+      fee: BASE_FEE,
+      networkPassphrase: Networks.TESTNET,
+    })
+      .addOperation(
+        Operation.payment({
+          destination: keypair.publicKey(),
+          asset: Asset.native(),
+          amount: "1",
+        }),
+      )
+      .setTimeout(30)
+      .build();
+
+    const uri = Sep7Tx.forTransaction(tx);
+
+    expect(uri.xdr).toMatch(BASE64_ONLY);
+    expect(uri.xdr).not.toContain(",");
+    // The decisive check: it must parse back into the same transaction.
+    expect(uri.getTransaction().toXdr()).toEqual(tx.toXdr());
   });
 });

@@ -7,6 +7,7 @@ import {
   MuxedAccount,
   Networks,
   StellarToml,
+  StrKey,
   Transaction,
   TransactionBuilder as SdkTransactionBuilder,
   Operation,
@@ -15,8 +16,12 @@ import {
 import { randomBytes } from "crypto";
 import axios from "axios";
 import sinon from "sinon";
+import { base64ToString, base64ToUint8Array } from "uint8array-extras";
+import { encode as utf8Encode } from "@stablelib/utf8";
+import nacl from "tweetnacl";
 
 import { validateToken, Sep10, type WalletSigner } from "../src/walletSdk/Auth";
+import { DefaultAuthHeaderSigner } from "../src/walletSdk/Auth/AuthHeaderSigner";
 import {
   Config,
   StellarConfiguration,
@@ -835,5 +840,42 @@ describe("Anchor.sep10() signing key handling", () => {
 
     const sep10 = await anchor.sep10();
     expect(sep10).toBeDefined();
+  });
+});
+
+describe("auth header JWT encoding", () => {
+  it("signs with unpadded base64url and verifies against the public key", async () => {
+    const kp = SigningKeypair.fromSecret(Keypair.random().secret());
+    const signer = new DefaultAuthHeaderSigner();
+
+    const jwt = await signer.createToken({
+      claims: {
+        account: kp.publicKey,
+        home_domain: "test.com",
+        web_auth_endpoint: "https://test.com/auth",
+      },
+      issuer: kp,
+    });
+
+    const [header, payload, signature] = jwt.split(".");
+
+    // base64url: no +, / or = padding in any segment.
+    for (const segment of [header, payload, signature]) {
+      expect(segment).not.toMatch(/[+/=]/);
+    }
+
+    // The header must still decode to real JSON.
+    expect(JSON.parse(base64ToString(header))).toEqual({ alg: "EdDSA" });
+
+    // The signature must verify over "<header>.<payload>".
+    const naclKP = nacl.sign.keyPair.fromSeed(
+      StrKey.decodeEd25519SecretSeed(kp.secretKey),
+    );
+    const verified = nacl.sign.detached.verify(
+      utf8Encode(`${header}.${payload}`),
+      base64ToUint8Array(signature),
+      naclKP.publicKey,
+    );
+    expect(verified).toBe(true);
   });
 });
