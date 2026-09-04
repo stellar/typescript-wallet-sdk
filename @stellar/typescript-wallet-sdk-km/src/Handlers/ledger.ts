@@ -43,16 +43,9 @@ export const ledgerHandler: KeyTypeHandler = {
     // xdr.DecoratedSignature here: this package bundles its own stellar-sdk
     // copy, and a wrapper class built by it is rejected by the consumer's copy.
     // See the note in Handlers/plaintextKey.ts.
-    //
-    // result.signature is typed as Node's Buffer by @ledgerhq/hw-app-str.
-    // The @types/node version resolved in this workspace predates
-    // TypeScript's generic typed arrays, so its Buffer type fails structural
-    // assignability against encodeBytes' Uint8Array parameter. Uint8Array.from
-    // copies the same bytes into a plain Uint8Array to sidestep that; it does
-    // not change the encoded value.
     transaction.addSignature(
       key.publicKey,
-      xdr.encodeBytes(Uint8Array.from(result.signature), "base64"),
+      xdr.encodeBytes(result.signature, "base64"),
     );
 
     return Promise.resolve(transaction);

@@ -15,6 +15,7 @@
     "@stellar/prettier-config": "^1.0.1",
     "@stellar/tsconfig": "^1.0.2",
     "@types/jest": "^29.5.12",
+    "@types/node": "^22.10.2",
     "@typescript-eslint/parser": "^7.1.1",
     "@stellar/typescript-wallet-sdk": "*",
     "babel-jest": "^29.7.0",

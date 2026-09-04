@@ -80,5 +80,27 @@ module.exports = {
         "@typescript-eslint/no-explicit-any": "off",
       },
     },
+    {
+      files: ["@stellar/*/src/**/*.ts"],
+      rules: {
+        "no-restricted-globals": [
+          "error",
+          {
+            name: "Buffer",
+            message:
+              "React Native has no Buffer global. Use Uint8Array with xdr.encodeBytes/decodeBytes.",
+          },
+        ],
+        "no-restricted-syntax": [
+          "error",
+          {
+            selector:
+              "CallExpression[callee.property.name='toString'][arguments.length>0]",
+            message:
+              "Uint8Array.toString() ignores its encoding argument and returns comma-joined decimals. Use xdr.encodeBytes(bytes, 'hex'|'base64').",
+          },
+        ],
+      },
+    },
   ],
 };
