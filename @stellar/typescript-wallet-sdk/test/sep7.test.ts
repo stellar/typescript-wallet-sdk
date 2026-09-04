@@ -360,7 +360,7 @@ describe("Sep7Tx", () => {
     txBuilder.transfer(testKp2.publicKey, new NativeAssetId(), "1");
     const tx = txBuilder.build();
 
-    const xdr = tx.toEnvelope().toXDR().toString("base64");
+    const xdr = tx.toEnvelope().toXdr("base64");
 
     const uri = Sep7Tx.forTransaction(tx);
     expect(uri.operationType).toBe("tx");
@@ -488,7 +488,7 @@ describe("Sep7Tx", () => {
     txBuilder.transfer(testKp2.publicKey, new NativeAssetId(), "1");
     const tx = txBuilder.build();
 
-    const xdr = tx.toEnvelope().toXDR().toString("base64");
+    const xdr = tx.toEnvelope().toXdr("base64");
 
     const uri = Sep7Tx.forTransaction(tx);
 
@@ -553,13 +553,11 @@ describe("Sep7Tx", () => {
     txBuilder.transfer(testKp2.publicKey, new NativeAssetId(), "1");
     const tx = txBuilder.build();
 
-    const xdr = tx.toEnvelope().toXDR().toString("base64");
+    const xdr = tx.toEnvelope().toXdr("base64");
 
     const uri = new Sep7Tx(`web+stellar:tx?xdr=${encodeURIComponent(xdr)}`);
 
-    expect(uri.getTransaction().toEnvelope().toXDR().toString("base64")).toBe(
-      xdr,
-    );
+    expect(uri.getTransaction().toEnvelope().toXdr("base64")).toBe(xdr);
   });
 });
 

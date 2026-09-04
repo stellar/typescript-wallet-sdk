@@ -1,11 +1,8 @@
 import {
   Address,
   Asset,
-  Memo,
-  MemoType,
   Networks,
   Operation,
-  StrKey,
   Transaction,
   TransactionBuilder,
   xdr,
@@ -36,8 +33,8 @@ describe("getTokenInvocationArgs for different function names", () => {
     const transaction = TransactionBuilder.fromXDR(
       transactions.sorobanTransfer,
       Networks.FUTURENET,
-    ) as Transaction<Memo<MemoType>, Operation.InvokeHostFunction[]>;
-    const op = transaction.operations[0];
+    ) as Transaction;
+    const op = transaction.operations[0] as Operation.InvokeHostFunction;
 
     const args = getTokenInvocationArgs(op);
 
@@ -58,8 +55,8 @@ describe("getTokenInvocationArgs for different function names", () => {
     const transaction = TransactionBuilder.fromXDR(
       transactions.sorobanMint,
       Networks.FUTURENET,
-    ) as Transaction<Memo<MemoType>, Operation.InvokeHostFunction[]>;
-    const op = transaction.operations[0];
+    ) as Transaction;
+    const op = transaction.operations[0] as Operation.InvokeHostFunction;
 
     const args = getTokenInvocationArgs(op);
 
@@ -78,8 +75,8 @@ describe("getTokenInvocationArgs for different function names", () => {
     const transaction = TransactionBuilder.fromXDR(
       transactions.classic,
       Networks.TESTNET,
-    ) as Transaction<Memo<MemoType>, Operation.InvokeHostFunction[]>;
-    const op = transaction.operations[0];
+    ) as Transaction;
+    const op = transaction.operations[0] as Operation.InvokeHostFunction;
 
     const args = getTokenInvocationArgs(op);
 
@@ -117,18 +114,12 @@ describe("scValByType should render expected common types", () => {
     const ACCOUNT = "GBBM6BKZPEHWYO3E3YKREDPQXMS4VK35YLNU7NFBRI26RAN7GI5POFBB";
     const CONTRACT = "CA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAXE";
 
-    const scAddressAccount = xdr.ScAddress.scAddressTypeAccount(
-      xdr.PublicKey.publicKeyTypeEd25519(
-        StrKey.decodeEd25519PublicKey(ACCOUNT),
-      ),
-    );
+    const scAddressAccount = new Address(ACCOUNT).toScAddress();
     const accountAddress = xdr.ScVal.scvAddress(scAddressAccount);
     const parsedAccountAddress = scValByType(accountAddress);
     expect(parsedAccountAddress).toEqual(ACCOUNT);
 
-    const scAddressContract = xdr.ScAddress.scAddressTypeContract(
-      StrKey.decodeContract(CONTRACT),
-    );
+    const scAddressContract = new Address(CONTRACT).toScAddress();
     const contractAddress = xdr.ScVal.scvAddress(scAddressContract);
     const parsedContractAddress = scValByType(contractAddress);
     expect(parsedContractAddress).toEqual(CONTRACT);
@@ -140,37 +131,32 @@ describe("scValByType should render expected common types", () => {
     expect(parsedBool).toEqual(true);
   });
 
-  it("should render bytes as a stringified array of numbers", () => {
-    const bytesBuffer = Buffer.from([0x00, 0x01]);
-    const bytes = xdr.ScVal.scvBytes(bytesBuffer);
-    const parsedBytes = scValByType(bytes);
-    expect(parsedBytes).toEqual("[0,1]");
+  it("should render bytes as a hex string", () => {
+    const bytes = xdr.ScVal.scvBytes(new Uint8Array([0x00, 0x01]));
+    expect(scValByType(bytes)).toEqual("0001");
   });
 
   it("should render contract instance as string", () => {
     // Note: those are totally random values for 'executable' and 'storage'
+    const WASM_HASH = new Uint8Array(32).fill(7);
     const contractInstance = xdr.ScVal.scvContractInstance(
       new xdr.ScContractInstance({
-        executable: xdr.ContractExecutable.contractExecutableWasm(
-          Buffer.from([1, 2, 3, 4, 5, 6, 7, 8]),
-        ),
+        executable: xdr.ContractExecutable.contractExecutableWasm(WASM_HASH),
         storage: [
           new xdr.ScMapEntry({
             key: xdr.ScVal.scvString("keyOne"),
-            val: xdr.ScVal.scvU64(new xdr.Uint64(123)),
+            val: xdr.ScVal.scvU64(xdr.Uint64(123)),
           }),
           new xdr.ScMapEntry({
             key: xdr.ScVal.scvString("keyTwo"),
-            val: xdr.ScVal.scvU64(new xdr.Uint64(456)),
+            val: xdr.ScVal.scvU64(xdr.Uint64(456)),
           }),
         ],
       }),
     );
 
     const parsedContractInstance = scValByType(contractInstance);
-    expect(parsedContractInstance).toEqual(
-      contractInstance.instance().executable().wasmHash()?.toString(),
-    );
+    expect(parsedContractInstance).toEqual(xdr.encodeBytes(WASM_HASH, "hex"));
   });
 
   it("should render an error as a number or a ScErrorCode object including the contract name and code", () => {
@@ -180,7 +166,7 @@ describe("scValByType should render expected common types", () => {
     const parsedContractError = scValByType(scvContractError);
     expect(parsedContractError).toEqual(contractErrorCode);
 
-    const scErrorCode = xdr.ScErrorCode.scecExceededLimit();
+    const scErrorCode = xdr.ScErrorCode.scecExceededLimit;
     const wasmError = xdr.ScError.sceWasmVm(scErrorCode);
     const scvWasmError = xdr.ScVal.scvError(wasmError);
     const parsedWasmError = scValByType(scvWasmError);
@@ -190,18 +176,18 @@ describe("scValByType should render expected common types", () => {
   });
 
   it("should render all numeric types as strings", () => {
-    const scv1 = xdr.ScVal.scvTimepoint(new xdr.Uint64(123));
+    const scv1 = xdr.ScVal.scvTimepoint(xdr.Uint64(123));
     const parsedScv1 = scValByType(scv1);
     expect(parsedScv1).toEqual("123");
 
-    const scv2 = xdr.ScVal.scvDuration(new xdr.Uint64(456));
+    const scv2 = xdr.ScVal.scvDuration(xdr.Uint64(456));
     const parsedScv2 = scValByType(scv2);
     expect(parsedScv2).toEqual("456");
 
     const scv3 = xdr.ScVal.scvI128(
       new xdr.Int128Parts({
-        hi: new xdr.Int64(789),
-        lo: new xdr.Uint64(123),
+        hi: xdr.Int64(789),
+        lo: xdr.Uint64(123),
       }),
     );
     const parsedScv3 = scValByType(scv3);
@@ -211,10 +197,10 @@ describe("scValByType should render expected common types", () => {
 
     const scv4 = xdr.ScVal.scvI256(
       new xdr.Int256Parts({
-        hiHi: new xdr.Int64(7899),
-        hiLo: new xdr.Uint64(7890),
-        loHi: new xdr.Uint64(1239),
-        loLo: new xdr.Uint64(1230),
+        hiHi: xdr.Int64(7899),
+        hiLo: xdr.Uint64(7890),
+        loHi: xdr.Uint64(1239),
+        loLo: xdr.Uint64(1230),
       }),
     );
     const parsedScv4 = scValByType(scv4);
@@ -227,14 +213,14 @@ describe("scValByType should render expected common types", () => {
     const parsedScv5 = scValByType(scv5);
     expect(parsedScv5).toEqual("3232");
 
-    const scv6 = xdr.ScVal.scvI64(new xdr.Int64(6464));
+    const scv6 = xdr.ScVal.scvI64(xdr.Int64(6464));
     const parsedScv6 = scValByType(scv6);
     expect(parsedScv6).toEqual("6464");
 
     const scv7 = xdr.ScVal.scvU128(
-      new xdr.UInt128Parts({
-        hi: new xdr.Uint64(1288),
-        lo: new xdr.Uint64(1280),
+      new xdr.Uint128Parts({
+        hi: xdr.Uint64(1288),
+        lo: xdr.Uint64(1280),
       }),
     );
     const parsedScv7 = scValByType(scv7);
@@ -244,10 +230,10 @@ describe("scValByType should render expected common types", () => {
 
     const scv8 = xdr.ScVal.scvU256(
       new xdr.Int256Parts({
-        hiHi: new xdr.Uint64(25699),
-        hiLo: new xdr.Uint64(25600),
-        loHi: new xdr.Uint64(2569),
-        loLo: new xdr.Uint64(2560),
+        hiHi: xdr.Uint64(25699),
+        hiLo: xdr.Uint64(25600),
+        loHi: xdr.Uint64(2569),
+        loLo: xdr.Uint64(2560),
       }),
     );
     const parsedScv8 = scValByType(scv8);
@@ -260,13 +246,13 @@ describe("scValByType should render expected common types", () => {
     const parsedScv9 = scValByType(scv9);
     expect(parsedScv9).toEqual("323232");
 
-    const scv10 = xdr.ScVal.scvU64(new xdr.Uint64(646464));
+    const scv10 = xdr.ScVal.scvU64(xdr.Uint64(646464));
     const parsedScv10 = scValByType(scv10);
     expect(parsedScv10).toEqual("646464");
   });
 
   it("should render nonce ledger key as string", () => {
-    const nonce = new xdr.Int64(123);
+    const nonce = xdr.Int64(123);
     const nonceKey = new xdr.ScNonceKey({ nonce });
     const ledgerKey = xdr.ScVal.scvLedgerKeyNonce(nonceKey);
     const parsedLedgerKey = scValByType(ledgerKey);
@@ -274,13 +260,13 @@ describe("scValByType should render expected common types", () => {
 
     const ledgerKeyContractInstance = xdr.ScVal.scvLedgerKeyContractInstance();
     const parsedInstance = scValByType(ledgerKeyContractInstance);
-    expect(parsedInstance).toEqual(undefined);
+    expect(parsedInstance).toEqual(null);
   });
 
   it("should render vectors and maps as JSON strings", () => {
     const xdrVec = xdr.ScVal.scvVec([
-      xdr.ScVal.scvU64(new xdr.Uint64(123)),
-      xdr.ScVal.scvU64(new xdr.Uint64(321)),
+      xdr.ScVal.scvU64(xdr.Uint64(123)),
+      xdr.ScVal.scvU64(xdr.Uint64(321)),
     ]);
     const parsedVec = scValByType(xdrVec);
     expect(parsedVec).toBe(
@@ -294,11 +280,11 @@ describe("scValByType should render expected common types", () => {
     const xdrMap = xdr.ScVal.scvMap([
       new xdr.ScMapEntry({
         key: xdr.ScVal.scvString("keyOne"),
-        val: xdr.ScVal.scvU64(new xdr.Uint64(456)),
+        val: xdr.ScVal.scvU64(xdr.Uint64(456)),
       }),
       new xdr.ScMapEntry({
         key: xdr.ScVal.scvString("keyTwo"),
-        val: xdr.ScVal.scvU64(new xdr.Uint64(789)),
+        val: xdr.ScVal.scvU64(xdr.Uint64(789)),
       }),
     ]);
     const parsedMap = scValByType(xdrMap);
@@ -398,11 +384,11 @@ describe("getInvocationDetails for a Soroban Authorized Invocation tree", () => 
               xdr.ContractIdPreimage.contractIdPreimageFromAddress(
                 new xdr.ContractIdPreimageFromAddress({
                   address: nftContract.address().toScAddress(),
-                  salt: Buffer.alloc(32, 0),
+                  salt: new Uint8Array(32),
                 }),
               ),
             executable: xdr.ContractExecutable.contractExecutableWasm(
-              Buffer.alloc(32, "\x20"),
+              new Uint8Array(32).fill(0x20),
             ),
           }),
         ),
@@ -536,11 +522,11 @@ describe("getInvocationDetails for a CreateContractV2 host function", () => {
               xdr.ContractIdPreimage.contractIdPreimageFromAddress(
                 new xdr.ContractIdPreimageFromAddress({
                   address: deployedContract.address().toScAddress(),
-                  salt: Buffer.alloc(32, 0),
+                  salt: new Uint8Array(32),
                 }),
               ),
             executable: xdr.ContractExecutable.contractExecutableWasm(
-              Buffer.alloc(32, "\x20"),
+              new Uint8Array(32).fill(0x20),
             ),
             constructorArgs,
           }),
@@ -657,12 +643,12 @@ describe("XDR integer boundary values (Protocol 26 strict validation)", () => {
 
   it("should throw on i32 overflow at serialization", () => {
     const val = xdr.ScVal.scvI32(2147483648);
-    expect(() => val.toXDR()).toThrow("XDR Write Error");
+    expect(() => val.toXDR()).toThrow(/expected integer in range/);
   });
 
   it("should throw on u32 overflow at serialization", () => {
     const val = xdr.ScVal.scvU32(4294967296);
-    expect(() => val.toXDR()).toThrow("XDR Write Error");
+    expect(() => val.toXDR()).toThrow(/expected integer in range/);
   });
 });
 

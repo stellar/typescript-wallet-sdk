@@ -6,6 +6,7 @@ import {
   nativeToScVal,
   xdr,
 } from "@stellar/stellar-sdk";
+import { stringToUint8Array } from "uint8array-extras";
 
 // Returns random public key
 export const randomKey = (): string => {
@@ -16,7 +17,7 @@ export const randomKey = (): string => {
 export const randomContracts = (n: number) => {
   return Array.from(Array(n).keys()).map(() => {
     // ezpz method to generate random contract IDs
-    const buf = hash(Buffer.from(randomKey()));
+    const buf = hash(stringToUint8Array(randomKey()));
     const contractId = StrKey.encodeContract(buf);
     return new Contract(contractId);
   });
