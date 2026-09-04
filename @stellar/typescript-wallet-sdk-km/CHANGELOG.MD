@@ -15,7 +15,7 @@
 * `KeyManager.fetchAuthToken` posts correctly encoded challenge XDR (the old `Buffer`-era encoder returned comma-joined decimals under v17) and compares transaction hashes correctly (`Buffer#equals` does not exist on `Uint8Array`)
 * The Trezor transform encodes `manageData` values, memo hashes and signer keys as hex, reads offer prices through the v17 property accessors, and classifies `preAuthTx`/`sha256Hash` signers correctly — the old `instanceof Buffer` check was always false under v17, so those signers were sent to Trezor as signer type `0` with the key dropped
 
-**Consumer note:** existing key-manager consumers need **no code changes**. The `KeyManager`, `ScryptEncrypter`, `Key`, `EncryptedKey`, `Encrypter`, `KeyStore` and `KeyType` surface contains no `Buffer`/`Uint8Array`, and its encrypter path never touches stellar-sdk. Both Freighter apps consume only that surface, and neither calls `fetchAuthToken`, where this package's two real breaks lived. The extension should align its `stellar-sdk` alias from `17.0.0` to `17.0.1`.
+**Consumer note:** consumers using only the key-store surface need **no code changes**. `KeyManager`, `ScryptEncrypter`, `Key`, `EncryptedKey`, `Encrypter`, `KeyStore` and `KeyType` contain no `Buffer`/`Uint8Array`, and the encrypter path never touches stellar-sdk. This release's behaviour changes are confined to `KeyManager.fetchAuthToken`, the Ledger handler and the Trezor transform. Consumers that also depend on `@stellar/stellar-sdk` directly should align their own pin to `17.0.1`, since this package bundles that exact version and mixing copies is what the xdr boundary rule guards against.
 
 # Release notes - Typescript Wallet SDK Key Manager - 4.0.1
 * Version bump
