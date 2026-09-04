@@ -82,8 +82,16 @@ export const scValByType = (scVal: xdr.ScVal) => {
       return native;
     }
 
-    case "scvExecutableTag":
-      return scVal.executableTag.toString();
+    case "scvExecutableTag": {
+      const tag = scVal.executableTag.asStringOrBytes();
+      // Same fallback as scvString/scvSymbol above: the tag is an unbounded
+      // SCString and toString() lenient-decodes to U+FFFD on non-UTF-8
+      // bytes, which would render two distinct binary tags identically.
+      if (tag instanceof Uint8Array) {
+        return xdr.encodeBytes(tag, "hex");
+      }
+      return tag;
+    }
 
     default:
       return null;

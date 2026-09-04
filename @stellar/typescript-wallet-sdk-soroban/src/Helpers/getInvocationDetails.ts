@@ -65,13 +65,27 @@ const getCreateContractArgs = (
     }
 
     case "contractExecutableExternalRef": {
+      // A wasm or external-ref executable derives its contract ID from a
+      // deployer address plus salt, so its preimage MUST be an address —
+      // same guard as the wasm arm above. Only a token/SAC pairs with an
+      // asset preimage.
+      if (preimage.type !== "contractIdPreimageFromAddress") {
+        return undefined;
+      }
+      const details = preimage.fromAddress;
+      const ref = executable.externalRef;
+
       // CAP-85: the referenced code can change after signing, so deliberately
       // surface the owner and tag but no hash.
-      const ref = executable.externalRef;
       return {
         type: "externalRef",
         executableOwner: Address.fromScAddress(ref.executableOwner).toString(),
-        tag: ref.tag.toString(),
+        // asStringOrBytes(), not toString(): the tag is an unbounded SCString
+        // and toString() is a lenient UTF-8 decode that substitutes U+FFFD,
+        // so two distinct binary tags could otherwise render identically.
+        tag: ref.tag.asStringOrBytes(),
+        salt: xdr.encodeBytes(details.salt.toBytes(), "hex"),
+        address: Address.fromScAddress(details.address).toString(),
         ...extra,
       };
     }

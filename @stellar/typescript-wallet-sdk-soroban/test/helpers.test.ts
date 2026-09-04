@@ -661,7 +661,12 @@ describe("XDR integer boundary values (Protocol 26 strict validation)", () => {
 
 describe("getInvocationDetails for CAP-85 external references", () => {
   it("decodes an external-ref contract creation without a wasm hash", () => {
-    const owner = randomContracts(1)[0];
+    // owner (whose code is referenced) and deployer (creating the new
+    // contract) are deliberately different contracts, so the assertions
+    // below can't pass by `address` and `executableOwner` accidentally
+    // holding the same value.
+    const [owner, deployer] = randomContracts(2);
+    const salt = new Uint8Array(32).fill(0x07);
     const invocation = new xdr.SorobanAuthorizedInvocation({
       function:
         xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeCreateContractHostFn(
@@ -669,8 +674,8 @@ describe("getInvocationDetails for CAP-85 external references", () => {
             contractIdPreimage:
               xdr.ContractIdPreimage.contractIdPreimageFromAddress(
                 new xdr.ContractIdPreimageFromAddress({
-                  address: owner.address().toScAddress(),
-                  salt: new Uint8Array(32),
+                  address: deployer.address().toScAddress(),
+                  salt,
                 }),
               ),
             executable: xdr.ContractExecutable.contractExecutableExternalRef(
@@ -691,6 +696,8 @@ describe("getInvocationDetails for CAP-85 external references", () => {
       type: "externalRef",
       executableOwner: owner.contractId(),
       tag: "my-tag",
+      address: deployer.contractId(),
+      salt: xdr.encodeBytes(salt, "hex"),
     });
     // CAP-85 code can change after signing, so no hash must be surfaced.
     expect(details[0]).not.toHaveProperty("hash");
@@ -786,6 +793,34 @@ describe("getInvocationDetails graceful degradation", () => {
     expect(getInvocationDetails(invocation)).toEqual([]);
   });
 
+  it("returns no details for an external-ref executable paired with a non-address preimage", () => {
+    // On-chain impossible, like the wasm case above: an external-ref
+    // executable derives its contract ID from a deployer address plus salt,
+    // so it can never be legitimately paired with an asset preimage.
+    const owner = randomContracts(1)[0];
+    const invocation = new xdr.SorobanAuthorizedInvocation({
+      function:
+        xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeCreateContractHostFn(
+          new xdr.CreateContractArgs({
+            contractIdPreimage:
+              xdr.ContractIdPreimage.contractIdPreimageFromAsset(
+                new Asset("TEST", randomKey()).toXDRObject(),
+              ),
+            executable: xdr.ContractExecutable.contractExecutableExternalRef(
+              new xdr.ContractExecutableExternalRef({
+                executableOwner: owner.address().toScAddress(),
+                tag: "my-tag",
+              }),
+            ),
+          }),
+        ),
+      subInvocations: [],
+    });
+
+    expect(() => getInvocationDetails(invocation)).not.toThrow();
+    expect(getInvocationDetails(invocation)).toEqual([]);
+  });
+
   it("returns no details for a Stellar Asset executable paired with a non-asset preimage", () => {
     const contract = randomContracts(1)[0];
     const invocation = new xdr.SorobanAuthorizedInvocation({
@@ -842,6 +877,24 @@ describe("scValByType Protocol 28 and address coverage", () => {
     expect(scValByType(scv)).toEqual("v1.2.3");
   });
 
+  it("keeps two distinct binary executable tags distinguishable", () => {
+    // 0xff and 0xfe are each invalid UTF-8 on their own, so a lenient decode
+    // (toString()) collapses both to the same U+FFFD replacement character —
+    // the exact collision hex-encoding is meant to prevent.
+    const tagA = xdr.ScVal.scvExecutableTag(new Uint8Array([0xff]));
+    const tagB = xdr.ScVal.scvExecutableTag(new Uint8Array([0xfe]));
+    expect(tagA.executableTag.toString()).toEqual(
+      tagB.executableTag.toString(),
+    );
+
+    const renderedA = scValByType(tagA);
+    const renderedB = scValByType(tagB);
+
+    expect(renderedA).toEqual("ff");
+    expect(renderedB).toEqual("fe");
+    expect(renderedA).not.toEqual(renderedB);
+  });
+
   it("renders all five ScAddress variants", () => {
     const account = Keypair.random().publicKey();
     const contract = StrKey.encodeContract(new Uint8Array(32).fill(3));
@@ -889,7 +942,8 @@ describe("scValByType Protocol 28 and address coverage", () => {
 
 describe("getInvocationDetails CreateContractV2 with an external ref", () => {
   it("surfaces constructorArgs alongside an external-ref executable", () => {
-    const owner = randomContracts(1)[0];
+    const [owner, deployer] = randomContracts(2);
+    const salt = new Uint8Array(32).fill(0x09);
     const invocation = new xdr.SorobanAuthorizedInvocation({
       function:
         xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeCreateContractV2HostFn(
@@ -897,8 +951,8 @@ describe("getInvocationDetails CreateContractV2 with an external ref", () => {
             contractIdPreimage:
               xdr.ContractIdPreimage.contractIdPreimageFromAddress(
                 new xdr.ContractIdPreimageFromAddress({
-                  address: owner.address().toScAddress(),
-                  salt: new Uint8Array(32),
+                  address: deployer.address().toScAddress(),
+                  salt,
                 }),
               ),
             executable: xdr.ContractExecutable.contractExecutableExternalRef(
@@ -919,6 +973,8 @@ describe("getInvocationDetails CreateContractV2 with an external ref", () => {
       type: "externalRef",
       executableOwner: owner.contractId(),
       tag: "v2-tag",
+      address: deployer.contractId(),
+      salt: xdr.encodeBytes(salt, "hex"),
     });
     expect(
       (detail as { constructorArgs?: unknown[] }).constructorArgs,
