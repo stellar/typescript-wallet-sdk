@@ -8,13 +8,14 @@ import {
   MemoText,
   MemoType,
   MemoValue,
+  xdr,
 } from "@stellar/stellar-sdk";
 import BigNumber from "bignumber.js";
 
 const transformSigner = (signer: {
   ed25519PublicKey?: string;
-  sha256Hash?: string | Buffer;
-  preAuthTx?: string | Buffer;
+  sha256Hash?: string | Uint8Array;
+  preAuthTx?: string | Uint8Array;
   weight?: number | string;
 }) => {
   let type = 0;
@@ -23,17 +24,17 @@ const transformSigner = (signer: {
 
   if (typeof signer.ed25519PublicKey === "string") {
     const keyPair = Keypair.fromPublicKey(signer.ed25519PublicKey);
-    key = keyPair.rawPublicKey().toString("hex");
+    key = xdr.encodeBytes(keyPair.rawPublicKey(), "hex");
   }
 
-  if (signer.preAuthTx instanceof Buffer) {
+  if (signer.preAuthTx instanceof Uint8Array) {
     type = 1;
-    key = signer.preAuthTx.toString("hex");
+    key = xdr.encodeBytes(signer.preAuthTx, "hex");
   }
 
-  if (signer.sha256Hash instanceof Buffer) {
+  if (signer.sha256Hash instanceof Uint8Array) {
     type = 2;
-    key = signer.sha256Hash.toString("hex");
+    key = xdr.encodeBytes(signer.sha256Hash, "hex");
   }
 
   return {
@@ -82,11 +83,19 @@ const transformMemo = (memo: { type: MemoType; value: MemoValue }) => {
     case MemoID:
       return { type: 2, id: memo.value };
     case MemoHash:
-      // stringify is not necessary, Buffer is also accepted
-      return { type: 3, hash: memo.value ? memo.value.toString("hex") : "" };
+      return {
+        type: 3,
+        hash: memo.value
+          ? xdr.encodeBytes(memo.value as Uint8Array, "hex")
+          : "",
+      };
     case MemoReturn:
-      // stringify is not necessary, Buffer is also accepted
-      return { type: 4, hash: memo.value ? memo.value.toString("hex") : "" };
+      return {
+        type: 4,
+        hash: memo.value
+          ? xdr.encodeBytes(memo.value as Uint8Array, "hex")
+          : "",
+      };
     default:
       return { type: 0 };
   }
@@ -145,10 +154,10 @@ export const transformTransaction = (path: string, transaction: any) => {
 
     // transform "price" field to { n: number, d: number }
     if (typeof operation.price === "string") {
-      const xdrOperation = transaction.tx.operations()[i];
+      const xdrOperation = transaction.tx.operations[i];
       operation.price = {
-        n: xdrOperation.body().value().price().n(),
-        d: xdrOperation.body().value().price().d(),
+        n: xdrOperation.body.value.price.n,
+        d: xdrOperation.body.value.price.d,
       };
     }
 
@@ -173,8 +182,7 @@ export const transformTransaction = (path: string, transaction: any) => {
     }
 
     if (operation.type === "manageData" && operation.value) {
-      // stringify is not necessary, Buffer is also accepted
-      operation.value = operation.value.toString("hex");
+      operation.value = xdr.encodeBytes(operation.value, "hex");
     }
 
     // transform type

@@ -37,6 +37,7 @@ module.exports = (env = { NODE: false }) => {
             util: require.resolve("util"),
             vm: require.resolve("vm-browserify"),
             "process/browser": require.resolve("process/browser"),
+            buffer: require.resolve("buffer"),
           }
         : {},
     },
@@ -52,6 +53,11 @@ module.exports = (env = { NODE: false }) => {
       ? [
           new webpack.ProvidePlugin({
             process: "process/browser",
+          }),
+          // Required by Handlers/ledger.ts: @ledgerhq/hw-app-str needs a real
+          // Buffer (it calls Buffer#copy). Browser-only; RN never loads it.
+          new webpack.ProvidePlugin({
+            Buffer: ["buffer", "Buffer"],
           }),
         ]
       : [],

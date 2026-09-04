@@ -1,4 +1,5 @@
 import { Networks, Transaction, WebAuth } from "@stellar/stellar-sdk";
+import { areUint8ArraysEqual } from "uint8array-extras";
 
 import { DomainSigningModifiedError } from "./Exceptions";
 import { freighterHandler } from "./Handlers/freighter";
@@ -379,7 +380,7 @@ export class KeyManager {
     // signature preserves the hash. Any change to the operations, source
     // account, sequence number, memo or network changes the hash and is
     // rejected here, so the validated challenge is what actually gets signed.
-    if (!returned.hash().equals(originalHash)) {
+    if (!areUint8ArraysEqual(returned.hash(), originalHash)) {
       throw new DomainSigningModifiedError();
     }
 
@@ -394,8 +395,7 @@ export class KeyManager {
 
     const signedTransactionXDR: string = signedTransaction
       .toEnvelope()
-      .toXDR()
-      .toString("base64");
+      .toXdr("base64");
 
     const responseRes = await fetch(authServer, {
       method: "POST",

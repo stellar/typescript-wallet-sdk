@@ -26,7 +26,7 @@ export const freighterHandler: KeyTypeHandler = {
       (custom && custom.networkPassphrase) || key.network || Networks.PUBLIC;
 
     try {
-      const response = await freighterApi.signTransaction(transaction.toXDR(), {
+      const response = await freighterApi.signTransaction(transaction.toXdr(), {
         networkPassphrase,
         address: custom && custom.address ? custom.address : undefined,
       });
@@ -40,10 +40,10 @@ export const freighterHandler: KeyTypeHandler = {
         );
       }
 
-      // fromXDR() returns type "Transaction | FeeBumpTransaction" and
+      // fromXdr() returns type "Transaction | FeeBumpTransaction" and
       // signTransaction() doesn't like "| FeeBumpTransaction" type, so casting
       // to "Transaction" type.
-      return TransactionBuilder.fromXDR(
+      return TransactionBuilder.fromXdr(
         response.signedTxXdr,
         networkPassphrase,
       ) as Transaction;
