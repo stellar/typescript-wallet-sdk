@@ -7,10 +7,18 @@ import * as vm from "vm";
  * process. Loading each published bundle in a context without them catches the
  * two failure modes this SDK has actually shipped: a reliance on the Buffer
  * global, and dependencies that subclass the DOM Event globals at module scope.
+ *
+ * The sandbox also *grants* a few globals that a real RN app must supply
+ * itself, so this file is explicit about what environment it is modelling:
+ *
+ * - `crypto`: Hermes/RN does not provide this either. A real RN app needs
+ *   `react-native-get-random-values` (or equivalent) for stellar-sdk's RNG
+ *   path. This was already true under v16 and is not new to this migration.
+ * - `btoa`/`atob`: see the dedicated comment below.
  */
 const BANNED = ["Buffer", "Event", "EventTarget", "process"];
 
-const makeHermesLikeContext = () => {
+const makeHermesLikeContext = ({ includeBase64 = true } = {}) => {
   const sandbox: Record<string, unknown> = {
     console,
     TextEncoder,
@@ -23,14 +31,26 @@ const makeHermesLikeContext = () => {
     clearInterval,
     crypto: globalThis.crypto,
     fetch: globalThis.fetch,
-    // Unlike Buffer, btoa/atob are real Hermes/React Native globals (RN's
-    // core polyfills provide them), and uint8array-extras' base64 encoding
-    // depends on them unconditionally with no Buffer fallback.
-    btoa: globalThis.btoa,
-    atob: globalThis.atob,
     module: { exports: {} },
     exports: {},
   };
+
+  if (includeBase64) {
+    // btoa/atob are a real consumer requirement of this release, not a test
+    // convenience. stellar-sdk v17's xdr.encodeBytes(bytes, "base64") routes
+    // through its own lib/cjs/base/util/base64.js, which calls the bare `btoa`
+    // identifier with no fallback, and Task 2 removed the browser bundle's
+    // Buffer polyfill that used to cover it. Hermes provides btoa/atob
+    // natively as of React Native 0.74 (facebook/hermes#1255, #1256); React
+    // Native's own JS layer has never defined them, so RN < 0.74 and
+    // non-Hermes engines (JSC, V8) need a polyfill such as `base-64`.
+    // Granting them here models a supported RN >= 0.74 Hermes app. Remove
+    // them and every base64 path throws "ReferenceError: btoa is not
+    // defined"; hex and base32/StrKey still work, being pure JS.
+    sandbox.btoa = globalThis.btoa;
+    sandbox.atob = globalThis.atob;
+  }
+
   sandbox.global = sandbox;
   sandbox.globalThis = sandbox;
 
@@ -91,5 +111,39 @@ describe("React Native (Hermes-like) bundle compatibility", () => {
     // encoder yields comma-joined decimals.
     expect(result.signature).toMatch(/^[A-Za-z0-9+/]+={0,2}$/);
     expect(result.signature).toHaveLength(88);
+  });
+
+  it("requires btoa/atob for base64 paths, while base32/StrKey keypair creation stays pure JS", () => {
+    const context = makeHermesLikeContext({ includeBase64: false });
+    const code = fs.readFileSync(
+      path.resolve(__dirname, "../../lib/bundle_browser.js"),
+      "utf8",
+    );
+    vm.runInContext(code, context, { filename: "bundle_browser.js" });
+
+    // Keypair generation and the public key's StrKey encoding are pure JS
+    // (base32, not base64), so they must work even without btoa/atob.
+    const publicKey = vm.runInContext(
+      `(() => {
+        const { Wallet } = module.exports;
+        return Wallet.TestNet().stellar().account().createKeypair().publicKey;
+      })()`,
+      context,
+    ) as string;
+    expect(publicKey).toMatch(/^G[A-Z2-7]{55}$/);
+
+    // Sep7Pay.addSignature's base64 encode step has no fallback: without
+    // btoa this must fail loudly rather than silently degrade.
+    expect(() =>
+      vm.runInContext(
+        `(() => {
+          const { Wallet, Sep7Pay } = module.exports;
+          const kp = Wallet.TestNet().stellar().account().createKeypair();
+          const uri = Sep7Pay.forDestination(kp.publicKey);
+          return uri.addSignature(kp.keypair);
+        })()`,
+        context,
+      ),
+    ).toThrow(/btoa is not defined/);
   });
 });

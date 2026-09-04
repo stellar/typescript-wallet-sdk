@@ -99,6 +99,24 @@ module.exports = {
             message:
               "Uint8Array.toString() ignores its encoding argument and returns comma-joined decimals. Use xdr.encodeBytes(bytes, 'hex'|'base64').",
           },
+          {
+            selector:
+              "MemberExpression[object.name=/^(globalThis|global)$/][property.name='Buffer']",
+            message:
+              "React Native has no Buffer global. Use Uint8Array with xdr.encodeBytes/decodeBytes.",
+          },
+        ],
+        "no-restricted-imports": [
+          "error",
+          {
+            paths: [
+              {
+                name: "buffer",
+                message:
+                  "React Native has no Buffer global. Use Uint8Array with xdr.encodeBytes/decodeBytes.",
+              },
+            ],
+          },
         ],
       },
     },
