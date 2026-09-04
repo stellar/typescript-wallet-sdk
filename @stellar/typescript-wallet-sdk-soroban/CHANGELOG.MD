@@ -1,3 +1,27 @@
+# Release notes - Typescript Wallet SDK Soroban - 5.0.0
+
+### BREAKING CHANGES
+* Upgraded `@stellar/stellar-sdk` from `16.2.0` to `17.0.1` — Protocol 28 support
+* Minimum Node.js version raised from 22 to 22.12.0, as required by stellar-sdk v17
+* **Minimum TypeScript 5.7** for consumers compiling against our type declarations — v17's typings use the generic `Uint8Array<ArrayBufferLike>` form
+* Byte inputs across stellar-sdk-derived types widen from `Buffer` to `Uint8Array`. Source-compatible for existing callers, because `Buffer` is a `Uint8Array` — **but only on `@types/node` >= 20**. Against an older `@types/node`, `Buffer` is not assignable to `Uint8Array<ArrayBufferLike>` and unchanged call sites will fail to compile
+* `InvocationArgs` gains a `FnArgsCreateExternalRef` member — exhaustive switches over this union need a new branch
+* `getInvocationArgs` returns `undefined` for an unrecognised executable or authorized-function type instead of throwing, and `getInvocationDetails` omits that entry from its list rather than crashing
+* `scValByType` return values changed. The emitted return type is `any`, so **the compiler will not flag any of these** — check call sites by hand:
+  * `scvBytes` returns a hex string (was a stringified array of numbers, e.g. `"[0,1]"`)
+  * `scvContractInstance` returns a real hex wasm hash (was a UTF-8 interpretation of the raw 32 hash bytes, i.e. mojibake), and now returns `null` for Stellar-Asset and CAP-85 external-ref executables where v16 threw
+  * `scvLedgerKeyContractInstance` returns `null` (was `undefined`)
+  * `scvString` and `scvSymbol` return a hex string for non-UTF-8 payloads (the old branch that was meant to handle this compared a constructor to a string and was therefore dead code)
+
+### Added
+* CAP-85 external contract executables are decoded, surfacing the owner contract and tag via the new `FnArgsCreateExternalRef` member. No wasm hash is reported, because the referenced code can change after the transaction is signed
+* Protocol 28's `scvExecutableTag` is rendered by `scValByType`
+* Addresses resolve for all five `ScAddress` variants — account, contract, muxed, claimable balance and liquidity pool — in `scValByType` and `getTokenInvocationArgs`. `getTokenInvocationArgs` therefore now resolves a muxed (`M…`) sender, which it previously could not
+* Test coverage for the graceful-degradation paths: an unrecognised authorized-function type, an unrecognised contract executable, and a wasm or Stellar-Asset executable paired with a mismatched contract-id preimage
+
+### Fixed
+* `scValByType` renders a contract instance's wasm hash as hex; it previously returned a UTF-8 interpretation of the raw 32 hash bytes
+
 # Release notes - Typescript Wallet SDK Soroban - 4.0.1
 * Version bump
 

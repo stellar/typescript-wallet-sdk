@@ -1,3 +1,24 @@
+# Release notes - Typescript Wallet SDK - 5.0.0
+
+### BREAKING CHANGES
+* Upgraded `@stellar/stellar-sdk` from `16.2.0` to `17.0.1` — Protocol 28 support
+* Minimum Node.js version raised from 22 to 22.12.0, as required by stellar-sdk v17
+* **Minimum TypeScript 5.7** for consumers compiling against our type declarations — v17's typings use the generic `Uint8Array<ArrayBufferLike>` form, and `Uint8Array` only became generic in the TypeScript 5.7 lib
+* Byte-valued public inputs widen from `Buffer` to `Uint8Array` (`AccountService.createKeypairFromRandom`, `CustomerBinaryInfoMap`, the `Customer.add`/`update` SEP-9 binary maps). Source-compatible for existing callers, because `Buffer` is a `Uint8Array` — **but only on `@types/node` >= 20**. Against an older `@types/node`, `Buffer` is not assignable to `Uint8Array<ArrayBufferLike>` and unchanged call sites will fail to compile, so `@types/node` >= 20 is a precondition for that compatibility promise
+* **`btoa`/`atob` are now a runtime requirement for base64.** stellar-sdk v17 performs base64 through the bare `btoa` identifier (`lib/cjs/base/util/base64.js`, with no fallback), and this release removes the browser bundle's `Buffer` `ProvidePlugin` that previously serviced it — a posture change from v16, where the bundle self-served base64 from that polyfill. Hermes provides `btoa`/`atob` natively from React Native 0.74 onward (facebook/hermes#1255); React Native's own JS layer never has, so **React Native < 0.74 or a non-Hermes engine (JSC, V8) needs a polyfill** such as `base-64`. Verified: a built bundle in a Hermes-like context without `btoa` throws `ReferenceError: btoa is not defined` on any base64 operation, while hex and base32/StrKey keep working (they are pure JS)
+* Removed the `base64url` dependency, replaced by `uint8array-extras`' `uint8ArrayToBase64(bytes, { urlSafe: true })`
+
+### Changed
+* Byte-derived values that used to be produced with `Buffer#toString(encoding)` are now produced with `xdr.encodeBytes(bytes, "hex" | "base64")`. `Uint8Array#toString()` ignores its encoding argument, so the old idiom silently returned comma-joined decimals under v17
+* The three `src` trees no longer reference the `Buffer` global at all, so the browser bundle ships without a `buffer` polyfill. This is enforced by ESLint (`no-restricted-globals` / `no-restricted-syntax` / `no-restricted-imports`) and by a React Native sandbox test that loads the built bundle with `Buffer`, `Event`, `EventTarget` and `process` absent
+
+### Fixed
+* SEP-7 signatures and transaction URIs are correctly base64-encoded. Under stellar-sdk v17 the previous `Buffer`-era code produced comma-joined decimals, which made a signed `Sep7Tx` URI unparseable
+* The SEP-10 `client_domain` integrity check compares transaction hashes correctly again — it used `Buffer#equals`, which does not exist on `Uint8Array`
+
+### Known limitations
+* SEP-12 binary upload (`Customer.add`/`update` with `sep9BinaryInfo`) is not usable on React Native. axios's `toFormData` takes a `Buffer.from(value)` path for typed-array values whenever `FormData` is not spec-compliant, which is the case on React Native. That path was already non-functional there — React Native's `FormData.append` cannot consume a `Buffer` part — so this is a change of failure mode, not of capability: with the polyfill removed it now raises `ReferenceError` instead of producing silent garbage. Browsers and Node.js are unaffected
+
 # Release notes - Typescript Wallet SDK - 4.0.1
 
 ### Changed
