@@ -15,14 +15,16 @@ import * as vm from "vm";
  *   `react-native-get-random-values` (or equivalent) for stellar-sdk's RNG
  *   path. This was already true under v16 and is not new to this migration.
  * - `btoa`/`atob`: see the dedicated comment below.
+ * - `TextEncoder`/`TextDecoder`: see the dedicated comment below.
  */
 const BANNED = ["Buffer", "Event", "EventTarget", "process"];
 
-const makeHermesLikeContext = ({ includeBase64 = true } = {}) => {
+const makeHermesLikeContext = ({
+  includeBase64 = true,
+  includeTextCodec = true,
+} = {}) => {
   const sandbox: Record<string, unknown> = {
     console,
-    TextEncoder,
-    TextDecoder,
     URL,
     URLSearchParams,
     setTimeout,
@@ -34,6 +36,28 @@ const makeHermesLikeContext = ({ includeBase64 = true } = {}) => {
     module: { exports: {} },
     exports: {},
   };
+
+  if (includeTextCodec) {
+    // TextEncoder/TextDecoder are a real consumer requirement, not a test
+    // convenience, and the requirement is unavoidable: uint8array-extras@1.5.0
+    // — a direct dependency of ours and a transitive dependency of
+    // stellar-sdk — constructs both at module initialization, unguarded:
+    // `new globalThis.TextDecoder('utf8')` (index.js:113, inside a
+    // module-scope object literal) and `new globalThis.TextEncoder()`
+    // (index.js:128). By contrast, @exodus/bytes DOES guard this —
+    // fallback/platform.native.js only constructs them when
+    // `isNative(globalThis.TextDecoder)` holds, falling back to pure-JS
+    // decoding otherwise — so the requirement traces specifically to
+    // uint8array-extras, not to @exodus/bytes. Granting them here models an
+    // environment that satisfies this prerequisite. We cannot verify from
+    // here whether React Native itself provides them (this file makes no
+    // claim either way), but RN apps commonly polyfill TextEncoder/TextDecoder
+    // already for other libraries. Remove them and every bundle throws
+    // "TypeError: globalThis.TextDecoder is not a constructor" at load —
+    // before any of our own code runs. See the test below that enforces this.
+    sandbox.TextEncoder = TextEncoder;
+    sandbox.TextDecoder = TextDecoder;
+  }
 
   if (includeBase64) {
     // btoa/atob are a real consumer requirement of this release, not a test
@@ -82,6 +106,23 @@ describe("React Native (Hermes-like) bundle compatibility", () => {
       expect(() =>
         vm.runInContext(code, context, { filename: `${name}.js` }),
       ).not.toThrow();
+    });
+  }
+
+  for (const [name, relativePath] of bundles) {
+    it(`fails to load the ${name} bundle without TextEncoder/TextDecoder`, () => {
+      const bundlePath = path.resolve(__dirname, relativePath);
+      const context = makeHermesLikeContext({ includeTextCodec: false });
+      const code = fs.readFileSync(bundlePath, "utf8");
+
+      // uint8array-extras constructs its TextDecoder/TextEncoder at module
+      // initialization (see the comment in makeHermesLikeContext), so the
+      // failure happens at load time, before any of our own code runs. This
+      // turns the assumption granted above into an enforced, documented
+      // contract rather than a silent one.
+      expect(() =>
+        vm.runInContext(code, context, { filename: `${name}.js` }),
+      ).toThrow(/TextDecoder is not a constructor/);
     });
   }
 
