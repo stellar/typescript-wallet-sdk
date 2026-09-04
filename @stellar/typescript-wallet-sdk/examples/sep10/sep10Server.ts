@@ -43,7 +43,7 @@ app.post("/sign", (req, res) => {
   res.set("Access-Control-Allow-Origin", "*");
   res.status(200);
   res.send({
-    transaction: transaction.toEnvelope().toXDR("base64"),
+    transaction: transaction.toEnvelope().toXdr("base64"),
     network_passphrase: network_passphrase,
   });
 });

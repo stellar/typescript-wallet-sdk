@@ -503,8 +503,10 @@ describe("getInvocationDetails for a Soroban Authorized Invocation tree", () => 
     expect(scValByType(nftTransferDetail.args[1])).toBe("2");
 
     expect(wasmDetail.type).toBe("wasm");
-    expect(wasmDetail.salt).toBe(Buffer.alloc(32, 0).toString("hex"));
-    expect(wasmDetail.hash).toBe(Buffer.alloc(32, "\x20").toString("hex"));
+    expect(wasmDetail.salt).toBe(xdr.encodeBytes(new Uint8Array(32), "hex"));
+    expect(wasmDetail.hash).toBe(
+      xdr.encodeBytes(new Uint8Array(32).fill(0x20), "hex"),
+    );
     expect(wasmDetail.address).toBe(
       Address.fromScAddress(nftContract.address().toScAddress()).toString(),
     );
@@ -543,8 +545,10 @@ describe("getInvocationDetails for a CreateContractV2 host function", () => {
 
     const [detail] = detailsList;
     expect(detail.type).toBe("wasm");
-    expect(detail.salt).toBe(Buffer.alloc(32, 0).toString("hex"));
-    expect(detail.hash).toBe(Buffer.alloc(32, "\x20").toString("hex"));
+    expect(detail.salt).toBe(xdr.encodeBytes(new Uint8Array(32), "hex"));
+    expect(detail.hash).toBe(
+      xdr.encodeBytes(new Uint8Array(32).fill(0x20), "hex"),
+    );
     expect(detail.address).toBe(
       Address.fromScAddress(
         deployedContract.address().toScAddress(),
@@ -692,7 +696,7 @@ describe("getInvocationDetails for CAP-85 external references", () => {
     expect(details[0]).not.toHaveProperty("hash");
   });
 
-  it("returns no details for an unrecognised executable instead of throwing", () => {
+  it("still decodes a known contractFn invocation alongside the CAP-85 arm", () => {
     const contract = randomContracts(1)[0];
     const invocation = new xdr.SorobanAuthorizedInvocation({
       function:
@@ -706,8 +710,129 @@ describe("getInvocationDetails for CAP-85 external references", () => {
       subInvocations: [],
     });
 
-    // Sanity check that a known function type still decodes.
     expect(() => getInvocationDetails(invocation)).not.toThrow();
+
+    const details = getInvocationDetails(invocation);
+    expect(details).toHaveLength(1);
+    expect(details[0]).toEqual({
+      type: "invoke",
+      fnName: "someFn",
+      contractId: contract.contractId(),
+      args: [],
+    });
+  });
+});
+
+describe("getInvocationDetails graceful degradation", () => {
+  // These four cases cover every `return undefined` path added by the v17
+  // migration. A wallet's transaction-review screen must degrade to "no
+  // details" rather than crash on an input it does not recognise.
+
+  it("returns no details for an unrecognised authorized function type", () => {
+    // Duck-typed: no real xdr union can carry a future variant name, which is
+    // exactly the case the default arm exists for.
+    const invocation = {
+      function: { type: "sorobanAuthorizedFunctionTypeFutureHostFn" },
+      subInvocations: [],
+    } as unknown as xdr.SorobanAuthorizedInvocation;
+
+    expect(() => getInvocationDetails(invocation)).not.toThrow();
+    expect(getInvocationDetails(invocation)).toEqual([]);
+  });
+
+  it("returns no details for an unrecognised contract executable", () => {
+    const owner = randomContracts(1)[0];
+    const invocation = {
+      function: {
+        type: "sorobanAuthorizedFunctionTypeCreateContractHostFn",
+        createContractHostFn: {
+          executable: { type: "contractExecutableFutureVariant" },
+          contractIdPreimage: {
+            type: "contractIdPreimageFromAddress",
+            fromAddress: {
+              address: owner.address().toScAddress(),
+              salt: new xdr.Uint256Bytes(new Uint8Array(32)),
+            },
+          },
+        },
+      },
+      subInvocations: [],
+    } as unknown as xdr.SorobanAuthorizedInvocation;
+
+    expect(() => getInvocationDetails(invocation)).not.toThrow();
+    expect(getInvocationDetails(invocation)).toEqual([]);
+  });
+
+  it("returns no details for a wasm executable paired with a non-address preimage", () => {
+    // On-chain impossible, but constructible — and reachable from any
+    // untrusted XDR blob a wallet is asked to review.
+    const invocation = new xdr.SorobanAuthorizedInvocation({
+      function:
+        xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeCreateContractHostFn(
+          new xdr.CreateContractArgs({
+            contractIdPreimage:
+              xdr.ContractIdPreimage.contractIdPreimageFromAsset(
+                new Asset("TEST", randomKey()).toXDRObject(),
+              ),
+            executable: xdr.ContractExecutable.contractExecutableWasm(
+              new Uint8Array(32).fill(0x20),
+            ),
+          }),
+        ),
+      subInvocations: [],
+    });
+
+    expect(() => getInvocationDetails(invocation)).not.toThrow();
+    expect(getInvocationDetails(invocation)).toEqual([]);
+  });
+
+  it("returns no details for a Stellar Asset executable paired with a non-asset preimage", () => {
+    const contract = randomContracts(1)[0];
+    const invocation = new xdr.SorobanAuthorizedInvocation({
+      function:
+        xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeCreateContractHostFn(
+          new xdr.CreateContractArgs({
+            contractIdPreimage:
+              xdr.ContractIdPreimage.contractIdPreimageFromAddress(
+                new xdr.ContractIdPreimageFromAddress({
+                  address: contract.address().toScAddress(),
+                  salt: new Uint8Array(32),
+                }),
+              ),
+            executable: xdr.ContractExecutable.contractExecutableStellarAsset(),
+          }),
+        ),
+      subInvocations: [],
+    });
+
+    expect(() => getInvocationDetails(invocation)).not.toThrow();
+    expect(getInvocationDetails(invocation)).toEqual([]);
+  });
+
+  it("omits only the degrading entry when it is nested beside valid ones", () => {
+    const contract = randomContracts(1)[0];
+    const invocation = {
+      function:
+        xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeContractFn(
+          new xdr.InvokeContractArgs({
+            contractAddress: contract.address().toScAddress(),
+            functionName: "outer",
+            args: [],
+          }),
+        ),
+      subInvocations: [
+        {
+          function: { type: "sorobanAuthorizedFunctionTypeFutureHostFn" },
+          subInvocations: [],
+        },
+      ],
+    } as unknown as xdr.SorobanAuthorizedInvocation;
+
+    expect(() => getInvocationDetails(invocation)).not.toThrow();
+
+    const details = getInvocationDetails(invocation);
+    expect(details).toHaveLength(1);
+    expect(details[0].fnName).toBe("outer");
   });
 });
 

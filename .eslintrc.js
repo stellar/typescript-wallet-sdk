@@ -105,6 +105,22 @@ module.exports = {
             message:
               "React Native has no Buffer global. Use Uint8Array with xdr.encodeBytes/decodeBytes.",
           },
+          {
+            // Defeats the two bypasses of the selector above: a computed
+            // access such as globalThis["Buffer"], and a typed cast such as
+            // (globalThis as { Buffer?: unknown }).Buffer, which is not
+            // caught by no-explicit-any.
+            selector:
+              "MemberExpression[computed=true][property.value='Buffer']",
+            message:
+              "React Native has no Buffer global. Use Uint8Array with xdr.encodeBytes/decodeBytes.",
+          },
+          {
+            selector:
+              "MemberExpression[object.type=/^TS(As|Satisfies|NonNull)Expression$/][property.name='Buffer']",
+            message:
+              "React Native has no Buffer global. Use Uint8Array with xdr.encodeBytes/decodeBytes.",
+          },
         ],
         "no-restricted-imports": [
           "error",
@@ -112,6 +128,11 @@ module.exports = {
             paths: [
               {
                 name: "buffer",
+                message:
+                  "React Native has no Buffer global. Use Uint8Array with xdr.encodeBytes/decodeBytes.",
+              },
+              {
+                name: "node:buffer",
                 message:
                   "React Native has no Buffer global. Use Uint8Array with xdr.encodeBytes/decodeBytes.",
               },
