@@ -10,7 +10,7 @@
 
 ### Changed
 * The Ledger handler now applies signatures via `transaction.addSignature(publicKey, signature)` instead of constructing an `xdr.DecoratedSignature` and pushing it onto `transaction.signatures`. This fixes the cross-copy failure documented in `Handlers/plaintextKey.ts` (a wrapper class built by this package's bundled stellar-sdk was rejected by the consumer's copy on React Native), **and it adds validation the old path did not have**: `addSignature` validates the public key and verifies the signature against the transaction hash, so a mismatched `key.publicKey` now throws where it previously produced a silently invalid envelope. A net correctness improvement, but a behaviour change worth noting for anyone relying on the old permissive path
-* `buffer` moved from `dependencies` to `devDependencies` — it is consumed only by webpack at build time and is already inlined into the shipped browser bundle
+* `buffer` added as a `devDependency` — it was not declared by this package before. It is consumed only by webpack at build time, which inlines it into the shipped browser bundle to back the `Handlers/ledger.ts` `Buffer` exception, so consumers install nothing new
 
 ### Fixed
 * `KeyManager.fetchAuthToken` posts correctly encoded challenge XDR (the old `Buffer`-era encoder returned comma-joined decimals under v17) and compares transaction hashes correctly (`Buffer#equals` does not exist on `Uint8Array`)

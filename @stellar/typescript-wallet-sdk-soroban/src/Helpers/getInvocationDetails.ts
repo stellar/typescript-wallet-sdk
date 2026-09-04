@@ -102,7 +102,8 @@ const getCreateContractArgs = (
       const ref = executable.externalRef;
 
       // CAP-85: the referenced code can change after signing, so deliberately
-      // surface the owner and tag but no hash.
+      // surface the owner and tag, plus the deployer address and salt that
+      // derive the contract ID (as the wasm arm does), but no hash.
       return {
         type: "externalRef",
         executableOwner: Address.fromScAddress(ref.executableOwner).toString(),
