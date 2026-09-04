@@ -1,8 +1,10 @@
 import {
   Address,
   Asset,
+  Keypair,
   Networks,
   Operation,
+  StrKey,
   Transaction,
   TransactionBuilder,
   xdr,
@@ -12,6 +14,7 @@ import BigNumber from "bignumber.js";
 import {
   SorobanTokenInterface,
   formatTokenAmount,
+  getArgsForTokenInvocation,
   getInvocationDetails,
   getTokenInvocationArgs,
   parseTokenAmount,
@@ -643,12 +646,12 @@ describe("XDR integer boundary values (Protocol 26 strict validation)", () => {
 
   it("should throw on i32 overflow at serialization", () => {
     const val = xdr.ScVal.scvI32(2147483648);
-    expect(() => val.toXDR()).toThrow(/expected integer in range/);
+    expect(() => val.toXDR()).toThrow(/scvI32\.i32: expected integer in range/);
   });
 
   it("should throw on u32 overflow at serialization", () => {
     const val = xdr.ScVal.scvU32(4294967296);
-    expect(() => val.toXDR()).toThrow(/expected integer in range/);
+    expect(() => val.toXDR()).toThrow(/scvU32\.u32: expected integer in range/);
   });
 });
 
@@ -705,5 +708,119 @@ describe("getInvocationDetails for CAP-85 external references", () => {
 
     // Sanity check that a known function type still decodes.
     expect(() => getInvocationDetails(invocation)).not.toThrow();
+  });
+});
+
+describe("scValByType Protocol 28 and address coverage", () => {
+  it("renders an executable tag", () => {
+    const scv = xdr.ScVal.scvExecutableTag("v1.2.3");
+    expect(scValByType(scv)).toEqual("v1.2.3");
+  });
+
+  it("renders all five ScAddress variants", () => {
+    const account = Keypair.random().publicKey();
+    const contract = StrKey.encodeContract(new Uint8Array(32).fill(3));
+
+    const cases: Array<[xdr.ScAddress, string]> = [
+      [new Address(account).toScAddress(), account],
+      [new Address(contract).toScAddress(), contract],
+      [
+        xdr.ScAddress.scAddressTypeMuxedAccount(
+          new xdr.MuxedEd25519Account({
+            id: BigInt(1),
+            ed25519: StrKey.decodeEd25519PublicKey(account),
+          }),
+        ),
+        // Muxed addresses encode to an M-address.
+        "M",
+      ],
+      [
+        xdr.ScAddress.scAddressTypeClaimableBalance(
+          xdr.ClaimableBalanceId.claimableBalanceIdTypeV0(
+            new Uint8Array(32).fill(1),
+          ),
+        ),
+        "B",
+      ],
+      [
+        xdr.ScAddress.scAddressTypeLiquidityPool(
+          new xdr.PoolId(new Uint8Array(32).fill(2)),
+        ),
+        "L",
+      ],
+    ];
+
+    for (const [scAddress, expected] of cases) {
+      const rendered = scValByType(xdr.ScVal.scvAddress(scAddress)) as string;
+      expect(typeof rendered).toBe("string");
+      expect(rendered.startsWith(expected)).toBe(true);
+    }
+  });
+
+  it("returns null for an unhandled ScVal type", () => {
+    expect(scValByType(xdr.ScVal.scvVoid())).toBeNull();
+  });
+});
+
+describe("getInvocationDetails CreateContractV2 with an external ref", () => {
+  it("surfaces constructorArgs alongside an external-ref executable", () => {
+    const owner = randomContracts(1)[0];
+    const invocation = new xdr.SorobanAuthorizedInvocation({
+      function:
+        xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeCreateContractV2HostFn(
+          new xdr.CreateContractArgsV2({
+            contractIdPreimage:
+              xdr.ContractIdPreimage.contractIdPreimageFromAddress(
+                new xdr.ContractIdPreimageFromAddress({
+                  address: owner.address().toScAddress(),
+                  salt: new Uint8Array(32),
+                }),
+              ),
+            executable: xdr.ContractExecutable.contractExecutableExternalRef(
+              new xdr.ContractExecutableExternalRef({
+                executableOwner: owner.address().toScAddress(),
+                tag: "v2-tag",
+              }),
+            ),
+            constructorArgs: [xdr.ScVal.scvU32(7)],
+          }),
+        ),
+      subInvocations: [],
+    });
+
+    const [detail] = getInvocationDetails(invocation);
+
+    expect(detail).toMatchObject({
+      type: "externalRef",
+      executableOwner: owner.contractId(),
+      tag: "v2-tag",
+    });
+    expect(
+      (detail as { constructorArgs?: unknown[] }).constructorArgs,
+    ).toHaveLength(1);
+    // CAP-85 code can change after signing, so still no hash.
+    expect(detail).not.toHaveProperty("hash");
+  });
+});
+
+describe("getTokenInvocationArgs address handling", () => {
+  it("resolves a muxed sender in a transfer", () => {
+    const account = Keypair.random().publicKey();
+    const muxed = xdr.ScAddress.scAddressTypeMuxedAccount(
+      new xdr.MuxedEd25519Account({
+        id: BigInt(7),
+        ed25519: StrKey.decodeEd25519PublicKey(account),
+      }),
+    );
+
+    const args = getArgsForTokenInvocation(SorobanTokenInterface.transfer, [
+      xdr.ScVal.scvAddress(muxed),
+      xdr.ScVal.scvAddress(new Address(account).toScAddress()),
+      xdr.ScVal.scvI128(new xdr.Int128Parts({ hi: BigInt(0), lo: BigInt(5) })),
+    ]);
+
+    expect(args.from.startsWith("M")).toBe(true);
+    expect(args.to).toEqual(account);
+    expect(args.amount).toEqual(BigInt(5));
   });
 });
