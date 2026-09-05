@@ -54,8 +54,14 @@ module.exports = (env = { NODE: false }) => {
           new webpack.ProvidePlugin({
             process: "process/browser",
           }),
-          // Required by Handlers/ledger.ts: @ledgerhq/hw-app-str needs a real
-          // Buffer (it calls Buffer#copy). Browser-only; RN never loads it.
+          // Required by Handlers/ledger.ts: @ledgerhq/hw-app-str needs a
+          // real Buffer (it calls Buffer#copy). This inlines the npm buffer
+          // polyfill into that module so it never depends on a host global.
+          //
+          // Do not remove this as browser-only dead weight: React Native
+          // loads this same bundle (Metro resolves the `browser` field, and
+          // keyManager.ts imports ledgerHandler unconditionally). Only
+          // *using* the U2F-backed handler is browser-specific.
           new webpack.ProvidePlugin({
             Buffer: ["buffer", "Buffer"],
           }),

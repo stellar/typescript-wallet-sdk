@@ -32,9 +32,16 @@ export const ledgerHandler: KeyTypeHandler = {
     const ledgerApi = new LedgerStr(transport);
     // @ledgerhq/hw-app-str calls Buffer#copy on this argument, which does not
     // exist on Uint8Array, so transactions spanning more than one APDU chunk
-    // would throw. This is the only sanctioned Buffer use in the SDK; Ledger
-    // here rides hw-transport-u2f, which is browser-only, so React Native is
-    // unaffected.
+    // would throw. This is the only sanctioned Buffer use in the SDK, and it
+    // resolves to the bundled npm polyfill rather than a host global —
+    // webpack's ProvidePlugin injects it into this module (see
+    // webpack.config.js), which is why the React Native sandbox test can load
+    // this bundle with no Buffer global present.
+    //
+    // React Native does load this module: keyManager.ts imports ledgerHandler
+    // unconditionally and Metro resolves the browser bundle. What is
+    // browser-specific is *using* the handler, since it rides
+    // hw-transport-u2f.
     // eslint-disable-next-line no-restricted-globals
     const signatureBase = Buffer.from(transaction.signatureBase());
     const result = await ledgerApi.signTransaction(key.path, signatureBase);
