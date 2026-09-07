@@ -168,7 +168,8 @@ export class Watcher {
           const newTransactions = transactions.filter((transaction) => {
             const isInProgress =
               transaction.status.indexOf("pending") === 0 ||
-              transaction.status === TransactionStatus.incomplete;
+              transaction.status === TransactionStatus.incomplete ||
+              transaction.status === TransactionStatus.on_hold;
             const registeredTransaction =
               this._transactionsRegistry[assetCode][transaction.id];
 
@@ -275,7 +276,7 @@ export class Watcher {
 
   /**
    * Watch a transaction until it stops pending. Takes three callbacks:
-   * * onMessage - When the transaction comes back as pending_ or incomplete.
+   * * onMessage - When the transaction comes back as pending_, incomplete, or on_hold.
    * * onSuccess - When the transaction comes back as completed / refunded / expired.
    * * onError - When there's a runtime error, or the transaction comes back as
    * no_market / too_small / too_large / error.
