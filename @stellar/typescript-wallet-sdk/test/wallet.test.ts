@@ -930,6 +930,83 @@ describe("Anchor", () => {
       // stops watching
       stop();
     });
+
+    test("on_hold is transient: not ignored on first poll", async () => {
+      const onMessage = sinon.spy();
+      const onError = sinon.spy();
+
+      const onHoldTransaction = makeTransaction(0, TransactionStatus.on_hold);
+      const completedTransaction = {
+        ...onHoldTransaction,
+        status: TransactionStatus.completed,
+      };
+
+      // first poll returns on_hold, second returns completed
+      jest
+        .spyOn(Sep24.prototype, "getTransactionsForAsset")
+        .mockResolvedValueOnce([onHoldTransaction])
+        .mockResolvedValueOnce([completedTransaction]);
+
+      const { stop } = watcher.watchAllTransactions({
+        authToken,
+        assetCode: "SRT",
+        lang: "en-US",
+        onMessage,
+        onError,
+        timeout: 1,
+      });
+
+      await sleep(1);
+
+      // on_hold must be treated as in-progress, not silently ignored
+      expect(onError.callCount).toBe(0);
+      expect(onMessage.callCount).toBe(1);
+
+      clock.next();
+      await sleep(1);
+
+      // now completed, reported as a status change
+      expect(onError.callCount).toBe(0);
+      expect(onMessage.callCount).toBe(2);
+
+      stop();
+    });
+
+    test("on_hold reported once when status unchanged across polls", async () => {
+      const onMessage = sinon.spy();
+      const onError = sinon.spy();
+
+      const onHoldTransaction = makeTransaction(0, TransactionStatus.on_hold);
+
+      // two consecutive polls return the same on_hold status
+      jest
+        .spyOn(Sep24.prototype, "getTransactionsForAsset")
+        .mockResolvedValueOnce([onHoldTransaction])
+        .mockResolvedValueOnce([onHoldTransaction]);
+
+      const { stop } = watcher.watchAllTransactions({
+        authToken,
+        assetCode: "SRT",
+        lang: "en-US",
+        onMessage,
+        onError,
+        timeout: 1,
+      });
+
+      await sleep(1);
+
+      // first poll: reported
+      expect(onMessage.callCount).toBe(1);
+
+      clock.next();
+      await sleep(1);
+
+      // second poll: same status, not reported again
+      expect(onMessage.callCount).toBe(1);
+      expect(onError.callCount).toBe(0);
+
+      stop();
+    });
   });
 
   describe("watchOneTransaction", () => {
@@ -944,6 +1021,51 @@ describe("Anchor", () => {
 
     afterEach(() => {
       clock.restore();
+    });
+
+    test("on_hold is transient: keeps watching until completed", async () => {
+      const onMessage = sinon.spy();
+      const onSuccess = sinon.spy();
+      const onError = sinon.spy();
+
+      const onHoldTransaction = makeTransaction(0, TransactionStatus.on_hold);
+      const completedTransaction = {
+        ...onHoldTransaction,
+        status: TransactionStatus.completed,
+      };
+
+      // first poll returns on_hold, the next returns completed
+      jest
+        .spyOn(Sep24.prototype, "getTransactionBy")
+        .mockResolvedValueOnce(onHoldTransaction)
+        .mockResolvedValueOnce(completedTransaction);
+
+      const { stop } = watcher.watchOneTransaction({
+        authToken,
+        assetCode: "SRT",
+        id: onHoldTransaction.id,
+        onMessage,
+        onSuccess,
+        onError,
+        timeout: 1,
+        lang: "en-US",
+      });
+
+      // first poll: on_hold is transient, so it must keep watching, not error out
+      await sleep(1);
+      expect(onError.callCount).toBe(0);
+      expect(onSuccess.callCount).toBe(0);
+      expect(onMessage.callCount).toBe(1);
+
+      clock.next();
+      await sleep(1);
+
+      // second poll: now completed, so onSuccess fires and onError never does
+      expect(onError.callCount).toBe(0);
+      expect(onSuccess.callCount).toBe(1);
+      expect(onMessage.callCount).toBe(1);
+
+      stop();
     });
 
     test("One completed / refunded / expired successes", async () => {
