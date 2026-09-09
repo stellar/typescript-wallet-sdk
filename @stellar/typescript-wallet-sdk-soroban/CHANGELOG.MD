@@ -22,6 +22,7 @@
 * Test coverage for the graceful-degradation paths: an unrecognised authorized-function type, an unrecognised contract executable, and a wasm, Stellar-Asset or external-ref executable paired with a mismatched contract-id preimage
 
 ### Fixed
+* `getInvocationDetails` decodes an invocation's `fnName` with the SEP-0051 escape form rather than a lenient UTF-8 decode. `functionName` is an `SCSymbol` whose XDR schema bounds length only — the `[a-zA-Z0-9_]` rule is a Soroban host invariant, and the host has not run at the point a wallet decodes an envelope to render a transaction-review screen. The previous decode substituted U+FFFD for invalid bytes, so two distinct function names could render identically to a reviewer. Ordinary printable-ASCII names (`transfer`, `mint`, and anything matching the symbol rule) are byte-for-byte unchanged; only malformed names now differ, appearing as `\xNN` escapes. This matches the treatment the CAP-85 executable tag already receives
 * `scValByType` renders a contract instance's wasm hash as hex; it previously returned a UTF-8 interpretation of the raw 32 hash bytes
 
 # Release notes - Typescript Wallet SDK Soroban - 4.0.1

@@ -143,7 +143,15 @@ export const getInvocationArgs = (
     case "sorobanAuthorizedFunctionTypeContractFn": {
       const _invocation = fn.contractFn;
       return {
-        fnName: _invocation.functionName.toString(),
+        // toJson(), not toString(): functionName is an SCSymbol whose schema
+        // bounds length only — the [a-zA-Z0-9_] rule is a Soroban host
+        // invariant, and the host has not run when a wallet decodes an
+        // envelope to render a review screen. toString() is a lenient UTF-8
+        // decode that substitutes U+FFFD, so two distinct names could render
+        // identically; toJson() is the SEP-0051 escape form, which passes
+        // printable ASCII through byte-for-byte (so `transfer` and `mint` are
+        // unchanged) and escapes anything else as \xNN, keeping it injective.
+        fnName: _invocation.functionName.toJson(),
         contractId: Address.fromScAddress(
           _invocation.contractAddress,
         ).toString(),

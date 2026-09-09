@@ -730,6 +730,50 @@ describe("getInvocationDetails for CAP-85 external references", () => {
   });
 });
 
+describe("getInvocationDetails function-name decoding", () => {
+  // Two SCSymbols differing only in bytes that a lenient UTF-8 decode would
+  // collapse to U+FFFD. The [a-zA-Z0-9_] rule is a Soroban host invariant, and
+  // the host has not run when a wallet decodes an envelope for review, so this
+  // is reachable from a hand-crafted envelope.
+  const invocationWithFnNameBytes = (bytes: number[]) => {
+    const contract = randomContracts(1)[0];
+    return new xdr.SorobanAuthorizedInvocation({
+      function:
+        xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeContractFn(
+          new xdr.InvokeContractArgs({
+            contractAddress: contract.address().toScAddress(),
+            functionName: Uint8Array.from(bytes),
+            args: [],
+          }),
+        ),
+      subInvocations: [],
+    });
+  };
+
+  it("keeps two names distinct when they differ only in invalid UTF-8 bytes", () => {
+    const [a] = getInvocationDetails(
+      invocationWithFnNameBytes([0x74, 0x78, 0xc0]),
+    ) as [{ fnName: string }];
+    const [b] = getInvocationDetails(
+      invocationWithFnNameBytes([0x74, 0x78, 0xc1]),
+    ) as [{ fnName: string }];
+
+    // A lenient decode would render both as "tx\uFFFD" and collide.
+    expect(a.fnName).not.toEqual(b.fnName);
+    expect(a.fnName).toEqual("tx\\xc0");
+    expect(b.fnName).toEqual("tx\\xc1");
+  });
+
+  it("passes ordinary printable-ASCII names through unchanged", () => {
+    for (const name of ["transfer", "mint", "swap", "my_fn_1"]) {
+      const [detail] = getInvocationDetails(
+        invocationWithFnNameBytes(Array.from(Buffer.from(name, "ascii"))),
+      ) as [{ fnName: string }];
+      expect(detail.fnName).toEqual(name);
+    }
+  });
+});
+
 describe("getInvocationDetails graceful degradation", () => {
   // These five cases cover every arm that cannot decode its input: an
   // unrecognised authorized function type, an unrecognised contract
