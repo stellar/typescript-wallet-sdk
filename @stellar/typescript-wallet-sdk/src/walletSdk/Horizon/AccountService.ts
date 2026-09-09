@@ -42,10 +42,10 @@ export class AccountService {
   /**
    * Generate new account keypair (public and secret key) from random bytes. This key pair can be
    * used to create a Stellar account.
-   * @param {Buffer} randomBytes - Random bytes to create keypair from.
+   * @param {Uint8Array} randomBytes - Random bytes to create keypair from.
    * @returns {SigningKeypair} Keypair capable of signing.
    */
-  createKeypairFromRandom(randomBytes: Buffer): SigningKeypair {
+  createKeypairFromRandom(randomBytes: Uint8Array): SigningKeypair {
     return new SigningKeypair(Keypair.fromRawEd25519Seed(randomBytes));
   }
 

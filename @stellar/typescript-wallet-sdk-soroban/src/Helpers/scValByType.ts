@@ -1,94 +1,96 @@
-import { Address, StrKey, scValToNative, xdr } from "@stellar/stellar-sdk";
+import { Address, scValToNative, xdr } from "@stellar/stellar-sdk";
 
 /* eslint-disable jsdoc/require-returns-type */
 /**
  * This function attempts to convert smart contract (complex) value types
- * to common/simpler types like string, array, buffer, JSON string, etc.
+ * to common/simpler types like string, array, hex string, JSON string, etc.
  *
  * @param {xdr.ScVal} scVal  the smart contract (complex) value
  *
  *
  * @returns the smart contract value converted to a common/simpler
- *     value like string, array, buffer, JSON string, etc.
+ *     value like string, array, hex string, JSON string, etc.
  *
  * @example
  *   const accountAddress = xdr.ScVal.scvAddress(
- *     xdr.ScAddress.scAddressTypeAccount(
- *       xdr.PublicKey.publicKeyTypeEd25519(
- *         StrKey.decodeEd25519PublicKey("GBBM6BKZPEHWYO3E3YKREDPQXMS4VK35YLNU7NFBRI26RAN7GI5POFBB"),
- *       ),
- *     )
+ *     new Address("GBBM6BKZPEHWYO3E3YKREDPQXMS4VK35YLNU7NFBRI26RAN7GI5POFBB").toScAddress(),
  *   ); ===> complex object
  *
  *   scValByType(accountAddress) returns "GBBM6BKZPEHWYO3E3YKREDPQXMS4VK35YLNU7NFBRI26RAN7GI5POFBB"
  */
 export const scValByType = (scVal: xdr.ScVal) => {
-  switch (scVal.switch()) {
-    case xdr.ScValType.scvAddress(): {
-      const address = scVal.address();
-      const addressType = address.switch();
-      if (addressType.name === "scAddressTypeAccount") {
-        return StrKey.encodeEd25519PublicKey(address.accountId().ed25519());
-      }
-      return Address.fromScAddress(address).toString();
+  switch (scVal.type) {
+    case "scvAddress":
+      // Address.fromScAddress covers all five ScAddress variants, so no
+      // per-variant branching is needed here.
+      return Address.fromScAddress(scVal.address).toString();
+
+    case "scvBool":
+      return scVal.b;
+
+    case "scvBytes":
+      return xdr.encodeBytes(scVal.bytes.toBytes(), "hex");
+
+    case "scvContractInstance": {
+      const { executable } = scVal.instance;
+      // Only a wasm executable carries a hash; SAC and CAP-85 external-ref
+      // executables do not.
+      return executable.type === "contractExecutableWasm"
+        ? xdr.encodeBytes(executable.wasmHash.toBytes(), "hex")
+        : null;
     }
 
-    case xdr.ScValType.scvBool(): {
-      return scVal.b();
-    }
+    case "scvError":
+      return scVal.error.value;
 
-    case xdr.ScValType.scvBytes(): {
-      return JSON.stringify(scVal.bytes().toJSON().data);
-    }
-
-    case xdr.ScValType.scvContractInstance(): {
-      const instance = scVal.instance();
-      return instance.executable().wasmHash()?.toString();
-    }
-
-    case xdr.ScValType.scvError(): {
-      const error = scVal.error();
-      return error.value();
-    }
-
-    case xdr.ScValType.scvTimepoint():
-    case xdr.ScValType.scvDuration():
-    case xdr.ScValType.scvI128():
-    case xdr.ScValType.scvI256():
-    case xdr.ScValType.scvI32():
-    case xdr.ScValType.scvI64():
-    case xdr.ScValType.scvU128():
-    case xdr.ScValType.scvU256():
-    case xdr.ScValType.scvU32():
-    case xdr.ScValType.scvU64(): {
+    case "scvTimepoint":
+    case "scvDuration":
+    case "scvI128":
+    case "scvI256":
+    case "scvI32":
+    case "scvI64":
+    case "scvU128":
+    case "scvU256":
+    case "scvU32":
+    case "scvU64":
       return scValToNative(scVal).toString();
-    }
 
-    case xdr.ScValType.scvLedgerKeyNonce():
-    case xdr.ScValType.scvLedgerKeyContractInstance(): {
-      if (scVal.switch().name === "scvLedgerKeyNonce") {
-        const val = scVal.nonceKey().nonce();
-        return val.toString();
-      }
-      return scVal.value();
-    }
+    case "scvLedgerKeyNonce":
+      return scVal.nonceKey.nonce.toString();
 
-    case xdr.ScValType.scvVec():
-    case xdr.ScValType.scvMap(): {
+    case "scvLedgerKeyContractInstance":
+      // Void arm — carries no payload.
+      return scVal.value;
+
+    case "scvVec":
+    case "scvMap":
       return JSON.stringify(
         scValToNative(scVal),
         (_, val) => (typeof val === "bigint" ? val.toString() : val),
         2,
       );
-    }
 
-    case xdr.ScValType.scvString():
-    case xdr.ScValType.scvSymbol(): {
+    case "scvString":
+    case "scvSymbol": {
       const native = scValToNative(scVal);
-      if (native.constructor === "Uint8Array") {
-        return native.toString();
+      // scValToNative returns a string for well-formed UTF-8 but falls back to
+      // raw bytes otherwise. (The previous check compared a constructor to the
+      // string "Uint8Array" and was therefore always false.)
+      if (native instanceof Uint8Array) {
+        return xdr.encodeBytes(native, "hex");
       }
       return native;
+    }
+
+    case "scvExecutableTag": {
+      const tag = scVal.executableTag.asStringOrBytes();
+      // Same fallback as scvString/scvSymbol above: the tag is an unbounded
+      // SCString and toString() lenient-decodes to U+FFFD on non-UTF-8
+      // bytes, which would render two distinct binary tags identically.
+      if (tag instanceof Uint8Array) {
+        return xdr.encodeBytes(tag, "hex");
+      }
+      return tag;
     }
 
     default:

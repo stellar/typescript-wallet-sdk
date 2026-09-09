@@ -1,4 +1,5 @@
-import { Keypair, Networks, StellarToml } from "@stellar/stellar-sdk";
+import { Keypair, Networks, StellarToml, xdr } from "@stellar/stellar-sdk";
+import { concatUint8Arrays, stringToUint8Array } from "uint8array-extras";
 import {
   Sep7OperationType,
   URI_MSG_MAX_LENGTH,
@@ -214,7 +215,7 @@ export abstract class Sep7Base {
    */
   addSignature(keypair: Keypair): string {
     const payload = this.createSignaturePayload();
-    const signature = keypair.sign(payload).toString("base64");
+    const signature = xdr.encodeBytes(keypair.sign(payload), "base64");
     this.setParam("signature", signature);
     return signature;
   }
@@ -256,7 +257,7 @@ export abstract class Sep7Base {
       }
       const keypair = Keypair.fromPublicKey(signingKey);
       const payload = this.createSignaturePayload();
-      return keypair.verify(payload, Buffer.from(signature, "base64"));
+      return keypair.verify(payload, xdr.decodeBytes(signature, "base64"));
     } catch (e) {
       // if something fails we assume signature verification failed
       return false;
@@ -300,10 +301,10 @@ export abstract class Sep7Base {
    *
    * @see https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0007.md#request-signing
    *
-   * @returns {Buffer} array of bytes to be signed with given keypair on
+   * @returns {Uint8Array} array of bytes to be signed with given keypair on
    * the 'addSignature' method.
    */
-  private createSignaturePayload(): Buffer {
+  private createSignaturePayload(): Uint8Array {
     let data = this.toString();
 
     const signature = this.signature;
@@ -315,10 +316,10 @@ export abstract class Sep7Base {
     // The first 35 bytes of the payload are all 0, the 36th byte is 4.
     // Then we concatenate the URI request with the prefix 'stellar.sep.7 - URI Scheme'
     // (no delimiter) and convert that to bytes to give use the final payload to be signed.
-    return Buffer.concat([
-      Buffer.alloc(35, 0),
-      Buffer.alloc(1, 4),
-      Buffer.from(`stellar.sep.7 - URI Scheme${data}`),
+    return concatUint8Arrays([
+      new Uint8Array(35),
+      Uint8Array.of(4),
+      stringToUint8Array(`stellar.sep.7 - URI Scheme${data}`),
     ]);
   }
 }

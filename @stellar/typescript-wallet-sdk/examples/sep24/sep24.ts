@@ -228,7 +228,7 @@ walletSigner.signWithDomainAccount = async ({
 
   const signer = SigningKeypair.fromSecret(clientSecret);
 
-  const transaction = TransactionBuilder.fromXDR(
+  const transaction = TransactionBuilder.fromXdr(
     transactionXDR,
     networkPassphrase,
   ) as Transaction;

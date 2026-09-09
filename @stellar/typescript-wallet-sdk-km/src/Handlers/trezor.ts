@@ -1,5 +1,6 @@
 import TrezorConnect from "trezor-connect";
 import transformTransaction from "@trezor/connect-plugin-stellar";
+import { xdr } from "@stellar/stellar-sdk";
 
 import {
   HandlerSignTransactionParams,
@@ -37,10 +38,10 @@ export const trezorHandler: KeyTypeHandler = {
       const response = await TrezorConnect.stellarSignTransaction(trezorParams);
 
       if (response.success) {
-        const signature = Buffer.from(
-          response.payload.signature,
-          "hex",
-        ).toString("base64");
+        const signature = xdr.encodeBytes(
+          xdr.decodeBytes(response.payload.signature, "hex"),
+          "base64",
+        );
         transaction.addSignature(key.publicKey, signature);
 
         return transaction;

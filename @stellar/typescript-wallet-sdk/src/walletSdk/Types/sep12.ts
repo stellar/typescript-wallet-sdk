@@ -3,7 +3,7 @@ export type CustomerInfoMap = {
 };
 
 export type CustomerBinaryInfoMap = {
-  [key: string]: Buffer;
+  [key: string]: Uint8Array;
 };
 
 export enum Sep12Status {

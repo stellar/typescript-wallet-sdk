@@ -6,102 +6,186 @@ import { InvocationArgs } from "Types";
  * Extract invocation args and params from a Soroban authorized invocation
  * tree, walking every sub invocation at any depth.
  *
+ * An invocation arm that cannot be decoded — an unrecognised authorized
+ * function type, an unrecognised contract executable, or a contract-id
+ * preimage that does not match its executable — is never silently omitted:
+ * it is surfaced as an `FnArgsUnknown` entry in the returned list instead, so
+ * a caller (such as a wallet's transaction-review screen) can fail closed on
+ * its own terms rather than display a list that looks complete but omits an
+ * action awaiting approval.
+ *
  * @param {xdr.SorobanAuthorizedInvocation} invocationTree - The invocation tree.
  *
  * @returns {InvocationArgs[]} A depth-first list of user friendly invocation
  * args and params for the root invocation and all of its nested sub
- * invocations.
+ * invocations. Undecodable arms are included as `FnArgsUnknown` entries
+ * rather than omitted.
  */
 export const getInvocationDetails = (
   invocationTree: xdr.SorobanAuthorizedInvocation,
-): InvocationArgs[] => {
-  const invocations = [
-    getInvocationArgs(invocationTree),
-    ...invocationTree
-      .subInvocations()
-      .flatMap((subInvocation) => getInvocationDetails(subInvocation)),
-  ];
-  return invocations.filter(isInvocationArg);
-};
-
-const isInvocationArg = (
-  invocation: InvocationArgs | undefined,
-): invocation is InvocationArgs => !!invocation;
+): InvocationArgs[] => [
+  getInvocationArgs(invocationTree),
+  ...invocationTree.subInvocations.flatMap((subInvocation) =>
+    getInvocationDetails(subInvocation),
+  ),
+];
 
 const getCreateContractArgs = (
+  functionType: string,
   executable: xdr.ContractExecutable,
   preimage: xdr.ContractIdPreimage,
   constructorArgs?: xdr.ScVal[],
 ): InvocationArgs => {
   // constructorArgs is a sibling of `executable` in CreateContractV2, so it can
-  // accompany either executable variant and is surfaced on both.
+  // accompany any executable variant and is surfaced on all of them.
   const extra = constructorArgs ? { constructorArgs } : {};
+  // Captured up front: the switch below narrows `executable` to `never` in
+  // its default arm (an exhaustive switch over a closed union), so `.type`
+  // is no longer readable there once TypeScript has narrowed it away.
+  const executableType = executable.type;
+  const preimageType = preimage.type;
 
-  switch (executable.switch().value) {
-    // contractExecutableWasm
-    case 0: {
-      const details = preimage.fromAddress();
+  switch (executable.type) {
+    case "contractExecutableWasm": {
+      if (preimage.type !== "contractIdPreimageFromAddress") {
+        return {
+          type: "unknown",
+          reason: "executablePreimageMismatch",
+          functionType,
+          executableType,
+          preimageType,
+        };
+      }
+      const details = preimage.fromAddress;
 
       return {
         type: "wasm",
-        salt: details.salt().toString("hex"),
-        hash: executable.wasmHash().toString("hex"),
-        address: Address.fromScAddress(details.address()).toString(),
+        salt: xdr.encodeBytes(details.salt.toBytes(), "hex"),
+        hash: xdr.encodeBytes(executable.wasmHash.toBytes(), "hex"),
+        address: Address.fromScAddress(details.address).toString(),
         ...extra,
       };
     }
 
-    // contractExecutableStellarAsset
-    case 1:
+    case "contractExecutableStellarAsset": {
+      if (preimage.type !== "contractIdPreimageFromAsset") {
+        return {
+          type: "unknown",
+          reason: "executablePreimageMismatch",
+          functionType,
+          executableType,
+          preimageType,
+        };
+      }
       return {
         type: "sac",
-        asset: Asset.fromOperation(preimage.fromAsset()).toString(),
+        asset: Asset.fromOperation(preimage.fromAsset).toString(),
         ...extra,
       };
+    }
+
+    case "contractExecutableExternalRef": {
+      // A wasm or external-ref executable derives its contract ID from a
+      // deployer address plus salt, so its preimage MUST be an address —
+      // same guard as the wasm arm above. Only a token/SAC pairs with an
+      // asset preimage.
+      if (preimage.type !== "contractIdPreimageFromAddress") {
+        return {
+          type: "unknown",
+          reason: "executablePreimageMismatch",
+          functionType,
+          executableType,
+          preimageType,
+        };
+      }
+      const details = preimage.fromAddress;
+      const ref = executable.externalRef;
+
+      // CAP-85: the referenced code can change after signing, so deliberately
+      // surface the owner and tag, plus the deployer address and salt that
+      // derive the contract ID (as the wasm arm does), but no hash.
+      return {
+        type: "externalRef",
+        executableOwner: Address.fromScAddress(ref.executableOwner).toString(),
+        // asStringOrBytes(), not toString(): the tag is an unbounded SCString
+        // and toString() is a lenient UTF-8 decode that substitutes U+FFFD,
+        // so two distinct binary tags could otherwise render identically.
+        tag: ref.tag.asStringOrBytes(),
+        salt: xdr.encodeBytes(details.salt.toBytes(), "hex"),
+        address: Address.fromScAddress(details.address).toString(),
+        ...extra,
+      };
+    }
 
     default:
-      throw new Error(`unknown creation type: ${JSON.stringify(executable)}`);
+      // Degrade instead of throwing: an unrecognised future executable must not
+      // crash a wallet's transaction-review screen.
+      return {
+        type: "unknown",
+        reason: "unsupportedExecutable",
+        functionType,
+        executableType,
+        preimageType,
+      };
   }
 };
 
 export const getInvocationArgs = (
   invocation: xdr.SorobanAuthorizedInvocation,
-): InvocationArgs | undefined => {
-  const fn = invocation.function();
+): InvocationArgs => {
+  const fn = invocation.function;
+  // Captured up front: the switch below narrows `fn` to `never` in its
+  // default arm (an exhaustive switch over a closed union), so `.type` is
+  // no longer readable there once TypeScript has narrowed it away.
+  const functionType = fn.type;
 
-  switch (fn.switch().value) {
-    // sorobanAuthorizedFunctionTypeContractFn
-    case 0: {
-      const _invocation = fn.contractFn();
-      const contractId = Address.fromScAddress(
-        _invocation.contractAddress(),
-      ).toString();
-      const fnName = _invocation.functionName().toString();
-      const args = _invocation.args();
-      return { fnName, contractId, args, type: "invoke" };
+  switch (fn.type) {
+    case "sorobanAuthorizedFunctionTypeContractFn": {
+      const _invocation = fn.contractFn;
+      return {
+        // toJson(), not toString(): functionName is an SCSymbol whose schema
+        // bounds length only — the [a-zA-Z0-9_] rule is a Soroban host
+        // invariant, and the host has not run when a wallet decodes an
+        // envelope to render a review screen. toString() is a lenient UTF-8
+        // decode that substitutes U+FFFD, so two distinct names could render
+        // identically; toJson() is the SEP-0051 escape form, which passes
+        // printable ASCII through byte-for-byte (so `transfer` and `mint` are
+        // unchanged) and escapes anything else as \xNN, keeping it injective.
+        fnName: _invocation.functionName.toJson(),
+        contractId: Address.fromScAddress(
+          _invocation.contractAddress,
+        ).toString(),
+        args: _invocation.args,
+        type: "invoke",
+      };
     }
 
-    // sorobanAuthorizedFunctionTypeCreateContractHostFn
-    case 1: {
-      const _invocation = fn.createContractHostFn();
+    case "sorobanAuthorizedFunctionTypeCreateContractHostFn": {
+      const _invocation = fn.createContractHostFn;
       return getCreateContractArgs(
-        _invocation.executable(),
-        _invocation.contractIdPreimage(),
+        fn.type,
+        _invocation.executable,
+        _invocation.contractIdPreimage,
       );
     }
 
-    // sorobanAuthorizedFunctionTypeCreateContractV2HostFn
-    case 2: {
-      const _invocation = fn.createContractV2HostFn();
+    case "sorobanAuthorizedFunctionTypeCreateContractV2HostFn": {
+      const _invocation = fn.createContractV2HostFn;
       return getCreateContractArgs(
-        _invocation.executable(),
-        _invocation.contractIdPreimage(),
-        _invocation.constructorArgs(),
+        fn.type,
+        _invocation.executable,
+        _invocation.contractIdPreimage,
+        _invocation.constructorArgs,
       );
     }
 
-    default: {
-      return undefined;
-    }
+    default:
+      // Degrade instead of throwing: an unrecognised future authorized
+      // function type must not crash a wallet's transaction-review screen.
+      return {
+        type: "unknown",
+        reason: "unsupportedFunction",
+        functionType,
+      };
   }
 };

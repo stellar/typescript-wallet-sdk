@@ -1,11 +1,12 @@
 module.exports = {
   rootDir: "./",
   preset: "ts-jest",
-  // @stellar/stellar-sdk v16 pulls in several ESM-only packages (directly or
+  // @stellar/stellar-sdk v17 pulls in several ESM-only packages (directly or
   // transitively) that must be transformed to run under Jest's CommonJS runtime.
   transformIgnorePatterns: [
     `/node_modules/(?!${[
       "@stablelib",
+      "@exodus/bytes",
       "@noble",
       "uint8array-extras",
       "smol-toml",

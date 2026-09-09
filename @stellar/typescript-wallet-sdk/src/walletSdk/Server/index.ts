@@ -60,7 +60,7 @@ export const signChallengeTransaction = async ({
   anchorDomain,
   homeDomain,
 }: SignChallengeTxnParams): Promise<SignChallengeTxnResponse> => {
-  const parsedTx = TransactionBuilder.fromXDR(
+  const parsedTx = TransactionBuilder.fromXdr(
     challengeTx,
     networkPassphrase,
   ) as Transaction;
@@ -106,7 +106,7 @@ export const signChallengeTransaction = async ({
 
   accountKp.sign(tx);
   return {
-    transaction: tx.toXDR(),
+    transaction: tx.toXdr(),
     networkPassphrase,
   };
 };

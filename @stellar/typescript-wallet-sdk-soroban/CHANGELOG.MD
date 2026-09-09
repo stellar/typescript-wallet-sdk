@@ -1,3 +1,30 @@
+# Release notes - Typescript Wallet SDK Soroban - 5.0.0
+
+### BREAKING CHANGES
+* Upgraded `@stellar/stellar-sdk` from `16.2.0` to `17.0.1` — Protocol 28 support
+* Minimum Node.js version raised from 22 to 22.12.0, as required by stellar-sdk v17
+* **Minimum TypeScript 5.7** for consumers compiling against our type declarations — v17's typings use the generic `Uint8Array<ArrayBufferLike>` form
+* Byte inputs across stellar-sdk-derived types widen from `Buffer` to `Uint8Array`. Source-compatible for existing callers, because `Buffer` is a `Uint8Array` — **but only on `@types/node` >= 20**. Against an older `@types/node`, `Buffer` is not assignable to `Uint8Array<ArrayBufferLike>` and unchanged call sites will fail to compile
+* **`TextEncoder`/`TextDecoder` are a runtime prerequisite for loading this bundle.** `uint8array-extras` — a transitive dependency of this package via stellar-sdk — constructs both at module initialization with no fallback (unlike `@exodus/bytes`, which only uses them when natively available and otherwise decodes in pure JS), so an environment missing either one fails at load, before any of our code runs. This is a prerequisite the consumer's environment must satisfy; React Native applications commonly polyfill `TextEncoder`/`TextDecoder` already. Verified: a built bundle in a context without them throws `TypeError: globalThis.TextDecoder is not a constructor` at load
+* `InvocationArgs` gains a `FnArgsCreateExternalRef` member — exhaustive switches over this union need a new branch
+* `InvocationArgs` gains an `FnArgsUnknown` member — exhaustive switches over this union need another new branch. An invocation arm that cannot be decoded (an unrecognised executable or authorized-function type, or a contract-id preimage that does not match its executable) is now surfaced as this variant instead of being silently dropped, so a caller — such as a wallet's transaction-review screen — can choose to fail closed rather than display a list that looks complete but omits an action awaiting approval
+* `getInvocationArgs` returns an `FnArgsUnknown` entry — not `undefined` — for an unrecognised executable or authorized-function type instead of throwing, and `getInvocationDetails` keeps that entry in its returned list instead of omitting it
+* `scValByType` return values changed. The emitted return type is `any`, so **the compiler will not flag any of these** — check call sites by hand:
+  * `scvBytes` returns a hex string (was a stringified array of numbers, e.g. `"[0,1]"`)
+  * `scvContractInstance` returns a real hex wasm hash (was a UTF-8 interpretation of the raw 32 hash bytes, i.e. mojibake), and now returns `null` for Stellar-Asset and CAP-85 external-ref executables where v16 threw
+  * `scvLedgerKeyContractInstance` returns `null` (was `undefined`)
+  * `scvString` and `scvSymbol` return a hex string for non-UTF-8 payloads (the old branch that was meant to handle this compared a constructor to a string and was therefore dead code)
+
+### Added
+* CAP-85 external contract executables are decoded via the new `FnArgsCreateExternalRef` member, which surfaces the owner contract (`executableOwner`), the `tag`, and the deployer `address` and `salt` that together derive the new contract's ID — the same pairing `FnArgsCreateWasm` reports. `tag` is typed `string | Uint8Array`: it is an unbounded SCString, so a tag that is not valid UTF-8 comes back as raw bytes rather than a lossy decode, matching `scValToNative`. No wasm hash is reported, because the referenced code can change after the transaction is signed
+* Protocol 28's `scvExecutableTag` is rendered by `scValByType`
+* Addresses resolve for all five `ScAddress` variants — account, contract, muxed, claimable balance and liquidity pool — in `scValByType` and `getTokenInvocationArgs`. `getTokenInvocationArgs` therefore now resolves a muxed (`M…`) sender, which it previously could not
+* Test coverage for the graceful-degradation paths: an unrecognised authorized-function type, an unrecognised contract executable, and a wasm, Stellar-Asset or external-ref executable paired with a mismatched contract-id preimage
+
+### Fixed
+* `getInvocationDetails` decodes an invocation's `fnName` with the SEP-0051 escape form rather than a lenient UTF-8 decode. `functionName` is an `SCSymbol` whose XDR schema bounds length only — the `[a-zA-Z0-9_]` rule is a Soroban host invariant, and the host has not run at the point a wallet decodes an envelope to render a transaction-review screen. The previous decode substituted U+FFFD for invalid bytes, so two distinct function names could render identically to a reviewer. Ordinary printable-ASCII names (`transfer`, `mint`, and anything matching the symbol rule) are byte-for-byte unchanged; only malformed names now differ, appearing as `\xNN` escapes. This matches the treatment the CAP-85 executable tag already receives
+* `scValByType` renders a contract instance's wasm hash as hex; it previously returned a UTF-8 interpretation of the raw 32 hash bytes
+
 # Release notes - Typescript Wallet SDK Soroban - 4.0.1
 * Version bump
 

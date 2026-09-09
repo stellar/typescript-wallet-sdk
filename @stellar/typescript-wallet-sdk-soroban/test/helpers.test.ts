@@ -1,8 +1,7 @@
 import {
   Address,
   Asset,
-  Memo,
-  MemoType,
+  Keypair,
   Networks,
   Operation,
   StrKey,
@@ -15,6 +14,7 @@ import BigNumber from "bignumber.js";
 import {
   SorobanTokenInterface,
   formatTokenAmount,
+  getArgsForTokenInvocation,
   getInvocationDetails,
   getTokenInvocationArgs,
   parseTokenAmount,
@@ -36,8 +36,8 @@ describe("getTokenInvocationArgs for different function names", () => {
     const transaction = TransactionBuilder.fromXDR(
       transactions.sorobanTransfer,
       Networks.FUTURENET,
-    ) as Transaction<Memo<MemoType>, Operation.InvokeHostFunction[]>;
-    const op = transaction.operations[0];
+    ) as Transaction;
+    const op = transaction.operations[0] as Operation.InvokeHostFunction;
 
     const args = getTokenInvocationArgs(op);
 
@@ -58,8 +58,8 @@ describe("getTokenInvocationArgs for different function names", () => {
     const transaction = TransactionBuilder.fromXDR(
       transactions.sorobanMint,
       Networks.FUTURENET,
-    ) as Transaction<Memo<MemoType>, Operation.InvokeHostFunction[]>;
-    const op = transaction.operations[0];
+    ) as Transaction;
+    const op = transaction.operations[0] as Operation.InvokeHostFunction;
 
     const args = getTokenInvocationArgs(op);
 
@@ -78,8 +78,8 @@ describe("getTokenInvocationArgs for different function names", () => {
     const transaction = TransactionBuilder.fromXDR(
       transactions.classic,
       Networks.TESTNET,
-    ) as Transaction<Memo<MemoType>, Operation.InvokeHostFunction[]>;
-    const op = transaction.operations[0];
+    ) as Transaction;
+    const op = transaction.operations[0] as Operation.InvokeHostFunction;
 
     const args = getTokenInvocationArgs(op);
 
@@ -117,18 +117,12 @@ describe("scValByType should render expected common types", () => {
     const ACCOUNT = "GBBM6BKZPEHWYO3E3YKREDPQXMS4VK35YLNU7NFBRI26RAN7GI5POFBB";
     const CONTRACT = "CA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAXE";
 
-    const scAddressAccount = xdr.ScAddress.scAddressTypeAccount(
-      xdr.PublicKey.publicKeyTypeEd25519(
-        StrKey.decodeEd25519PublicKey(ACCOUNT),
-      ),
-    );
+    const scAddressAccount = new Address(ACCOUNT).toScAddress();
     const accountAddress = xdr.ScVal.scvAddress(scAddressAccount);
     const parsedAccountAddress = scValByType(accountAddress);
     expect(parsedAccountAddress).toEqual(ACCOUNT);
 
-    const scAddressContract = xdr.ScAddress.scAddressTypeContract(
-      StrKey.decodeContract(CONTRACT),
-    );
+    const scAddressContract = new Address(CONTRACT).toScAddress();
     const contractAddress = xdr.ScVal.scvAddress(scAddressContract);
     const parsedContractAddress = scValByType(contractAddress);
     expect(parsedContractAddress).toEqual(CONTRACT);
@@ -140,37 +134,32 @@ describe("scValByType should render expected common types", () => {
     expect(parsedBool).toEqual(true);
   });
 
-  it("should render bytes as a stringified array of numbers", () => {
-    const bytesBuffer = Buffer.from([0x00, 0x01]);
-    const bytes = xdr.ScVal.scvBytes(bytesBuffer);
-    const parsedBytes = scValByType(bytes);
-    expect(parsedBytes).toEqual("[0,1]");
+  it("should render bytes as a hex string", () => {
+    const bytes = xdr.ScVal.scvBytes(new Uint8Array([0x00, 0x01]));
+    expect(scValByType(bytes)).toEqual("0001");
   });
 
   it("should render contract instance as string", () => {
     // Note: those are totally random values for 'executable' and 'storage'
+    const WASM_HASH = new Uint8Array(32).fill(7);
     const contractInstance = xdr.ScVal.scvContractInstance(
       new xdr.ScContractInstance({
-        executable: xdr.ContractExecutable.contractExecutableWasm(
-          Buffer.from([1, 2, 3, 4, 5, 6, 7, 8]),
-        ),
+        executable: xdr.ContractExecutable.contractExecutableWasm(WASM_HASH),
         storage: [
           new xdr.ScMapEntry({
             key: xdr.ScVal.scvString("keyOne"),
-            val: xdr.ScVal.scvU64(new xdr.Uint64(123)),
+            val: xdr.ScVal.scvU64(xdr.Uint64(123)),
           }),
           new xdr.ScMapEntry({
             key: xdr.ScVal.scvString("keyTwo"),
-            val: xdr.ScVal.scvU64(new xdr.Uint64(456)),
+            val: xdr.ScVal.scvU64(xdr.Uint64(456)),
           }),
         ],
       }),
     );
 
     const parsedContractInstance = scValByType(contractInstance);
-    expect(parsedContractInstance).toEqual(
-      contractInstance.instance().executable().wasmHash()?.toString(),
-    );
+    expect(parsedContractInstance).toEqual(xdr.encodeBytes(WASM_HASH, "hex"));
   });
 
   it("should render an error as a number or a ScErrorCode object including the contract name and code", () => {
@@ -180,7 +169,7 @@ describe("scValByType should render expected common types", () => {
     const parsedContractError = scValByType(scvContractError);
     expect(parsedContractError).toEqual(contractErrorCode);
 
-    const scErrorCode = xdr.ScErrorCode.scecExceededLimit();
+    const scErrorCode = xdr.ScErrorCode.scecExceededLimit;
     const wasmError = xdr.ScError.sceWasmVm(scErrorCode);
     const scvWasmError = xdr.ScVal.scvError(wasmError);
     const parsedWasmError = scValByType(scvWasmError);
@@ -190,18 +179,18 @@ describe("scValByType should render expected common types", () => {
   });
 
   it("should render all numeric types as strings", () => {
-    const scv1 = xdr.ScVal.scvTimepoint(new xdr.Uint64(123));
+    const scv1 = xdr.ScVal.scvTimepoint(xdr.Uint64(123));
     const parsedScv1 = scValByType(scv1);
     expect(parsedScv1).toEqual("123");
 
-    const scv2 = xdr.ScVal.scvDuration(new xdr.Uint64(456));
+    const scv2 = xdr.ScVal.scvDuration(xdr.Uint64(456));
     const parsedScv2 = scValByType(scv2);
     expect(parsedScv2).toEqual("456");
 
     const scv3 = xdr.ScVal.scvI128(
       new xdr.Int128Parts({
-        hi: new xdr.Int64(789),
-        lo: new xdr.Uint64(123),
+        hi: xdr.Int64(789),
+        lo: xdr.Uint64(123),
       }),
     );
     const parsedScv3 = scValByType(scv3);
@@ -211,10 +200,10 @@ describe("scValByType should render expected common types", () => {
 
     const scv4 = xdr.ScVal.scvI256(
       new xdr.Int256Parts({
-        hiHi: new xdr.Int64(7899),
-        hiLo: new xdr.Uint64(7890),
-        loHi: new xdr.Uint64(1239),
-        loLo: new xdr.Uint64(1230),
+        hiHi: xdr.Int64(7899),
+        hiLo: xdr.Uint64(7890),
+        loHi: xdr.Uint64(1239),
+        loLo: xdr.Uint64(1230),
       }),
     );
     const parsedScv4 = scValByType(scv4);
@@ -227,14 +216,14 @@ describe("scValByType should render expected common types", () => {
     const parsedScv5 = scValByType(scv5);
     expect(parsedScv5).toEqual("3232");
 
-    const scv6 = xdr.ScVal.scvI64(new xdr.Int64(6464));
+    const scv6 = xdr.ScVal.scvI64(xdr.Int64(6464));
     const parsedScv6 = scValByType(scv6);
     expect(parsedScv6).toEqual("6464");
 
     const scv7 = xdr.ScVal.scvU128(
-      new xdr.UInt128Parts({
-        hi: new xdr.Uint64(1288),
-        lo: new xdr.Uint64(1280),
+      new xdr.Uint128Parts({
+        hi: xdr.Uint64(1288),
+        lo: xdr.Uint64(1280),
       }),
     );
     const parsedScv7 = scValByType(scv7);
@@ -244,10 +233,10 @@ describe("scValByType should render expected common types", () => {
 
     const scv8 = xdr.ScVal.scvU256(
       new xdr.Int256Parts({
-        hiHi: new xdr.Uint64(25699),
-        hiLo: new xdr.Uint64(25600),
-        loHi: new xdr.Uint64(2569),
-        loLo: new xdr.Uint64(2560),
+        hiHi: xdr.Uint64(25699),
+        hiLo: xdr.Uint64(25600),
+        loHi: xdr.Uint64(2569),
+        loLo: xdr.Uint64(2560),
       }),
     );
     const parsedScv8 = scValByType(scv8);
@@ -260,13 +249,13 @@ describe("scValByType should render expected common types", () => {
     const parsedScv9 = scValByType(scv9);
     expect(parsedScv9).toEqual("323232");
 
-    const scv10 = xdr.ScVal.scvU64(new xdr.Uint64(646464));
+    const scv10 = xdr.ScVal.scvU64(xdr.Uint64(646464));
     const parsedScv10 = scValByType(scv10);
     expect(parsedScv10).toEqual("646464");
   });
 
   it("should render nonce ledger key as string", () => {
-    const nonce = new xdr.Int64(123);
+    const nonce = xdr.Int64(123);
     const nonceKey = new xdr.ScNonceKey({ nonce });
     const ledgerKey = xdr.ScVal.scvLedgerKeyNonce(nonceKey);
     const parsedLedgerKey = scValByType(ledgerKey);
@@ -274,13 +263,13 @@ describe("scValByType should render expected common types", () => {
 
     const ledgerKeyContractInstance = xdr.ScVal.scvLedgerKeyContractInstance();
     const parsedInstance = scValByType(ledgerKeyContractInstance);
-    expect(parsedInstance).toEqual(undefined);
+    expect(parsedInstance).toEqual(null);
   });
 
   it("should render vectors and maps as JSON strings", () => {
     const xdrVec = xdr.ScVal.scvVec([
-      xdr.ScVal.scvU64(new xdr.Uint64(123)),
-      xdr.ScVal.scvU64(new xdr.Uint64(321)),
+      xdr.ScVal.scvU64(xdr.Uint64(123)),
+      xdr.ScVal.scvU64(xdr.Uint64(321)),
     ]);
     const parsedVec = scValByType(xdrVec);
     expect(parsedVec).toBe(
@@ -294,11 +283,11 @@ describe("scValByType should render expected common types", () => {
     const xdrMap = xdr.ScVal.scvMap([
       new xdr.ScMapEntry({
         key: xdr.ScVal.scvString("keyOne"),
-        val: xdr.ScVal.scvU64(new xdr.Uint64(456)),
+        val: xdr.ScVal.scvU64(xdr.Uint64(456)),
       }),
       new xdr.ScMapEntry({
         key: xdr.ScVal.scvString("keyTwo"),
-        val: xdr.ScVal.scvU64(new xdr.Uint64(789)),
+        val: xdr.ScVal.scvU64(xdr.Uint64(789)),
       }),
     ]);
     const parsedMap = scValByType(xdrMap);
@@ -398,11 +387,11 @@ describe("getInvocationDetails for a Soroban Authorized Invocation tree", () => 
               xdr.ContractIdPreimage.contractIdPreimageFromAddress(
                 new xdr.ContractIdPreimageFromAddress({
                   address: nftContract.address().toScAddress(),
-                  salt: Buffer.alloc(32, 0),
+                  salt: new Uint8Array(32),
                 }),
               ),
             executable: xdr.ContractExecutable.contractExecutableWasm(
-              Buffer.alloc(32, "\x20"),
+              new Uint8Array(32).fill(0x20),
             ),
           }),
         ),
@@ -514,8 +503,10 @@ describe("getInvocationDetails for a Soroban Authorized Invocation tree", () => 
     expect(scValByType(nftTransferDetail.args[1])).toBe("2");
 
     expect(wasmDetail.type).toBe("wasm");
-    expect(wasmDetail.salt).toBe(Buffer.alloc(32, 0).toString("hex"));
-    expect(wasmDetail.hash).toBe(Buffer.alloc(32, "\x20").toString("hex"));
+    expect(wasmDetail.salt).toBe(xdr.encodeBytes(new Uint8Array(32), "hex"));
+    expect(wasmDetail.hash).toBe(
+      xdr.encodeBytes(new Uint8Array(32).fill(0x20), "hex"),
+    );
     expect(wasmDetail.address).toBe(
       Address.fromScAddress(nftContract.address().toScAddress()).toString(),
     );
@@ -536,11 +527,11 @@ describe("getInvocationDetails for a CreateContractV2 host function", () => {
               xdr.ContractIdPreimage.contractIdPreimageFromAddress(
                 new xdr.ContractIdPreimageFromAddress({
                   address: deployedContract.address().toScAddress(),
-                  salt: Buffer.alloc(32, 0),
+                  salt: new Uint8Array(32),
                 }),
               ),
             executable: xdr.ContractExecutable.contractExecutableWasm(
-              Buffer.alloc(32, "\x20"),
+              new Uint8Array(32).fill(0x20),
             ),
             constructorArgs,
           }),
@@ -554,8 +545,10 @@ describe("getInvocationDetails for a CreateContractV2 host function", () => {
 
     const [detail] = detailsList;
     expect(detail.type).toBe("wasm");
-    expect(detail.salt).toBe(Buffer.alloc(32, 0).toString("hex"));
-    expect(detail.hash).toBe(Buffer.alloc(32, "\x20").toString("hex"));
+    expect(detail.salt).toBe(xdr.encodeBytes(new Uint8Array(32), "hex"));
+    expect(detail.hash).toBe(
+      xdr.encodeBytes(new Uint8Array(32).fill(0x20), "hex"),
+    );
     expect(detail.address).toBe(
       Address.fromScAddress(
         deployedContract.address().toScAddress(),
@@ -657,11 +650,458 @@ describe("XDR integer boundary values (Protocol 26 strict validation)", () => {
 
   it("should throw on i32 overflow at serialization", () => {
     const val = xdr.ScVal.scvI32(2147483648);
-    expect(() => val.toXDR()).toThrow("XDR Write Error");
+    expect(() => val.toXDR()).toThrow(/scvI32\.i32: expected integer in range/);
   });
 
   it("should throw on u32 overflow at serialization", () => {
     const val = xdr.ScVal.scvU32(4294967296);
-    expect(() => val.toXDR()).toThrow("XDR Write Error");
+    expect(() => val.toXDR()).toThrow(/scvU32\.u32: expected integer in range/);
+  });
+});
+
+describe("getInvocationDetails for CAP-85 external references", () => {
+  it("decodes an external-ref contract creation without a wasm hash", () => {
+    // owner (whose code is referenced) and deployer (creating the new
+    // contract) are deliberately different contracts, so the assertions
+    // below can't pass by `address` and `executableOwner` accidentally
+    // holding the same value.
+    const [owner, deployer] = randomContracts(2);
+    const salt = new Uint8Array(32).fill(0x07);
+    const invocation = new xdr.SorobanAuthorizedInvocation({
+      function:
+        xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeCreateContractHostFn(
+          new xdr.CreateContractArgs({
+            contractIdPreimage:
+              xdr.ContractIdPreimage.contractIdPreimageFromAddress(
+                new xdr.ContractIdPreimageFromAddress({
+                  address: deployer.address().toScAddress(),
+                  salt,
+                }),
+              ),
+            executable: xdr.ContractExecutable.contractExecutableExternalRef(
+              new xdr.ContractExecutableExternalRef({
+                executableOwner: owner.address().toScAddress(),
+                tag: "my-tag",
+              }),
+            ),
+          }),
+        ),
+      subInvocations: [],
+    });
+
+    const details = getInvocationDetails(invocation);
+
+    expect(details).toHaveLength(1);
+    expect(details[0]).toEqual({
+      type: "externalRef",
+      executableOwner: owner.contractId(),
+      tag: "my-tag",
+      address: deployer.contractId(),
+      salt: xdr.encodeBytes(salt, "hex"),
+    });
+    // CAP-85 code can change after signing, so no hash must be surfaced.
+    expect(details[0]).not.toHaveProperty("hash");
+  });
+
+  it("still decodes a known contractFn invocation alongside the CAP-85 arm", () => {
+    const contract = randomContracts(1)[0];
+    const invocation = new xdr.SorobanAuthorizedInvocation({
+      function:
+        xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeContractFn(
+          new xdr.InvokeContractArgs({
+            contractAddress: contract.address().toScAddress(),
+            functionName: "someFn",
+            args: [],
+          }),
+        ),
+      subInvocations: [],
+    });
+
+    expect(() => getInvocationDetails(invocation)).not.toThrow();
+
+    const details = getInvocationDetails(invocation);
+    expect(details).toHaveLength(1);
+    expect(details[0]).toEqual({
+      type: "invoke",
+      fnName: "someFn",
+      contractId: contract.contractId(),
+      args: [],
+    });
+  });
+});
+
+describe("getInvocationDetails function-name decoding", () => {
+  // Two SCSymbols differing only in bytes that a lenient UTF-8 decode would
+  // collapse to U+FFFD. The [a-zA-Z0-9_] rule is a Soroban host invariant, and
+  // the host has not run when a wallet decodes an envelope for review, so this
+  // is reachable from a hand-crafted envelope.
+  const invocationWithFnNameBytes = (bytes: number[]) => {
+    const contract = randomContracts(1)[0];
+    return new xdr.SorobanAuthorizedInvocation({
+      function:
+        xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeContractFn(
+          new xdr.InvokeContractArgs({
+            contractAddress: contract.address().toScAddress(),
+            functionName: Uint8Array.from(bytes),
+            args: [],
+          }),
+        ),
+      subInvocations: [],
+    });
+  };
+
+  it("keeps two names distinct when they differ only in invalid UTF-8 bytes", () => {
+    const [a] = getInvocationDetails(
+      invocationWithFnNameBytes([0x74, 0x78, 0xc0]),
+    ) as [{ fnName: string }];
+    const [b] = getInvocationDetails(
+      invocationWithFnNameBytes([0x74, 0x78, 0xc1]),
+    ) as [{ fnName: string }];
+
+    // A lenient decode would render both as "tx\uFFFD" and collide.
+    expect(a.fnName).not.toEqual(b.fnName);
+    expect(a.fnName).toEqual("tx\\xc0");
+    expect(b.fnName).toEqual("tx\\xc1");
+  });
+
+  it("passes ordinary printable-ASCII names through unchanged", () => {
+    for (const name of ["transfer", "mint", "swap", "my_fn_1"]) {
+      const [detail] = getInvocationDetails(
+        invocationWithFnNameBytes(Array.from(Buffer.from(name, "ascii"))),
+      ) as [{ fnName: string }];
+      expect(detail.fnName).toEqual(name);
+    }
+  });
+});
+
+describe("getInvocationDetails graceful degradation", () => {
+  // These five cases cover every arm that cannot decode its input: an
+  // unrecognised authorized function type, an unrecognised contract
+  // executable, and each of the three creation arms where a contract-id
+  // preimage does not match its paired executable. A wallet's
+  // transaction-review screen must never crash on an input it does not
+  // recognise, but it also must never silently drop the action from the
+  // list — each of these degrades to an explicit `unknown` entry instead, so
+  // a caller can choose to fail closed on its own terms.
+
+  it("returns an unknown entry for an unrecognised authorized function type", () => {
+    // Duck-typed: no real xdr union can carry a future variant name, which is
+    // exactly the case the default arm exists for.
+    const invocation = {
+      function: { type: "sorobanAuthorizedFunctionTypeFutureHostFn" },
+      subInvocations: [],
+    } as unknown as xdr.SorobanAuthorizedInvocation;
+
+    expect(() => getInvocationDetails(invocation)).not.toThrow();
+    expect(getInvocationDetails(invocation)).toEqual([
+      {
+        type: "unknown",
+        reason: "unsupportedFunction",
+        functionType: "sorobanAuthorizedFunctionTypeFutureHostFn",
+      },
+    ]);
+  });
+
+  it("returns an unknown entry for an unrecognised contract executable", () => {
+    const owner = randomContracts(1)[0];
+    const invocation = {
+      function: {
+        type: "sorobanAuthorizedFunctionTypeCreateContractHostFn",
+        createContractHostFn: {
+          executable: { type: "contractExecutableFutureVariant" },
+          contractIdPreimage: {
+            type: "contractIdPreimageFromAddress",
+            fromAddress: {
+              address: owner.address().toScAddress(),
+              salt: new xdr.Uint256Bytes(new Uint8Array(32)),
+            },
+          },
+        },
+      },
+      subInvocations: [],
+    } as unknown as xdr.SorobanAuthorizedInvocation;
+
+    expect(() => getInvocationDetails(invocation)).not.toThrow();
+    expect(getInvocationDetails(invocation)).toEqual([
+      {
+        type: "unknown",
+        reason: "unsupportedExecutable",
+        functionType: "sorobanAuthorizedFunctionTypeCreateContractHostFn",
+        executableType: "contractExecutableFutureVariant",
+        preimageType: "contractIdPreimageFromAddress",
+      },
+    ]);
+  });
+
+  it("returns an unknown entry for a wasm executable paired with a non-address preimage", () => {
+    // On-chain impossible, but constructible — and reachable from any
+    // untrusted XDR blob a wallet is asked to review.
+    const invocation = new xdr.SorobanAuthorizedInvocation({
+      function:
+        xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeCreateContractHostFn(
+          new xdr.CreateContractArgs({
+            contractIdPreimage:
+              xdr.ContractIdPreimage.contractIdPreimageFromAsset(
+                new Asset("TEST", randomKey()).toXDRObject(),
+              ),
+            executable: xdr.ContractExecutable.contractExecutableWasm(
+              new Uint8Array(32).fill(0x20),
+            ),
+          }),
+        ),
+      subInvocations: [],
+    });
+
+    expect(() => getInvocationDetails(invocation)).not.toThrow();
+    expect(getInvocationDetails(invocation)).toEqual([
+      {
+        type: "unknown",
+        reason: "executablePreimageMismatch",
+        functionType: "sorobanAuthorizedFunctionTypeCreateContractHostFn",
+        executableType: "contractExecutableWasm",
+        preimageType: "contractIdPreimageFromAsset",
+      },
+    ]);
+  });
+
+  it("returns an unknown entry for an external-ref executable paired with a non-address preimage", () => {
+    // On-chain impossible, like the wasm case above: an external-ref
+    // executable derives its contract ID from a deployer address plus salt,
+    // so it can never be legitimately paired with an asset preimage.
+    const owner = randomContracts(1)[0];
+    const invocation = new xdr.SorobanAuthorizedInvocation({
+      function:
+        xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeCreateContractHostFn(
+          new xdr.CreateContractArgs({
+            contractIdPreimage:
+              xdr.ContractIdPreimage.contractIdPreimageFromAsset(
+                new Asset("TEST", randomKey()).toXDRObject(),
+              ),
+            executable: xdr.ContractExecutable.contractExecutableExternalRef(
+              new xdr.ContractExecutableExternalRef({
+                executableOwner: owner.address().toScAddress(),
+                tag: "my-tag",
+              }),
+            ),
+          }),
+        ),
+      subInvocations: [],
+    });
+
+    expect(() => getInvocationDetails(invocation)).not.toThrow();
+    expect(getInvocationDetails(invocation)).toEqual([
+      {
+        type: "unknown",
+        reason: "executablePreimageMismatch",
+        functionType: "sorobanAuthorizedFunctionTypeCreateContractHostFn",
+        executableType: "contractExecutableExternalRef",
+        preimageType: "contractIdPreimageFromAsset",
+      },
+    ]);
+  });
+
+  it("returns an unknown entry for a Stellar Asset executable paired with a non-asset preimage", () => {
+    const contract = randomContracts(1)[0];
+    const invocation = new xdr.SorobanAuthorizedInvocation({
+      function:
+        xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeCreateContractHostFn(
+          new xdr.CreateContractArgs({
+            contractIdPreimage:
+              xdr.ContractIdPreimage.contractIdPreimageFromAddress(
+                new xdr.ContractIdPreimageFromAddress({
+                  address: contract.address().toScAddress(),
+                  salt: new Uint8Array(32),
+                }),
+              ),
+            executable: xdr.ContractExecutable.contractExecutableStellarAsset(),
+          }),
+        ),
+      subInvocations: [],
+    });
+
+    expect(() => getInvocationDetails(invocation)).not.toThrow();
+    expect(getInvocationDetails(invocation)).toEqual([
+      {
+        type: "unknown",
+        reason: "executablePreimageMismatch",
+        functionType: "sorobanAuthorizedFunctionTypeCreateContractHostFn",
+        executableType: "contractExecutableStellarAsset",
+        preimageType: "contractIdPreimageFromAddress",
+      },
+    ]);
+  });
+
+  it("keeps an unknown entry nested as a sub-invocation, in depth-first order beside its decodable siblings", () => {
+    // This is the case a signing view most needs to get right: an
+    // undecodable action nested below one the wallet *can* explain must
+    // still show up, not vanish behind a decodable sibling.
+    const contract = randomContracts(1)[0];
+    const invocation = {
+      function:
+        xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeContractFn(
+          new xdr.InvokeContractArgs({
+            contractAddress: contract.address().toScAddress(),
+            functionName: "outer",
+            args: [],
+          }),
+        ),
+      subInvocations: [
+        {
+          function: { type: "sorobanAuthorizedFunctionTypeFutureHostFn" },
+          subInvocations: [],
+        },
+      ],
+    } as unknown as xdr.SorobanAuthorizedInvocation;
+
+    expect(() => getInvocationDetails(invocation)).not.toThrow();
+
+    const details = getInvocationDetails(invocation);
+    expect(details).toHaveLength(2);
+    expect(details[0]).toEqual({
+      type: "invoke",
+      fnName: "outer",
+      contractId: contract.contractId(),
+      args: [],
+    });
+    expect(details[1]).toEqual({
+      type: "unknown",
+      reason: "unsupportedFunction",
+      functionType: "sorobanAuthorizedFunctionTypeFutureHostFn",
+    });
+  });
+});
+
+describe("scValByType Protocol 28 and address coverage", () => {
+  it("renders an executable tag", () => {
+    const scv = xdr.ScVal.scvExecutableTag("v1.2.3");
+    expect(scValByType(scv)).toEqual("v1.2.3");
+  });
+
+  it("keeps two distinct binary executable tags distinguishable", () => {
+    // 0xff and 0xfe are each invalid UTF-8 on their own, so a lenient decode
+    // (toString()) collapses both to the same U+FFFD replacement character —
+    // the exact collision hex-encoding is meant to prevent.
+    const tagA = xdr.ScVal.scvExecutableTag(new Uint8Array([0xff]));
+    const tagB = xdr.ScVal.scvExecutableTag(new Uint8Array([0xfe]));
+    expect(tagA.executableTag.toString()).toEqual(
+      tagB.executableTag.toString(),
+    );
+
+    const renderedA = scValByType(tagA);
+    const renderedB = scValByType(tagB);
+
+    expect(renderedA).toEqual("ff");
+    expect(renderedB).toEqual("fe");
+    expect(renderedA).not.toEqual(renderedB);
+  });
+
+  it("renders all five ScAddress variants", () => {
+    const account = Keypair.random().publicKey();
+    const contract = StrKey.encodeContract(new Uint8Array(32).fill(3));
+
+    const cases: Array<[xdr.ScAddress, string]> = [
+      [new Address(account).toScAddress(), account],
+      [new Address(contract).toScAddress(), contract],
+      [
+        xdr.ScAddress.scAddressTypeMuxedAccount(
+          new xdr.MuxedEd25519Account({
+            id: BigInt(1),
+            ed25519: StrKey.decodeEd25519PublicKey(account),
+          }),
+        ),
+        // Muxed addresses encode to an M-address.
+        "M",
+      ],
+      [
+        xdr.ScAddress.scAddressTypeClaimableBalance(
+          xdr.ClaimableBalanceId.claimableBalanceIdTypeV0(
+            new Uint8Array(32).fill(1),
+          ),
+        ),
+        "B",
+      ],
+      [
+        xdr.ScAddress.scAddressTypeLiquidityPool(
+          new xdr.PoolId(new Uint8Array(32).fill(2)),
+        ),
+        "L",
+      ],
+    ];
+
+    for (const [scAddress, expected] of cases) {
+      const rendered = scValByType(xdr.ScVal.scvAddress(scAddress)) as string;
+      expect(typeof rendered).toBe("string");
+      expect(rendered.startsWith(expected)).toBe(true);
+    }
+  });
+
+  it("returns null for an unhandled ScVal type", () => {
+    expect(scValByType(xdr.ScVal.scvVoid())).toBeNull();
+  });
+});
+
+describe("getInvocationDetails CreateContractV2 with an external ref", () => {
+  it("surfaces constructorArgs alongside an external-ref executable", () => {
+    const [owner, deployer] = randomContracts(2);
+    const salt = new Uint8Array(32).fill(0x09);
+    const invocation = new xdr.SorobanAuthorizedInvocation({
+      function:
+        xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeCreateContractV2HostFn(
+          new xdr.CreateContractArgsV2({
+            contractIdPreimage:
+              xdr.ContractIdPreimage.contractIdPreimageFromAddress(
+                new xdr.ContractIdPreimageFromAddress({
+                  address: deployer.address().toScAddress(),
+                  salt,
+                }),
+              ),
+            executable: xdr.ContractExecutable.contractExecutableExternalRef(
+              new xdr.ContractExecutableExternalRef({
+                executableOwner: owner.address().toScAddress(),
+                tag: "v2-tag",
+              }),
+            ),
+            constructorArgs: [xdr.ScVal.scvU32(7)],
+          }),
+        ),
+      subInvocations: [],
+    });
+
+    const [detail] = getInvocationDetails(invocation);
+
+    expect(detail).toMatchObject({
+      type: "externalRef",
+      executableOwner: owner.contractId(),
+      tag: "v2-tag",
+      address: deployer.contractId(),
+      salt: xdr.encodeBytes(salt, "hex"),
+    });
+    expect(
+      (detail as { constructorArgs?: unknown[] }).constructorArgs,
+    ).toHaveLength(1);
+    // CAP-85 code can change after signing, so still no hash.
+    expect(detail).not.toHaveProperty("hash");
+  });
+});
+
+describe("getTokenInvocationArgs address handling", () => {
+  it("resolves a muxed sender in a transfer", () => {
+    const account = Keypair.random().publicKey();
+    const muxed = xdr.ScAddress.scAddressTypeMuxedAccount(
+      new xdr.MuxedEd25519Account({
+        id: BigInt(7),
+        ed25519: StrKey.decodeEd25519PublicKey(account),
+      }),
+    );
+
+    const args = getArgsForTokenInvocation(SorobanTokenInterface.transfer, [
+      xdr.ScVal.scvAddress(muxed),
+      xdr.ScVal.scvAddress(new Address(account).toScAddress()),
+      xdr.ScVal.scvI128(new xdr.Int128Parts({ hi: BigInt(0), lo: BigInt(5) })),
+    ]);
+
+    expect(args.from.startsWith("M")).toBe(true);
+    expect(args.to).toEqual(account);
+    expect(args.amount).toEqual(BigInt(5));
   });
 });

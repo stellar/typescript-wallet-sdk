@@ -259,7 +259,7 @@ export class Stellar {
    * @returns {Transaction|FeeBumpTransaction} The decoded transaction.
    */
   decodeTransaction(xdr: string): Transaction | FeeBumpTransaction {
-    return StellarTransactionBuilder.fromXDR(xdr, this.cfg.stellar.network);
+    return StellarTransactionBuilder.fromXdr(xdr, this.cfg.stellar.network);
   }
 
   /**

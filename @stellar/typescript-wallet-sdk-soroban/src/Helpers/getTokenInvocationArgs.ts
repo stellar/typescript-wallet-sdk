@@ -1,4 +1,4 @@
-import { Address, Operation, StrKey, scValToNative, xdr } from "@stellar/stellar-sdk";
+import { Address, Operation, scValToNative, xdr } from "@stellar/stellar-sdk";
 
 import {
   ArgsForTokenInvocation,
@@ -14,20 +14,24 @@ export const getArgsForTokenInvocation = (
   let from = "";
   let to = "";
 
+  // Address.fromScAddress handles every ScAddress variant, so muxed senders and
+  // recipients resolve instead of throwing.
+  const addressAt = (index: number): string => {
+    const scVal = args[index];
+    if (scVal.type !== "scvAddress") {
+      throw new TypeError(`expected an address at arg ${index}`);
+    }
+    return Address.fromScAddress(scVal.address).toString();
+  };
+
   switch (fnName) {
     case SorobanTokenInterface.transfer:
-      from = StrKey.encodeEd25519PublicKey(
-        args[0].address().accountId().ed25519(),
-      );
-      to = StrKey.encodeEd25519PublicKey(
-        args[1].address().accountId().ed25519(),
-      );
+      from = addressAt(0);
+      to = addressAt(1);
       amount = scValToNative(args[2]);
       break;
     case SorobanTokenInterface.mint:
-      to = StrKey.encodeEd25519PublicKey(
-        args[0].address().accountId().ed25519(),
-      );
+      to = addressAt(0);
       amount = scValToNative(args[1]);
       break;
     default:
@@ -50,25 +54,18 @@ export const getArgsForTokenInvocation = (
 export const getTokenInvocationArgs = (
   hostFn: Operation.InvokeHostFunction,
 ): TokenInvocationArgs | null => {
-  if (!hostFn?.func?.invokeContract) {
+  if (hostFn?.func?.type !== "hostFunctionTypeInvokeContract") {
     return null;
   }
 
-  let invokedContract: xdr.InvokeContractArgs;
-
-  try {
-    invokedContract = hostFn.func.invokeContract();
-  } catch (e) {
-    return null;
-  }
+  const invokedContract: xdr.InvokeContractArgs = hostFn.func.invokeContract;
 
   const contractId = Address.fromScAddress(
-    invokedContract.contractAddress(),
+    invokedContract.contractAddress,
   ).toString();
-  const fnName = invokedContract
-    .functionName()
-    .toString() as SorobanTokenInterface;
-  const args = invokedContract.args();
+  const fnName =
+    invokedContract.functionName.toString() as SorobanTokenInterface;
+  const args = invokedContract.args;
 
   if (
     ![SorobanTokenInterface.transfer, SorobanTokenInterface.mint].includes(

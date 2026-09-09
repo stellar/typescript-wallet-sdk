@@ -298,7 +298,7 @@ describe("KeyManager", () => {
     expect(
       keypair.verify(
         transaction.hash(),
-        signedTransaction.signatures[0].signature(),
+        signedTransaction.signatures[0].signature,
       ),
     ).toEqual(true);
   });
@@ -774,7 +774,7 @@ describe("fetchAuthToken", () => {
     expect(submittedTx.signatures.length).toEqual(3);
 
     const verified = submittedTx.signatures.some((sig) =>
-      otherKeypair.verify(tx.hash(), sig.signature()),
+      otherKeypair.verify(tx.hash(), sig.signature),
     );
 
     expect(verified).toBeTruthy();

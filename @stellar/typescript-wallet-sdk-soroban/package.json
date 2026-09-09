@@ -1,8 +1,8 @@
 {
   "name": "@stellar/typescript-wallet-sdk-soroban",
-  "version": "4.0.1",
+  "version": "5.0.0",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12.0"
   },
   "browser": "./lib/bundle_browser.js",
   "main": "./lib/bundle.js",
@@ -15,6 +15,7 @@
     "@stellar/prettier-config": "^1.0.1",
     "@stellar/tsconfig": "^1.0.2",
     "@types/jest": "^29.5.12",
+    "@types/node": "^22.10.2",
     "@typescript-eslint/parser": "^7.1.1",
     "babel-jest": "^29.7.0",
     "husky": "^9.0.11",
@@ -23,12 +24,13 @@
     "ts-jest": "^29.1.2",
     "ts-loader": "^9.5.1",
     "tslib": "^2.6.2",
-    "typescript": "^5.3.3",
+    "typescript": "^5.7.3",
+    "uint8array-extras": "^1.5.0",
     "webpack": "^5.90.3",
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "@stellar/stellar-sdk": "16.2.0"
+    "@stellar/stellar-sdk": "17.0.1"
   },
   "scripts": {
     "prepare": "husky install",

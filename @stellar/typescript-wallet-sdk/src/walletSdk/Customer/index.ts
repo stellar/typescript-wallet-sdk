@@ -77,12 +77,12 @@ export class Sep12 {
 
   /**
    * Add a new customer. Customer info is given in sep9Info param. If it
-   * is binary type (eg. Buffer of an image) include it in sep9BinaryInfo.
+   * is binary type (eg. Uint8Array of an image) include it in sep9BinaryInfo.
    * @param {AddCustomerParams} params - The parameters for adding a customer.
    * @param {CustomerInfoMap} [params.sep9Info] - Customer information. What fields you should
    * give is indicated by the anchor.
    * @param {CustomerBinaryInfoMap} [params.sep9BinaryInfo] - Customer information that is in binary
-   * format (eg. Buffer of an image).
+   * format (eg. Uint8Array of an image).
    * @param {string} [params.type] - The type of the customer.
    * @param {string} [params.memo] - A memo associated with the customer.
    * @param {string} [params.transactionId] - The id of the transaction that the customer is
@@ -96,7 +96,7 @@ export class Sep12 {
     memo,
     transactionId,
   }: AddCustomerParams): Promise<AddCustomerResponse> {
-    let customerMap: { [key: string]: string | Buffer } = {
+    let customerMap: { [key: string]: string | Uint8Array } = {
       ...sep9Info,
       ...sep9BinaryInfo,
     };
@@ -127,12 +127,12 @@ export class Sep12 {
 
   /**
    * Updates an existing customer. Customer info is given in sep9Info param. If it
-   * is binary type (eg. Buffer of an image) include it in sep9BinaryInfo.
+   * is binary type (eg. Uint8Array of an image) include it in sep9BinaryInfo.
    * @param {AddCustomerParams} params - The parameters for adding a customer.
    * @param {CustomerInfoMap} [params.sep9Info] - Customer information. What fields you should
    * give is indicated by the anchor.
    * @param {CustomerBinaryInfoMap} [params.sep9BinaryInfo] - Customer information that is in binary
-   * format (eg. Buffer of an image).
+   * format (eg. Uint8Array of an image).
    * @param {string} [params.id] - The id of the customer.
    * @param {string} [params.type] - The type of the customer.
    * @param {string} [params.memo] - A memo associated with the customer.
@@ -149,7 +149,7 @@ export class Sep12 {
     memo,
     transactionId,
   }: AddCustomerParams): Promise<AddCustomerResponse> {
-    let customerMap: { [key: string]: string | Buffer } = {};
+    let customerMap: { [key: string]: string | Uint8Array } = {};
     if (id) {
       customerMap["id"] = id;
     }

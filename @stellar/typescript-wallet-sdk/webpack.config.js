@@ -40,7 +40,6 @@ module.exports = (env = { NODE: false }) => {
             util: require.resolve("util"),
             vm: require.resolve("vm-browserify"),
             "process/browser": require.resolve("process/browser"),
-            buffer: require.resolve("buffer"),
           }
         : {},
     },
@@ -59,9 +58,6 @@ module.exports = (env = { NODE: false }) => {
       ? [
           new webpack.ProvidePlugin({
             process: "process/browser",
-          }),
-          new webpack.ProvidePlugin({
-            Buffer: ["buffer", "Buffer"],
           }),
         ]
       : [],

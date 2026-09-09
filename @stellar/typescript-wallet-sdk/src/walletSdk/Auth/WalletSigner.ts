@@ -103,7 +103,7 @@ export class DomainSigner implements WalletSigner {
       { headers: this.headers },
     );
 
-    return StellarTransactionBuilder.fromXDR(
+    return StellarTransactionBuilder.fromXdr(
       response.data.transaction,
       networkPassphrase,
     ) as Transaction;

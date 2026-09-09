@@ -25,17 +25,17 @@ export const albedoHandler: KeyTypeHandler = {
     }
 
     try {
-      const xdr = transaction.toXDR();
+      const xdr = transaction.toXdr();
       const response = await albedo.tx({ xdr });
 
       if (!response.signed_envelope_xdr) {
         throw new Error("We couldn’t sign the transaction with Albedo.");
       }
 
-      // fromXDR() returns type "Transaction | FeeBumpTransaction" and
+      // fromXdr() returns type "Transaction | FeeBumpTransaction" and
       // signTransaction() doesn't like "| FeeBumpTransaction" type, so casting
       // to "Transaction" type.
-      return TransactionBuilder.fromXDR(
+      return TransactionBuilder.fromXdr(
         response.signed_envelope_xdr,
         Networks.PUBLIC,
       ) as Transaction;

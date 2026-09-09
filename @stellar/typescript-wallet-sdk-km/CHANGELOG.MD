@@ -1,3 +1,23 @@
+# Release notes - Typescript Wallet SDK Key Manager - 5.0.0
+
+### BREAKING CHANGES
+* Upgraded `@stellar/stellar-sdk` from `16.2.0` to `17.0.1` — Protocol 28 support
+* Minimum Node.js version raised from 22 to 22.12.0, as required by stellar-sdk v17
+* **Minimum TypeScript 5.7** for consumers compiling against our type declarations — v17's typings use the generic `Uint8Array<ArrayBufferLike>` form
+* Byte inputs across stellar-sdk-derived types widen from `Buffer` to `Uint8Array`. Source-compatible for existing callers, because `Buffer` is a `Uint8Array` — **but only on `@types/node` >= 20**. Against an older `@types/node`, `Buffer` is not assignable to `Uint8Array<ArrayBufferLike>` and unchanged call sites will fail to compile
+* **`btoa`/`atob` are now a runtime requirement for base64.** stellar-sdk v17 performs base64 through the bare `btoa` identifier (`lib/cjs/base/util/base64.js`, with no fallback). `KeyManager.fetchAuthToken` and the Ledger and Trezor handlers all take that path. Hermes provides `btoa`/`atob` natively from React Native 0.74 onward (facebook/hermes#1255); React Native's own JS layer never has, so **React Native < 0.74 or a non-Hermes engine (JSC, V8) needs a polyfill** such as `base-64`. The encrypter path is unaffected — it base64s through `@stablelib/base64`, which is pure JS
+* **`TextEncoder`/`TextDecoder` are a runtime prerequisite for loading this bundle.** `uint8array-extras` — a direct dependency of this package and a transitive dependency of stellar-sdk — constructs both at module initialization with no fallback (unlike `@exodus/bytes`, which only uses them when natively available and otherwise decodes in pure JS), so an environment missing either one fails at load, before any of our code runs. This is a prerequisite the consumer's environment must satisfy; React Native applications commonly polyfill `TextEncoder`/`TextDecoder` already. Verified: a built bundle in a context without them throws `TypeError: globalThis.TextDecoder is not a constructor` at load
+
+### Changed
+* The Ledger handler now applies signatures via `transaction.addSignature(publicKey, signature)` instead of constructing an `xdr.DecoratedSignature` and pushing it onto `transaction.signatures`. This fixes the cross-copy failure documented in `Handlers/plaintextKey.ts` (a wrapper class built by this package's bundled stellar-sdk was rejected by the consumer's copy on React Native), **and it adds validation the old path did not have**: `addSignature` validates the public key and verifies the signature against the transaction hash, so a mismatched `key.publicKey` now throws where it previously produced a silently invalid envelope. A net correctness improvement, but a behaviour change worth noting for anyone relying on the old permissive path
+* `buffer` added as a `devDependency` — it was not declared by this package before. It is consumed only by webpack at build time, which inlines it into the shipped browser bundle to back the `Handlers/ledger.ts` `Buffer` exception, so consumers install nothing new
+
+### Fixed
+* `KeyManager.fetchAuthToken` posts correctly encoded challenge XDR (the old `Buffer`-era encoder returned comma-joined decimals under v17) and compares transaction hashes correctly (`Buffer#equals` does not exist on `Uint8Array`)
+* The Trezor transform encodes `manageData` values, memo hashes and signer keys as hex, reads offer prices through the v17 property accessors, and classifies `preAuthTx`/`sha256Hash` signers correctly — the old `instanceof Buffer` check was always false under v17, so those signers were sent to Trezor as signer type `0` with the key dropped
+
+**Consumer note:** consumers using only the key-store surface need **no call-site changes** — `KeyManager`, `ScryptEncrypter`, `Key`, `EncryptedKey`, `Encrypter`, `KeyStore` and `KeyType` contain no `Buffer`/`Uint8Array`, and the encrypter path never touches stellar-sdk. The runtime prerequisites listed above still apply to them, though: on React Native in particular, `TextEncoder`/`TextDecoder` must be present before this bundle is imported, because it fails during module initialization otherwise. So the upgrade is source-compatible for these consumers, not necessarily action-free. This release's behaviour changes are confined to `KeyManager.fetchAuthToken`, the Ledger handler and the Trezor transform. Consumers that also depend on `@stellar/stellar-sdk` directly should align their own pin to `17.0.1`, since this package bundles that exact version and mixing copies is what the xdr boundary rule guards against.
+
 # Release notes - Typescript Wallet SDK Key Manager - 4.0.1
 * Version bump
 

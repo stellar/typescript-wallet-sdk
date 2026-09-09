@@ -1,6 +1,6 @@
 import LedgerStr from "@ledgerhq/hw-app-str";
 import LedgerTransport from "@ledgerhq/hw-transport-u2f";
-import { Keypair, xdr } from "@stellar/stellar-sdk";
+import { xdr } from "@stellar/stellar-sdk";
 
 import {
   HandlerSignTransactionParams,
@@ -30,17 +30,30 @@ export const ledgerHandler: KeyTypeHandler = {
     */
     const transport = await LedgerTransport.create(60 * 1000);
     const ledgerApi = new LedgerStr(transport);
-    const result = await ledgerApi.signTransaction(
-      key.path,
-      transaction.signatureBase(),
-    );
+    // @ledgerhq/hw-app-str calls Buffer#copy on this argument, which does not
+    // exist on Uint8Array, so transactions spanning more than one APDU chunk
+    // would throw. This is the only sanctioned Buffer use in the SDK, and it
+    // resolves to the bundled npm polyfill rather than a host global —
+    // webpack's ProvidePlugin injects it into this module (see
+    // webpack.config.js), which is why the React Native sandbox test can load
+    // this bundle with no Buffer global present.
+    //
+    // React Native does load this module: keyManager.ts imports ledgerHandler
+    // unconditionally and Metro resolves the browser bundle. What is
+    // browser-specific is *using* the handler, since it rides
+    // hw-transport-u2f.
+    // eslint-disable-next-line no-restricted-globals
+    const signatureBase = Buffer.from(transaction.signatureBase());
+    const result = await ledgerApi.signTransaction(key.path, signatureBase);
 
-    const keyPair = Keypair.fromPublicKey(key.publicKey);
-    const decoratedSignature = new xdr.DecoratedSignature({
-      hint: keyPair.signatureHint(),
-      signature: result.signature,
-    });
-    transaction.signatures.push(decoratedSignature);
+    // Pass the signature across as base64 rather than constructing an
+    // xdr.DecoratedSignature here: this package bundles its own stellar-sdk
+    // copy, and a wrapper class built by it is rejected by the consumer's copy.
+    // See the note in Handlers/plaintextKey.ts.
+    transaction.addSignature(
+      key.publicKey,
+      xdr.encodeBytes(result.signature, "base64"),
+    );
 
     return Promise.resolve(transaction);
   },
