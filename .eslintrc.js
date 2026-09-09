@@ -94,8 +94,13 @@ module.exports = {
         "no-restricted-syntax": [
           "error",
           {
+            // Scoped to encoding-string literals rather than any argument:
+            // the bug class this guards is `bytes.toString("hex"|"base64")`
+            // on a Uint8Array. A bare arguments.length>0 selector also
+            // rejects a legitimate numeric radix such as n.toString(16),
+            // with a message about byte encodings that makes no sense there.
             selector:
-              "CallExpression[callee.property.name='toString'][arguments.length>0]",
+              "CallExpression[callee.property.name='toString'][arguments.0.type='Literal'][arguments.0.value=/^(hex|base64|base64url|utf-?8|ascii|latin1|binary|ucs-?2|utf-?16le)$/i]",
             message:
               "Uint8Array.toString() ignores its encoding argument and returns comma-joined decimals. Use xdr.encodeBytes(bytes, 'hex'|'base64').",
           },
