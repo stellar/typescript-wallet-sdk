@@ -135,9 +135,10 @@ export class Recovery extends AccountRecover {
    * **Warning**: This transaction will lock master key of the account. Make sure you have access to
    * specified [RecoverableWalletConfig.deviceAddress]
    *
-   * The returned transaction is unsigned — sign it and submit it yourself. The account's master
-   * key must sign; when [RecoverableWalletConfig.sponsorAddress] is set the sponsor must sign as
-   * well, because it is the source of the sponsorship operations. See [RecoverableWallet].
+   * The returned transaction is unsigned — sign it and submit it yourself. It sets signers and
+   * thresholds, so it needs signatures meeting the account's current **high** threshold rather
+   * than the master key specifically, and the sponsor must sign too when
+   * [RecoverableWalletConfig.sponsorAddress] is set. See [RecoverableWallet] for the cases.
    *
    * The signer set returned by the recovery servers is validated before the transaction is built,
    * because the locking of the master key cannot be undone once it is submitted.

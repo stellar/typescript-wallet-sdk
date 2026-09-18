@@ -27,14 +27,27 @@ export type RecoverableWalletConfig = {
 
 /**
  * The result of registering an account with SEP-30 recovery servers.
- * @property {Transaction} transaction - The **unsigned** registration transaction. The SDK builds it
- * but neither signs nor submits it, e.g. `transaction.sign(accountKp.keypair)` followed by
- * `stellar.submitTransaction(transaction)`. The account's master key must sign. If a
- * `sponsorAddress` was supplied, the sponsor must sign too — it is the source of the
- * `beginSponsoringFutureReserves` operation, and of `createAccount` when the account does not
- * exist yet — so a sponsored transaction carrying only the master key signature fails
- * authorization. Once submitted the master key is locked, so inspect the transaction before
- * signing if you want to verify the signer set it installs.
+ * @property {Transaction} transaction - The **unsigned** registration transaction. The SDK builds
+ * it but neither signs nor submits it.
+ *
+ * It sets signers and thresholds, which Stellar authorizes against the account's **high**
+ * threshold — not against the master key specifically:
+ *
+ * - For an account that already exists, whichever of its current signers together reach `high`
+ *   can authorize it. The master key is neither automatically sufficient (it may carry less
+ *   weight than `high`) nor necessarily required (an account whose master key is already locked
+ *   is enrolled by its other signers alone).
+ * - For an account created within this same transaction, i.e. the sponsored path where the
+ *   account does not exist yet, the new account's own key suffices: a new account starts with
+ *   master weight 1 and zeroed thresholds.
+ * - When `sponsorAddress` is supplied the sponsor must sign as well, being the source of the
+ *   `beginSponsoringFutureReserves` operation and of `createAccount`.
+ *
+ * For a newly funded account whose master key is still its only signer, that is just
+ * `transaction.sign(accountKp.keypair)` followed by `stellar.submitTransaction(transaction)`.
+ *
+ * Once submitted the master key is locked, so inspect the transaction before signing if you want
+ * to verify the signer set it installs.
  * @property {string[]} signers - Public keys of the recovery server signers added to the account,
  * one per configured server. These are the addresses to pass to `signWithRecoveryServers` when
  * recovering the account later.
