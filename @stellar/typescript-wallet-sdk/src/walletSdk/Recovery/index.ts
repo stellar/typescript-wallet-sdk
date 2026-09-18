@@ -21,10 +21,14 @@ import { AccountRecover } from "./AccountRecover";
 import { Sep10 } from "../Auth";
 import {
   DeviceKeyEqualsMasterKeyError,
+  DuplicateAccountSignerError,
+  DuplicateRecoverySignerError,
   NoAccountAndNoSponsorError,
   NoAccountSignersError,
   RecoveryIdentityNotFoundError,
+  RecoverySignerEqualsDeviceKeyError,
   ServerRequestFailedError,
+  SignerKeyEqualsMasterKeyError,
 } from "../Exceptions";
 import {
   AccountKeypair,
@@ -42,6 +46,48 @@ type RecoveryParams = {
   stellar: Stellar;
   httpClient: AxiosInstance;
   servers: RecoveryServerMap;
+};
+
+/** A signer key paired with the recovery server that returned it. */
+type EnrolledRecoverySigner = {
+  serverKey: RecoveryServerKey;
+  signerKey: string;
+};
+
+/**
+ * Assert that a signer set can be installed as written.
+ *
+ * Stellar stores account signers as a set keyed by public key, and `SetOptions`
+ * is an upsert rather than an append — it overwrites a repeated key instead of
+ * summing the weights. A set containing the same address twice therefore
+ * installs one signer, while the thresholds chosen for the intended set are
+ * written alongside it regardless. Because the same transaction also removes
+ * the master key, that mismatch is unrecoverable once submitted.
+ * @param {string} accountAddress - Address of the account whose master key is being locked.
+ * @param {AccountSigner[]} accountSigners - The signer set about to be installed.
+ * @throws {DuplicateAccountSignerError} If any address appears more than once.
+ * @throws {SignerKeyEqualsMasterKeyError} If any address is the account itself.
+ * @returns {void}
+ */
+const validateAccountSigners = (
+  accountAddress: string,
+  accountSigners: AccountSigner[],
+): void => {
+  const seen: { [address: string]: true } = {};
+
+  accountSigners.forEach(({ address }) => {
+    const { publicKey } = address;
+
+    if (publicKey === accountAddress) {
+      throw new SignerKeyEqualsMasterKeyError(publicKey);
+    }
+
+    if (seen[publicKey]) {
+      throw new DuplicateAccountSignerError(publicKey);
+    }
+
+    seen[publicKey] = true;
+  });
 };
 
 /**
@@ -89,8 +135,20 @@ export class Recovery extends AccountRecover {
    * **Warning**: This transaction will lock master key of the account. Make sure you have access to
    * specified [RecoverableWalletConfig.deviceAddress]
    *
+   * The returned transaction is unsigned — sign it and submit it yourself. It sets signers and
+   * thresholds, so it needs signatures meeting the account's current **high** threshold rather
+   * than the master key specifically, and the sponsor must sign too when
+   * [RecoverableWalletConfig.sponsorAddress] is set. See [RecoverableWallet] for the cases.
+   *
+   * The signer set returned by the recovery servers is validated before the transaction is built,
+   * because the locking of the master key cannot be undone once it is submitted.
+   *
    * This transaction can be sponsored.
    * @param {RecoverableWalletConfig} config - The configuration for recoverable wallet.
+   * @throws {DeviceKeyEqualsMasterKeyError} If the device address is the account address.
+   * @throws {DuplicateRecoverySignerError} If two or more recovery servers return the same signer key.
+   * @throws {RecoverySignerEqualsDeviceKeyError} If a recovery server returns the device key.
+   * @throws {SignerKeyEqualsMasterKeyError} If a recovery server returns the account's own key.
    * @returns {Promise<RecoverableWallet>} The wallet.
    */
   async createRecoverableWallet(
@@ -100,10 +158,14 @@ export class Recovery extends AccountRecover {
       throw new DeviceKeyEqualsMasterKeyError();
     }
 
-    const recoverySigners = await this.enrollWithRecoveryServer(
+    const enrolled = await this.enrollWithRecoveryServer(
       config.accountAddress,
       config.accountIdentity,
     );
+
+    this.validateEnrolledSigners(enrolled, config.deviceAddress.publicKey);
+
+    const recoverySigners = enrolled.map(({ signerKey }) => signerKey);
 
     const accountSigners: AccountSigner[] = recoverySigners.map((rs) => ({
       address: PublicKeypair.fromPublicKey(rs),
@@ -185,6 +247,9 @@ export class Recovery extends AccountRecover {
    * @param {AccountThreshold} accountThreshold - Low, medium, and high thresholds to set on the account.
    * @param {AccountKeypair} [sponsorAddress] - Stellar address of the account sponsoring this transaction.
    * @param {(builder: CommonBuilder) => CommonBuilder} [builderExtra] - Stellar address of the account sponsoring this transaction.
+   * @throws {DuplicateAccountSignerError} If the same address appears more than once in [accountSigners].
+   * @throws {SignerKeyEqualsMasterKeyError} If [accountSigners] contains [account] itself.
+   * @throws {NoAccountAndNoSponsorError} If the account does not exist and no sponsor is given.
    * @returns {Promise<Transaction>}  The built transaction.
    */
   async registerRecoveryServerSigners(
@@ -194,6 +259,8 @@ export class Recovery extends AccountRecover {
     sponsorAddress?: AccountKeypair,
     builderExtra?: (builder: CommonBuilder) => CommonBuilder,
   ): Promise<Transaction> {
+    validateAccountSigners(account.publicKey, accountSigners);
+
     let accountInfo = undefined;
 
     try {
@@ -253,12 +320,14 @@ export class Recovery extends AccountRecover {
    * [SEP-30](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0030.md).
    * @param {AccountKeypair} account - Account being registerd.
    * @param {RecoveryIdentityMap} identityMap - map of identities to recovery keys.
-   * @returns {Promise<string[]>}  List of recovery signer public keys.
+   * @returns {Promise<EnrolledRecoverySigner[]>} Each recovery signer public key paired with the
+   * server that returned it. The pairing is kept so that cross-server validation can name the
+   * server responsible when two of them return the same key.
    */
   private async enrollWithRecoveryServer(
     account: AccountKeypair,
     identityMap: RecoveryIdentityMap,
-  ): Promise<string[]> {
+  ): Promise<EnrolledRecoverySigner[]> {
     return Promise.all(
       Object.keys(this.servers).map(async (key) => {
         const server = this.servers[key];
@@ -299,9 +368,53 @@ export class Recovery extends AccountRecover {
           throw new ServerRequestFailedError(e);
         }
 
-        return this.getLatestRecoverySigner(recoveryAccount.signers);
+        return {
+          serverKey: key,
+          signerKey: this.getLatestRecoverySigner(recoveryAccount.signers),
+        };
       }),
     );
+  }
+
+  /**
+   * Assert that the recovery servers collectively returned a usable signer set.
+   *
+   * SEP-30 has each server generate its own unique signing key for the account,
+   * so the same key coming back from two servers is a protocol violation, not a
+   * judgement call. Left unchecked it halves the recovery signer set while the
+   * thresholds sized for the full set are written anyway, which is only
+   * discovered when the device is lost and recovery is attempted.
+   * @private
+   * @param {EnrolledRecoverySigner[]} enrolled - Signer keys paired with the servers that returned them.
+   * @param {string} deviceAddress - Address being added as the device signer.
+   * @throws {DuplicateRecoverySignerError} If two or more servers returned the same key.
+   * @throws {RecoverySignerEqualsDeviceKeyError} If a server returned the device key.
+   * @returns {void}
+   */
+  private validateEnrolledSigners(
+    enrolled: EnrolledRecoverySigner[],
+    deviceAddress: string,
+  ): void {
+    const serverKeysBySigner: { [signerKey: string]: RecoveryServerKey[] } = {};
+
+    enrolled.forEach(({ serverKey, signerKey }) => {
+      serverKeysBySigner[signerKey] = [
+        ...(serverKeysBySigner[signerKey] || []),
+        serverKey,
+      ];
+    });
+
+    Object.keys(serverKeysBySigner).forEach((signerKey) => {
+      const serverKeys = serverKeysBySigner[signerKey];
+
+      if (serverKeys.length > 1) {
+        throw new DuplicateRecoverySignerError(serverKeys, signerKey);
+      }
+
+      if (signerKey === deviceAddress) {
+        throw new RecoverySignerEqualsDeviceKeyError(serverKeys[0], signerKey);
+      }
+    });
   }
 
   private getLatestRecoverySigner(signers: RecoveryAccountSigner[]): string {

@@ -274,6 +274,55 @@ export class DeviceKeyEqualsMasterKeyError extends Error {
   }
 }
 
+export class DuplicateRecoverySignerError extends Error {
+  constructor(serverKeys: string[], signerKey: string) {
+    super(
+      `Recovery servers [${serverKeys.join(
+        ", ",
+      )}] all returned the signer key ${signerKey}. SEP-30 requires each ` +
+        `server to generate a unique signing key, so this is either one ` +
+        `endpoint configured under several keys in the recovery server map, ` +
+        `or a server returning a key it does not control. Registering this ` +
+        `set would install one signer where several were intended, leaving ` +
+        `the account below the thresholds being set alongside it`,
+    );
+    Object.setPrototypeOf(this, DuplicateRecoverySignerError.prototype);
+  }
+}
+
+export class RecoverySignerEqualsDeviceKeyError extends Error {
+  constructor(serverKey: string, signerKey: string) {
+    super(
+      `Recovery server '${serverKey}' returned the device key ${signerKey} ` +
+        `as its signer. The recovery signer must differ from the device key, ` +
+        `otherwise the device and the server collapse into a single signer`,
+    );
+    Object.setPrototypeOf(this, RecoverySignerEqualsDeviceKeyError.prototype);
+  }
+}
+
+export class DuplicateAccountSignerError extends Error {
+  constructor(address: string) {
+    super(
+      `Account signer ${address} is listed more than once. Stellar stores ` +
+        `signers keyed by public key and SetOptions overwrites rather than ` +
+        `accumulates, so repeated entries would install one signer carrying ` +
+        `one weight, not several`,
+    );
+    Object.setPrototypeOf(this, DuplicateAccountSignerError.prototype);
+  }
+}
+
+export class SignerKeyEqualsMasterKeyError extends Error {
+  constructor(address: string) {
+    super(
+      `Account signer ${address} is the account's own master key, which ` +
+        `cannot be added as a signer of itself`,
+    );
+    Object.setPrototypeOf(this, SignerKeyEqualsMasterKeyError.prototype);
+  }
+}
+
 export class NoAccountAndNoSponsorError extends Error {
   constructor() {
     super(`Account does not exist and is not sponsored`);
