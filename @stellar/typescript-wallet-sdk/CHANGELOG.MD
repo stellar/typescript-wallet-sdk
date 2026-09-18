@@ -1,22 +1,3 @@
-# Release notes - Typescript Wallet SDK - 5.1.0
-
-### Fixed
-* **SEP-30 enrolment no longer installs a collapsed recovery signer set.** `createRecoverableWallet` collected one signer key per recovery server, appended the device key, and built a single transaction that locks the account master key and writes the thresholds sized for that set — without ever checking the set. Stellar stores signers keyed by public key and `SetOptions` overwrites rather than accumulates, so if two servers returned the same key the account received one signer where two were intended, at the weight of one, against thresholds sized for both. With `{device: 10, recoveryServer: 5}` and thresholds `{10,10,10}` the account keeps working while the user holds the device and the loss only surfaces at device loss, when the maximum reachable weight is 5 against a high of 10 and no transaction can ever be authorised again; where `signerWeight.device < signerWeight.recoveryServer` the account is unusable the moment the transaction confirms, and `setOptions` being a high-threshold operation means it cannot be repaired. The signer set is now validated before the transaction is built (#68)
-
-### Added
-* `DuplicateRecoverySignerError`, thrown by `createRecoverableWallet` when two or more recovery servers return the same signer key. SEP-30 requires each server to generate a unique signing key for the account, so this is always an error — most often one endpoint listed under several keys in the recovery server map, otherwise a server returning a key it does not control. The message names every server that returned the key (#68)
-* `RecoverySignerEqualsDeviceKeyError`, thrown by `createRecoverableWallet` when a recovery server returns the device key as its signer (#68)
-* `DuplicateAccountSignerError` and `SignerKeyEqualsMasterKeyError`, thrown by `registerRecoveryServerSigners` when the given signer set repeats an address or contains the account's own key (#68)
-* All four are exported via `Exceptions` (#68)
-
-### Changed
-* `registerRecoveryServerSigners` validates `accountSigners` before contacting Horizon. This is a new throw on a public method, but only for input that was already producing a broken account: it rejects a signer set that cannot be installed as written. Callers passing a set of distinct addresses, none of them the account itself, are unaffected (#68)
-* Documented `SignerWeight`, which previously carried no JSDoc, including how the relative weights and `AccountThreshold` together determine whether recovery works without the device and whether a single server can act alone (#68)
-* Documented that `RecoverableWallet.transaction` is unsigned and must be signed with the account master key and submitted by the integrator (#68)
-
-### Known limitations
-* Validation covers the cases the SDK can prove wrong before the master key is locked. It does not, and cannot, address the exposure inherent to SEP-30: a recovery server may return a freshly generated key whose secret it discards, or return a real key and withhold the signature at recovery time, and a single entity operating two servers with different keys is indistinguishable from two independent ones. A `total weight >= max(threshold)` check is also not implemented, because `registerRecoveryServerSigners` supports an account that may already carry signers and `builderExtra` runs after `setThreshold` and can add more, so the final reachable weight is not knowable at validation time
-
 # Release notes - Typescript Wallet SDK - 5.0.0
 
 ### BREAKING CHANGES

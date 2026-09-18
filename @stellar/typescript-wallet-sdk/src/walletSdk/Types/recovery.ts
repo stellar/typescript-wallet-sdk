@@ -28,10 +28,13 @@ export type RecoverableWalletConfig = {
 /**
  * The result of registering an account with SEP-30 recovery servers.
  * @property {Transaction} transaction - The **unsigned** registration transaction. The SDK builds it
- * but neither signs nor submits it: sign it with the account's master key and submit it yourself,
- * e.g. `transaction.sign(accountKp.keypair)` followed by `stellar.submitTransaction(transaction)`.
- * Once submitted the master key is locked, so inspect it before signing if you want to verify the
- * signer set it installs.
+ * but neither signs nor submits it, e.g. `transaction.sign(accountKp.keypair)` followed by
+ * `stellar.submitTransaction(transaction)`. The account's master key must sign. If a
+ * `sponsorAddress` was supplied, the sponsor must sign too — it is the source of the
+ * `beginSponsoringFutureReserves` operation, and of `createAccount` when the account does not
+ * exist yet — so a sponsored transaction carrying only the master key signature fails
+ * authorization. Once submitted the master key is locked, so inspect the transaction before
+ * signing if you want to verify the signer set it installs.
  * @property {string[]} signers - Public keys of the recovery server signers added to the account,
  * one per configured server. These are the addresses to pass to `signWithRecoveryServers` when
  * recovering the account later.
@@ -67,15 +70,18 @@ export type AccountThreshold = {
  * 1. The device can operate the account on its own — `device >= high`.
  * 2. The recovery servers can recover the account without the device —
  *    `recoveryServer * serverCount >= high`.
- * 3. No single recovery server can act alone — `recoveryServer < low`. This is the guarantee
- *    SEP-30 exists to provide; without it a server is simply a custodian of the account.
+ * 3. No single recovery server can act alone — `recoveryServer < low`. This is a choice, not a
+ *    protocol guarantee: SEP-30 supports both postures. Two or more servers weighted this way
+ *    means no individual server controls the account, but the spec equally supports a
+ *    single-server custodial setup where one deliberately does.
  *
  * With two servers, `{ device: 10, recoveryServer: 5 }` against thresholds `{ low: 10, medium: 10,
  * high: 10 }` satisfies all three: the device alone reaches `high`, the two servers together reach
  * `high`, and one server alone reaches nothing.
  *
- * Note that a configuration where `device < recoveryServer` is legal but fragile — it makes the
- * account depend on the servers for ordinary use, not just for recovery.
+ * Note that whether the device can act alone is decided by `device` against `high`, per property 1
+ * above — not by how `device` compares to `recoveryServer`. A device weighing less than a single
+ * recovery server still operates the account independently as long as it meets `high`.
  * @property {number} device - Weight of the device signer, which replaces the master key.
  * @property {number} recoveryServer - Weight given to each recovery server signer.
  */

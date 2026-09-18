@@ -135,8 +135,9 @@ export class Recovery extends AccountRecover {
    * **Warning**: This transaction will lock master key of the account. Make sure you have access to
    * specified [RecoverableWalletConfig.deviceAddress]
    *
-   * The returned transaction is unsigned — sign it with the account's master key and submit it
-   * yourself. See [RecoverableWallet].
+   * The returned transaction is unsigned — sign it and submit it yourself. The account's master
+   * key must sign; when [RecoverableWalletConfig.sponsorAddress] is set the sponsor must sign as
+   * well, because it is the source of the sponsorship operations. See [RecoverableWallet].
    *
    * The signer set returned by the recovery servers is validated before the transaction is built,
    * because the locking of the master key cannot be undone once it is submitted.
@@ -318,7 +319,9 @@ export class Recovery extends AccountRecover {
    * [SEP-30](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0030.md).
    * @param {AccountKeypair} account - Account being registerd.
    * @param {RecoveryIdentityMap} identityMap - map of identities to recovery keys.
-   * @returns {Promise<string[]>}  List of recovery signer public keys.
+   * @returns {Promise<EnrolledRecoverySigner[]>} Each recovery signer public key paired with the
+   * server that returned it. The pairing is kept so that cross-server validation can name the
+   * server responsible when two of them return the same key.
    */
   private async enrollWithRecoveryServer(
     account: AccountKeypair,

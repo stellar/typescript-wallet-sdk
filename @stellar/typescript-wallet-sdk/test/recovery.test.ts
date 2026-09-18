@@ -23,29 +23,32 @@ const sponsorAccountKp = SigningKeypair.fromSecret(
 
 let wallet: Wallet;
 
+// Shared by every suite in this file. Kept at file scope rather than inside one
+// describe so that running either suite on its own — e.g. with a -t filter —
+// still gets a wallet and funded accounts.
+beforeAll(async () => {
+  wallet = Wallet.TestNet();
+  const stellar = wallet.stellar();
+
+  // make sure testing accounts exist
+  try {
+    await stellar.server.loadAccount(testingAccountKp.publicKey);
+  } catch (e) {
+    await axios.get(
+      "https://friendbot.stellar.org/?addr=" + testingAccountKp.publicKey,
+    );
+  }
+
+  try {
+    await stellar.server.loadAccount(sponsorAccountKp.publicKey);
+  } catch (e) {
+    await axios.get(
+      "https://friendbot.stellar.org/?addr=" + sponsorAccountKp.publicKey,
+    );
+  }
+}, 60000);
+
 describe("Recovery / Register Signers", () => {
-  beforeAll(async () => {
-    wallet = Wallet.TestNet();
-    const stellar = wallet.stellar();
-
-    // make sure testing accounts exist
-    try {
-      await stellar.server.loadAccount(testingAccountKp.publicKey);
-    } catch (e) {
-      await axios.get(
-        "https://friendbot.stellar.org/?addr=" + testingAccountKp.publicKey,
-      );
-    }
-
-    try {
-      await stellar.server.loadAccount(sponsorAccountKp.publicKey);
-    } catch (e) {
-      await axios.get(
-        "https://friendbot.stellar.org/?addr=" + sponsorAccountKp.publicKey,
-      );
-    }
-  }, 60000);
-
   it("defaults work", async () => {
     const transaction = await wallet
       .recovery({ servers: {} })
