@@ -76,12 +76,16 @@ export class BrowserStorageKeyStore implements KeyStore {
     return Promise.resolve(keysMetadata);
   }
 
-  public updateKeys(keys: EncryptedKey[]) {
-    // we can't update keys if they're already stored
-    const invalidKeys: EncryptedKey[] = keys.filter(
-      async (encryptedKey: EncryptedKey) =>
-        !(await this.keyStore.hasKey(encryptedKey.id)),
-    );
+  public async updateKeys(keys: EncryptedKey[]) {
+    // We can't update keys if they aren't already there
+    const invalidKeys: EncryptedKey[] = [];
+
+    for (const encryptedKey of keys) {
+      const hasKey = await this.keyStore.hasKey(encryptedKey.id);
+      if (!hasKey) {
+        invalidKeys.push(encryptedKey);
+      }
+    }
 
     if (invalidKeys.length) {
       return Promise.reject(
@@ -91,10 +95,12 @@ export class BrowserStorageKeyStore implements KeyStore {
       );
     }
 
-    const keysMetadata = keys.map((encryptedKey: EncryptedKey) => {
-      this.keyStore.setKey(encryptedKey.id, encryptedKey);
-      return getKeyMetadata(encryptedKey);
-    });
+    const keysMetadata: KeyMetadata[] = [];
+
+    for (const encryptedKey of keys) {
+      await this.keyStore.setKey(encryptedKey.id, encryptedKey);
+      keysMetadata.push(getKeyMetadata(encryptedKey));
+    }
 
     return Promise.resolve(keysMetadata);
   }

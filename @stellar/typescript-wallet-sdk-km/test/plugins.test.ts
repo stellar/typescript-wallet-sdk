@@ -1,6 +1,10 @@
 import sinon from "sinon";
 
 import { testKeyStore, testEncrypter } from "./pluginTesting";
+import {
+  BrowserStorageArea,
+  createBrowserStorageArea,
+} from "./fixtures/browserStorage";
 import { EncryptedKey, KeyType, Key } from "../src/Types";
 import {
   BrowserStorageKeyStore,
@@ -95,6 +99,89 @@ describe("BrowserStorageKeyStore", function () {
     const noKeys = await testStore.loadAllKeys();
 
     expect(noKeys).toEqual([]);
+  });
+});
+
+describe("BrowserStorageKeyStore with an in-memory storage area", () => {
+  const encryptedKey: EncryptedKey = {
+    id: "PURIFIER",
+    encryptedBlob: "BLOB",
+    encrypterName: "Test",
+    salt: "SLFKJSDLKFJLSKDJFLKSJD",
+  };
+
+  let storage: BrowserStorageArea;
+  let testStore: BrowserStorageKeyStore;
+
+  beforeEach(async () => {
+    storage = createBrowserStorageArea();
+    testStore = new BrowserStorageKeyStore();
+    await testStore.configure({ storage });
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("passes PluginTesting", async () => {
+    expect(await testKeyStore(testStore)).toEqual(true);
+  });
+
+  it("passes PluginTesting with a custom prefix", async () => {
+    await testStore.configure({ storage, prefix: "mywallet" });
+
+    expect(await testKeyStore(testStore)).toEqual(true);
+  });
+
+  it("updates a stored key", async () => {
+    await testStore.storeKeys([encryptedKey]);
+    const updatedKey = { ...encryptedKey, encryptedBlob: "NEW BLOB" };
+
+    expect(await testStore.updateKeys([updatedKey])).toEqual([
+      { id: "PURIFIER" },
+    ]);
+    expect(await storage.get(null)).toEqual({
+      "stellarkeys:PURIFIER": updatedKey,
+    });
+  });
+
+  it("rejects an update naming only the missing keys, and writes none", async () => {
+    await testStore.storeKeys([encryptedKey]);
+
+    await expect(
+      testStore.updateKeys([
+        { ...encryptedKey, encryptedBlob: "NEW BLOB" },
+        { ...encryptedKey, id: "ARCHANGEL", encryptedBlob: "OTHER BLOB" },
+      ]),
+    ).rejects.toEqual("Some keys couldn't be found in the keystore: ARCHANGEL");
+    expect(await storage.get(null)).toEqual({
+      "stellarkeys:PURIFIER": encryptedKey,
+    });
+  });
+
+  it("rejects an update when the storage write fails", async () => {
+    await testStore.storeKeys([encryptedKey]);
+    sinon.stub(storage, "set").rejects(new Error("QUOTA_BYTES exceeded"));
+
+    await expect(
+      testStore.updateKeys([{ ...encryptedKey, encryptedBlob: "NEW BLOB" }]),
+    ).rejects.toThrow("QUOTA_BYTES exceeded");
+  });
+
+  it("loads only the keys stored under its own prefix", async () => {
+    const walletStore = new BrowserStorageKeyStore();
+    await walletStore.configure({ storage, prefix: "mywallet" });
+    const walletKeys = [
+      { ...encryptedKey, encryptedBlob: "WALLET BLOB" },
+      { ...encryptedKey, id: "ARCHANGEL", encryptedBlob: "OTHER BLOB" },
+    ];
+
+    await testStore.storeKeys([encryptedKey]);
+    await walletStore.storeKeys(walletKeys);
+    await storage.set({ settings: { theme: "dark" } });
+
+    expect(await walletStore.loadAllKeys()).toEqual(walletKeys);
+    expect(await testStore.loadAllKeys()).toEqual([encryptedKey]);
   });
 });
 

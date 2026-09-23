@@ -63,7 +63,7 @@ export class BrowserStorageFacade {
 
   public async getAllKeys() {
     this.check();
-    const regexp = RegExp(`^${PREFIX}\\:(.*)`);
+    const regexp = RegExp(`^${this.prefix}\\:(.*)`);
     const keys: EncryptedKey[] = [];
 
     if (this.storage !== null) {
