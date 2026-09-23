@@ -1,3 +1,9 @@
+# Release notes - Typescript Wallet SDK Key Manager - 5.0.1
+
+### Fixed
+* `KeyManager.changePassword` works with `BrowserStorageKeyStore`. `BrowserStorageKeyStore.updateKeys` checked for existing keys with an async callback passed to `Array.prototype.filter`, which treats the returned Promise as always truthy, so every key counted as missing and the call always rejected with "Some keys couldn't be found in the keystore". Keys were never re-encrypted with the new password. `updateKeys` now resolves only once the updated keys are written, and rejects if a write fails
+* `BrowserStorageKeyStore` finds keys stored under a custom `prefix`. `loadAllKeys` only matched entries under the default `stellarkeys` prefix, so with a custom prefix `KeyManager.loadKey` and `loadAllKeyIds` found no keys, and `changePassword` resolved with an empty list without updating any key
+
 # Release notes - Typescript Wallet SDK Key Manager - 5.0.0
 
 ### BREAKING CHANGES

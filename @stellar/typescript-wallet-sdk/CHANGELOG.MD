@@ -1,3 +1,12 @@
+# Release notes - Typescript Wallet SDK - 5.0.1
+
+### Changed
+* `Recovery.createRecoverableWallet` throws before building the transaction when two recovery servers return the same signer key, or when a server returns the device key (#255)
+* `Recovery.registerRecoveryServerSigners` throws before contacting Horizon when an account signer is listed more than once, or is the account's own key. `SetOptions` overwrites a repeated signer instead of adding its weight, so such a set would install fewer signers than the thresholds written alongside it were sized for (#255)
+
+### Added
+* `DuplicateRecoverySignerError`, `RecoverySignerEqualsDeviceKeyError`, `DuplicateAccountSignerError` and `SignerKeyEqualsMasterKeyError`, exported via `Exceptions` (#255)
+
 # Release notes - Typescript Wallet SDK - 5.0.0
 
 ### BREAKING CHANGES
