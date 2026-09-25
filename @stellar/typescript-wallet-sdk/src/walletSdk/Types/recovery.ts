@@ -25,6 +25,33 @@ export type RecoverableWalletConfig = {
   builderExtra?: (builder: CommonBuilder) => CommonBuilder;
 };
 
+/**
+ * The result of registering an account with SEP-30 recovery servers.
+ * @property {Transaction} transaction - The **unsigned** registration transaction. The SDK builds
+ * it but neither signs nor submits it.
+ *
+ * It sets signers and thresholds, which Stellar authorizes against the account's **high**
+ * threshold — not against the master key specifically:
+ *
+ * - For an account that already exists, whichever of its current signers together reach `high`
+ *   can authorize it. The master key is neither automatically sufficient (it may carry less
+ *   weight than `high`) nor necessarily required (an account whose master key is already locked
+ *   is enrolled by its other signers alone).
+ * - For an account created within this same transaction, i.e. the sponsored path where the
+ *   account does not exist yet, the new account's own key suffices: a new account starts with
+ *   master weight 1 and zeroed thresholds.
+ * - When `sponsorAddress` is supplied the sponsor must sign as well, being the source of the
+ *   `beginSponsoringFutureReserves` operation and of `createAccount`.
+ *
+ * For a newly funded account whose master key is still its only signer, that is just
+ * `transaction.sign(accountKp.keypair)` followed by `stellar.submitTransaction(transaction)`.
+ *
+ * Once submitted the master key is locked, so inspect the transaction before signing if you want
+ * to verify the signer set it installs.
+ * @property {string[]} signers - Public keys of the recovery server signers added to the account,
+ * one per configured server. These are the addresses to pass to `signWithRecoveryServers` when
+ * recovering the account later.
+ */
 export type RecoverableWallet = {
   transaction: Transaction;
   signers: string[];
@@ -47,6 +74,30 @@ export type AccountThreshold = {
   high: number;
 };
 
+/**
+ * Weights assigned to the device signer and to each recovery server signer.
+ *
+ * These values only mean something relative to {@link AccountThreshold}. Together they decide
+ * three separate properties, and it is possible to satisfy some and silently lose the others:
+ *
+ * 1. The device can operate the account on its own — `device >= high`.
+ * 2. The recovery servers can recover the account without the device —
+ *    `recoveryServer * serverCount >= high`.
+ * 3. No single recovery server can act alone — `recoveryServer < low`. This is a choice, not a
+ *    protocol guarantee: SEP-30 supports both postures. Two or more servers weighted this way
+ *    means no individual server controls the account, but the spec equally supports a
+ *    single-server custodial setup where one deliberately does.
+ *
+ * With two servers, `{ device: 10, recoveryServer: 5 }` against thresholds `{ low: 10, medium: 10,
+ * high: 10 }` satisfies all three: the device alone reaches `high`, the two servers together reach
+ * `high`, and one server alone reaches nothing.
+ *
+ * Note that whether the device can act alone is decided by `device` against `high`, per property 1
+ * above — not by how `device` compares to `recoveryServer`. A device weighing less than a single
+ * recovery server still operates the account independently as long as it meets `high`.
+ * @property {number} device - Weight of the device signer, which replaces the master key.
+ * @property {number} recoveryServer - Weight given to each recovery server signer.
+ */
 export type SignerWeight = {
   device: number;
   recoveryServer: number;
