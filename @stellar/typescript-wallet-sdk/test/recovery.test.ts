@@ -1,7 +1,7 @@
 import axios from "axios";
 import { xdr } from "@stellar/stellar-sdk";
 
-import { Recovery, SigningKeypair, Wallet } from "../src";
+import { AccountService, Recovery, SigningKeypair, Wallet } from "../src";
 import {
   DuplicateAccountSignerError,
   DuplicateRecoverySignerError,
@@ -194,7 +194,7 @@ describe("Recovery / Signer set validation", () => {
     });
 
     it("validates before reaching the network", async () => {
-      const getInfo = jest.spyOn(wallet.stellar().account(), "getInfo");
+      const getInfo = jest.spyOn(AccountService.prototype, "getInfo");
 
       await expect(
         wallet.recovery({ servers: {} }).registerRecoveryServerSigners(
