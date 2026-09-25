@@ -283,8 +283,10 @@ export class DuplicateRecoverySignerError extends Error {
         `server to generate a unique signing key, so this is either one ` +
         `endpoint configured under several keys in the recovery server map, ` +
         `or a server returning a key it does not control. Registering this ` +
-        `set would install one signer where several were intended, leaving ` +
-        `the account below the thresholds being set alongside it`,
+        `set would install one signer where several were intended, so the ` +
+        `recovery servers would together carry less weight than the ` +
+        `thresholds written alongside them were sized for, and may no longer ` +
+        `reach the account's high threshold once the device is lost`,
     );
     Object.setPrototypeOf(this, DuplicateRecoverySignerError.prototype);
   }

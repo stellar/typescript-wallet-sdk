@@ -61,8 +61,10 @@ type EnrolledRecoverySigner = {
  * is an upsert rather than an append — it overwrites a repeated key instead of
  * summing the weights. A set containing the same address twice therefore
  * installs one signer, while the thresholds chosen for the intended set are
- * written alongside it regardless. Because the same transaction also removes
- * the master key, that mismatch is unrecoverable once submitted.
+ * written alongside it regardless. Because the same transaction also zeroes the
+ * master key, repairing that mismatch takes a further `SetOptions`, itself
+ * authorized at the account's high threshold — so it is possible only while the
+ * remaining signers can still reach `high`, and impossible once they cannot.
  * @param {string} accountAddress - Address of the account whose master key is being locked.
  * @param {AccountSigner[]} accountSigners - The signer set about to be installed.
  * @throws {DuplicateAccountSignerError} If any address appears more than once.
@@ -141,7 +143,8 @@ export class Recovery extends AccountRecover {
    * [RecoverableWalletConfig.sponsorAddress] is set. See [RecoverableWallet] for the cases.
    *
    * The signer set returned by the recovery servers is validated before the transaction is built,
-   * because the locking of the master key cannot be undone once it is submitted.
+   * because undoing the master key lock afterwards takes a further `SetOptions` meeting the
+   * account's high threshold, which the collapsed signer set may no longer be able to reach.
    *
    * This transaction can be sponsored.
    * @param {RecoverableWalletConfig} config - The configuration for recoverable wallet.
