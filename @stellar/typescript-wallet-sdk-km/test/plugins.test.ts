@@ -159,13 +159,53 @@ describe("BrowserStorageKeyStore with an in-memory storage area", () => {
     });
   });
 
-  it("rejects an update when the storage write fails", async () => {
-    await testStore.storeKeys([encryptedKey]);
-    sinon.stub(storage, "set").rejects(new Error("QUOTA_BYTES exceeded"));
+  it("rejects an update whose storage write fails, and changes no key", async () => {
+    const otherKey = {
+      ...encryptedKey,
+      id: "ARCHANGEL",
+      encryptedBlob: "OTHER BLOB",
+    };
+    await testStore.storeKeys([encryptedKey, otherKey]);
+    const set = storage.set;
+    sinon
+      .stub(storage, "set")
+      .callsFake((items) =>
+        "stellarkeys:ARCHANGEL" in items
+          ? Promise.reject(new Error("QUOTA_BYTES exceeded"))
+          : set(items),
+      );
 
     await expect(
-      testStore.updateKeys([{ ...encryptedKey, encryptedBlob: "NEW BLOB" }]),
+      testStore.updateKeys([
+        { ...encryptedKey, encryptedBlob: "NEW BLOB" },
+        { ...otherKey, encryptedBlob: "NEW OTHER BLOB" },
+      ]),
     ).rejects.toThrow("QUOTA_BYTES exceeded");
+    expect(await storage.get(null)).toEqual({
+      "stellarkeys:PURIFIER": encryptedKey,
+      "stellarkeys:ARCHANGEL": otherKey,
+    });
+  });
+
+  it.each(["wallet+1", "wallet(v2)", "wallet["])(
+    "passes PluginTesting with the prefix %s",
+    async (prefix) => {
+      await testStore.configure({ storage, prefix });
+
+      expect(await testKeyStore(testStore)).toEqual(true);
+    },
+  );
+
+  it("matches its prefix as literal text", async () => {
+    const walletStore = new BrowserStorageKeyStore();
+    await walletStore.configure({ storage, prefix: "my.wallet" });
+
+    await walletStore.storeKeys([encryptedKey]);
+    await storage.set({
+      "myXwallet:PURIFIER": { ...encryptedKey, encryptedBlob: "OTHER BLOB" },
+    });
+
+    expect(await walletStore.loadAllKeys()).toEqual([encryptedKey]);
   });
 
   it("loads only the keys stored under its own prefix", async () => {
