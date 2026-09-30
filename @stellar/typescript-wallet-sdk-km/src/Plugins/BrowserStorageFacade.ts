@@ -54,6 +54,17 @@ export class BrowserStorageFacade {
       : null;
   }
 
+  public setKeys(keys: EncryptedKey[]) {
+    this.check();
+    const items: Record<string, EncryptedKey> = {};
+
+    for (const key of keys) {
+      items[`${this.prefix}:${key.id}`] = { ...key };
+    }
+
+    return this.storage !== null ? this.storage.set(items) : null;
+  }
+
   public removeKey(id: string) {
     this.check();
     return this.storage !== null
@@ -63,16 +74,15 @@ export class BrowserStorageFacade {
 
   public async getAllKeys() {
     this.check();
-    const regexp = RegExp(`^${PREFIX}\\:(.*)`);
+    const keyPrefix = `${this.prefix}:`;
     const keys: EncryptedKey[] = [];
 
     if (this.storage !== null) {
       const storageObj = await this.storage.get(null);
       const storageKeys = Object.keys(storageObj);
       for (const storageKey of storageKeys) {
-        const raw_id = storageKey;
-        if (raw_id !== null && regexp.test(raw_id)) {
-          const key = await this.getKey(regexp.exec(raw_id)![1]);
+        if (storageKey.startsWith(keyPrefix)) {
+          const key = await this.getKey(storageKey.slice(keyPrefix.length));
           if (key !== null) {
             keys.push(key);
           }

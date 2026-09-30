@@ -14,14 +14,21 @@ import {
   DefaultAuthHeaderSigner,
   SigningKeypair,
 } from "@stellar/typescript-wallet-sdk";
+import fs from "fs";
 import { mockRandomForEach } from "jest-mock-random";
+import { LocalStorage } from "node-localstorage";
+import os from "os";
+import path from "path";
 import randomBytes from "randombytes";
 import sinon from "sinon";
 
+import { createBrowserStorageArea } from "./fixtures/browserStorage";
 import { KeyManager } from "../src";
 import { DomainSigningModifiedError } from "../src/Exceptions";
-import { KeyType } from "../src/Types";
+import { Key, KeyStore, KeyType } from "../src/Types";
 import {
+  BrowserStorageKeyStore,
+  LocalStorageKeyStore,
   MemoryKeyStore,
   IdentityEncrypter,
   ScryptEncrypter,
@@ -1802,6 +1809,121 @@ describe("KeyManager Scrypt, multiple keys with different passwords", () => {
       privateKey: "ARCHANGEL1",
       publicKey: "AVACYN1",
       type: "plaintextKey",
+    });
+  });
+});
+
+describe("KeyManager changePassword", () => {
+  const oldPassword = "old password";
+  const newPassword = "new password";
+  const keys: Key[] = [
+    {
+      id: "key1",
+      type: KeyType.plaintextKey,
+      publicKey: "AVACYN1",
+      privateKey: "ARCHANGEL1",
+    },
+    {
+      id: "key2",
+      type: KeyType.plaintextKey,
+      publicKey: "AVACYN2",
+      privateKey: "ARCHANGEL2",
+    },
+  ];
+
+  const localStorageDirs: string[] = [];
+
+  afterEach(() => {
+    for (const dir of localStorageDirs.splice(0)) {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  const keyStoreCases: {
+    name: string;
+    createKeyStore: () => Promise<KeyStore>;
+  }[] = [
+    {
+      name: "MemoryKeyStore",
+      createKeyStore: () => Promise.resolve(new MemoryKeyStore()),
+    },
+    {
+      name: "LocalStorageKeyStore",
+      createKeyStore: async () => {
+        const dir = fs.mkdtempSync(path.join(os.tmpdir(), "km-password-"));
+        localStorageDirs.push(dir);
+        const keyStore = new LocalStorageKeyStore();
+        await keyStore.configure({ storage: new LocalStorage(dir) });
+        return keyStore;
+      },
+    },
+    {
+      name: "BrowserStorageKeyStore",
+      createKeyStore: async () => {
+        const keyStore = new BrowserStorageKeyStore();
+        await keyStore.configure({ storage: createBrowserStorageArea() });
+        return keyStore;
+      },
+    },
+    {
+      name: "BrowserStorageKeyStore with a custom prefix",
+      createKeyStore: async () => {
+        const keyStore = new BrowserStorageKeyStore();
+        await keyStore.configure({
+          storage: createBrowserStorageArea(),
+          prefix: "mywallet",
+        });
+        return keyStore;
+      },
+    },
+  ];
+
+  describe.each(keyStoreCases)("with $name", ({ createKeyStore }) => {
+    let keyManager: KeyManager;
+
+    beforeEach(async () => {
+      keyManager = new KeyManager({ keyStore: await createKeyStore() });
+      keyManager.registerEncrypter(ScryptEncrypter);
+
+      for (const key of keys) {
+        await keyManager.storeKey({
+          key,
+          password: oldPassword,
+          encrypterName: ScryptEncrypter.name,
+        });
+      }
+    });
+
+    test("re-encrypts every stored key with the new password", async () => {
+      const metadata = await keyManager.changePassword({
+        oldPassword,
+        newPassword,
+      });
+
+      expect(metadata.map(({ id }) => id).sort()).toEqual(["key1", "key2"]);
+
+      for (const key of keys) {
+        expect(await keyManager.loadKey(key.id, newPassword)).toEqual(key);
+        await expect(keyManager.loadKey(key.id, oldPassword)).rejects.toThrow(
+          "Couldn’t decrypt key",
+        );
+      }
+    });
+
+    test("leaves every stored key unchanged when the old password is wrong", async () => {
+      await expect(
+        keyManager.changePassword({
+          oldPassword: "wrong password",
+          newPassword,
+        }),
+      ).rejects.toThrow("That passphrase wasn’t valid.");
+
+      for (const key of keys) {
+        expect(await keyManager.loadKey(key.id, oldPassword)).toEqual(key);
+        await expect(keyManager.loadKey(key.id, newPassword)).rejects.toThrow(
+          "Couldn’t decrypt key",
+        );
+      }
     });
   });
 });

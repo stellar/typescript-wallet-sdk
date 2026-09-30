@@ -178,6 +178,31 @@ export async function testKeyStore(
     );
   }
 
+  // KeyStore.updateKeys
+  const updatedKey: EncryptedKey = {
+    ...encryptedKey,
+    encryptedBlob: `${encryptedKey.encryptedBlob} updated`,
+  };
+
+  const updateMetadata = await keyStore.updateKeys([updatedKey]);
+
+  if (updateMetadata.length !== 1 || keyMetadata.id !== updateMetadata[0].id) {
+    return Promise.reject(
+      new Error("[KeyStore.updateKeys] Key metadata doesn't match"),
+    );
+  }
+
+  const updatedKeys = await keyStore.loadAllKeys();
+
+  if (
+    updatedKeys.length !== 1 ||
+    updatedKey.encryptedBlob !== updatedKeys[0].encryptedBlob
+  ) {
+    return Promise.reject(
+      new Error("[KeyStore.updateKeys] Updated key wasn't stored"),
+    );
+  }
+
   const removalMetadata = await keyStore.removeKey(encryptedKey.id);
 
   if (!removalMetadata || keyMetadata.id !== removalMetadata.id) {

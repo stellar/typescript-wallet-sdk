@@ -66,22 +66,25 @@ export class BrowserStorageKeyStore implements KeyStore {
       );
     }
 
-    const keysMetadata: KeyMetadata[] = [];
+    // One write for all keys, so a failed write doesn't leave some of them
+    // stored and the rest not
+    await this.keyStore.setKeys(keys);
 
-    for (const encryptedKey of keys) {
-      this.keyStore.setKey(encryptedKey.id, encryptedKey);
-      keysMetadata.push(getKeyMetadata(encryptedKey));
-    }
-
-    return Promise.resolve(keysMetadata);
+    return Promise.resolve(
+      keys.map((encryptedKey: EncryptedKey) => getKeyMetadata(encryptedKey)),
+    );
   }
 
-  public updateKeys(keys: EncryptedKey[]) {
-    // we can't update keys if they're already stored
-    const invalidKeys: EncryptedKey[] = keys.filter(
-      async (encryptedKey: EncryptedKey) =>
-        !(await this.keyStore.hasKey(encryptedKey.id)),
-    );
+  public async updateKeys(keys: EncryptedKey[]) {
+    // We can't update keys if they aren't already there
+    const invalidKeys: EncryptedKey[] = [];
+
+    for (const encryptedKey of keys) {
+      const hasKey = await this.keyStore.hasKey(encryptedKey.id);
+      if (!hasKey) {
+        invalidKeys.push(encryptedKey);
+      }
+    }
 
     if (invalidKeys.length) {
       return Promise.reject(
@@ -91,12 +94,13 @@ export class BrowserStorageKeyStore implements KeyStore {
       );
     }
 
-    const keysMetadata = keys.map((encryptedKey: EncryptedKey) => {
-      this.keyStore.setKey(encryptedKey.id, encryptedKey);
-      return getKeyMetadata(encryptedKey);
-    });
+    // One write for all keys, so a failed write doesn't leave some of them
+    // updated and the rest not
+    await this.keyStore.setKeys(keys);
 
-    return Promise.resolve(keysMetadata);
+    return Promise.resolve(
+      keys.map((encryptedKey: EncryptedKey) => getKeyMetadata(encryptedKey)),
+    );
   }
 
   public async loadKey(id: string) {
@@ -108,13 +112,13 @@ export class BrowserStorageKeyStore implements KeyStore {
   }
 
   public async removeKey(id: string) {
-    if (!this.keyStore.hasKey(id)) {
+    if (!(await this.keyStore.hasKey(id))) {
       return Promise.reject(id);
     }
 
     const key = await this.keyStore.getKey(id);
     const metadata: KeyMetadata = getKeyMetadata(key);
-    this.keyStore.removeKey(id);
+    await this.keyStore.removeKey(id);
 
     return Promise.resolve(metadata);
   }
