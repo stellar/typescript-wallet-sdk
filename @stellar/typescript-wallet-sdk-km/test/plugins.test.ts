@@ -187,6 +187,39 @@ describe("BrowserStorageKeyStore with an in-memory storage area", () => {
     });
   });
 
+  it("rejects a store whose storage write fails, and stores no key", async () => {
+    const set = storage.set;
+    sinon
+      .stub(storage, "set")
+      .callsFake((items) =>
+        "stellarkeys:ARCHANGEL" in items
+          ? Promise.reject(new Error("QUOTA_BYTES exceeded"))
+          : set(items),
+      );
+
+    await expect(
+      testStore.storeKeys([
+        encryptedKey,
+        { ...encryptedKey, id: "ARCHANGEL", encryptedBlob: "OTHER BLOB" },
+      ]),
+    ).rejects.toThrow("QUOTA_BYTES exceeded");
+    expect(await storage.get(null)).toEqual({});
+  });
+
+  it("rejects removing a key that isn't stored", async () => {
+    await expect(testStore.removeKey("PURIFIER")).rejects.toEqual("PURIFIER");
+  });
+
+  it("rejects a removal whose storage delete fails, and keeps the key", async () => {
+    await testStore.storeKeys([encryptedKey]);
+    sinon.stub(storage, "remove").rejects(new Error("IO error"));
+
+    await expect(testStore.removeKey("PURIFIER")).rejects.toThrow("IO error");
+    expect(await storage.get(null)).toEqual({
+      "stellarkeys:PURIFIER": encryptedKey,
+    });
+  });
+
   it.each(["wallet+1", "wallet(v2)", "wallet["])(
     "passes PluginTesting with the prefix %s",
     async (prefix) => {

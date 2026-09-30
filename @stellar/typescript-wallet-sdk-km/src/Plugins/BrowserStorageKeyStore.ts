@@ -66,14 +66,13 @@ export class BrowserStorageKeyStore implements KeyStore {
       );
     }
 
-    const keysMetadata: KeyMetadata[] = [];
+    // One write for all keys, so a failed write doesn't leave some of them
+    // stored and the rest not
+    await this.keyStore.setKeys(keys);
 
-    for (const encryptedKey of keys) {
-      this.keyStore.setKey(encryptedKey.id, encryptedKey);
-      keysMetadata.push(getKeyMetadata(encryptedKey));
-    }
-
-    return Promise.resolve(keysMetadata);
+    return Promise.resolve(
+      keys.map((encryptedKey: EncryptedKey) => getKeyMetadata(encryptedKey)),
+    );
   }
 
   public async updateKeys(keys: EncryptedKey[]) {
@@ -113,13 +112,13 @@ export class BrowserStorageKeyStore implements KeyStore {
   }
 
   public async removeKey(id: string) {
-    if (!this.keyStore.hasKey(id)) {
+    if (!(await this.keyStore.hasKey(id))) {
       return Promise.reject(id);
     }
 
     const key = await this.keyStore.getKey(id);
     const metadata: KeyMetadata = getKeyMetadata(key);
-    this.keyStore.removeKey(id);
+    await this.keyStore.removeKey(id);
 
     return Promise.resolve(metadata);
   }
