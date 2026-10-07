@@ -1,0 +1,11 @@
+{
+  "workspace": ".",
+  "javascript_sast_enabled": true,
+  "javascript_disabled_rules": "js-unhandled-promise-rejection",
+  "sast_ignore_overrides": "js-timing-attack:@stellar/typescript-wallet-sdk-km/src/keyManager.ts,js-prototype-pollution:@stellar/typescript-wallet-sdk-km/src/Exceptions/index.ts,js-prototype-pollution:@stellar/typescript-wallet-sdk/src/walletSdk/Exceptions/index.ts",
+  "secret_scanning_enabled": true,
+  "console_tabular_enabled": true,
+  "socket_tier_1_enabled": false,
+  "trivy_vuln_enabled": false,
+  "trufflehog_exclude_dir": "node_modules,dist,build,.git,@stellar/typescript-wallet-sdk/test/docker/docker-compose.yml,@stellar/typescript-wallet-sdk/test/wallet.test.ts"
+}
