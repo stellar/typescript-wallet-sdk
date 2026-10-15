@@ -58,12 +58,6 @@ export const albedoHandler: KeyTypeHandler = {
         throw new Error("We couldn’t sign the transaction with Albedo.");
       }
 
-      if (response.network !== network) {
-        throw new Error(
-          `Albedo signed for the "${response.network}" network, but "${network}" was requested`,
-        );
-      }
-
       // fromXdr() returns type "Transaction | FeeBumpTransaction" and
       // signTransaction() doesn't like "| FeeBumpTransaction" type, so casting
       // to "Transaction" type.

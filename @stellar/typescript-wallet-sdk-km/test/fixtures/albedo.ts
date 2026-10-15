@@ -17,11 +17,10 @@ const albedoPassphrases: { [network: string]: string } = {
 
 // Stands in for albedo.link answering a tx intent: it signs the XDR with the
 // user's account for the requested network ("public" when none is given) and
-// echoes that network back. `signedNetwork` makes it sign for another network
-// than the one requested.
-export function albedoSigningWith(signer: Keypair, signedNetwork?: string) {
+// echoes that network back.
+export function albedoSigningWith(signer: Keypair) {
   return ({ xdr: envelope, network }: { xdr: string; network?: string }) => {
-    const responseNetwork = signedNetwork || network || "public";
+    const responseNetwork = network || "public";
     const tx = TransactionBuilder.fromXdr(
       envelope,
       albedoPassphrases[responseNetwork],

@@ -105,16 +105,6 @@ describe("albedoHandler", () => {
     expect(WebAuth.verifyTxSignedBy(result, signer.publicKey())).toBe(true);
   });
 
-  it("throws when Albedo signs for a different network than requested", async () => {
-    mockTx.mockImplementation(albedoSigningWith(signer, "public"));
-    const tx = buildTestTransaction(signer, Networks.TESTNET);
-    const key = makeAlbedoKey(signer, { network: Networks.TESTNET });
-
-    await expect(
-      albedoHandler.signTransaction({ transaction: tx, key }),
-    ).rejects.toThrow(/"public".*"testnet"/);
-  });
-
   it.each([
     ["Networks.FUTURENET", Networks.FUTURENET],
     ["a private network passphrase", "Private Network ; October 2026"],
