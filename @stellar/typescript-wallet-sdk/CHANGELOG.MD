@@ -1,3 +1,13 @@
+# Release notes - Typescript Wallet SDK - 5.1.0
+
+### Added
+* `DuplicateRecoverySignerError`, `RecoverySignerEqualsDeviceKeyError`, `DuplicateAccountSignerError` and `SignerKeyEqualsMasterKeyError`, exported via `Exceptions` (#255)
+
+### Changed
+* `Recovery.createRecoverableWallet` checks the signer keys returned by the recovery servers before building the transaction. It throws `DuplicateRecoverySignerError` when two or more servers return the same key, `RecoverySignerEqualsDeviceKeyError` when a server returns the device key, and `SignerKeyEqualsMasterKeyError` when a server returns the account's own key (#255)
+* `Recovery.registerRecoveryServerSigners` throws before contacting Horizon when an address appears more than once in `accountSigners` (`DuplicateAccountSignerError`) or is the account itself (`SignerKeyEqualsMasterKeyError`). `SetOptions` overwrites a repeated signer instead of adding its weight, so such a set would install fewer signers than the thresholds written alongside it were sized for (#255)
+* The browser bundle is built with `pbkdf2` 3.1.7, `sha.js` 2.4.12 and `cipher-base` 1.0.7, which it inlines through its `crypto` polyfill (#258)
+
 # Release notes - Typescript Wallet SDK - 5.0.0
 
 ### BREAKING CHANGES
