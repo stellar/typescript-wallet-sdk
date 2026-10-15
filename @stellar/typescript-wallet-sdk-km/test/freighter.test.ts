@@ -246,5 +246,41 @@ describe("freighterHandler", () => {
         expect.objectContaining({ networkPassphrase: Networks.PUBLIC }),
       );
     });
+
+    it.each([
+      {
+        setup: "a key without a network",
+        txNetwork: Networks.TESTNET,
+        keyNetwork: undefined,
+        customNetwork: undefined,
+      },
+      {
+        setup: "a key scoped to another network",
+        txNetwork: Networks.PUBLIC,
+        keyNetwork: Networks.TESTNET,
+        customNetwork: undefined,
+      },
+      {
+        setup: "custom.networkPassphrase for another network",
+        txNetwork: Networks.TESTNET,
+        keyNetwork: Networks.TESTNET,
+        customNetwork: Networks.PUBLIC,
+      },
+    ])(
+      "refuses a transaction for another network ($setup) without calling Freighter",
+      async ({ txNetwork, keyNetwork, customNetwork }) => {
+        const tx = buildTestTransaction(txNetwork);
+        const key = makeFreighterKey({ network: keyNetwork });
+
+        await expect(
+          freighterHandler.signTransaction({
+            transaction: tx,
+            key,
+            custom: { networkPassphrase: customNetwork },
+          }),
+        ).rejects.toThrow(`"${txNetwork}"`);
+        expect(mockSignTransaction).not.toHaveBeenCalled();
+      },
+    );
   });
 });

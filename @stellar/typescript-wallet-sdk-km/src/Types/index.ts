@@ -13,7 +13,8 @@ export interface BaseKey {
   extra?: any;
   path?: string;
   publicKey: string;
-  // if the network is not set, the key is assumed to be on Networks.PUBLIC
+  // if the network is not set, KeyManager assumes the key is on its default
+  // network passphrase (Networks.PUBLIC unless configured otherwise)
   network?: string;
   type: KeyType | string;
 }
