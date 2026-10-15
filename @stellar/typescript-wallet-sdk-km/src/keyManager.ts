@@ -69,7 +69,8 @@ export class KeyManager {
   }
 
   /**
-   * Set the default network passphrase
+   * Set the default network passphrase, used for keys that don't set their
+   * own network.
    * @param {string} passphrase - The passphrase.
    */
   public setDefaultNetworkPassphrase(passphrase: string) {
@@ -184,7 +185,10 @@ export class KeyManager {
    * @param {string} params.id - Key to sign with. The id is computed as
    *    `sha1(private key + public key)`.
    * @param {string} params.password - the key password
-   * @param {{[key: string]: any}} [params.custom] - custom arguments
+   * @param {{[key: string]: any}} [params.custom] - custom arguments. For keys
+   *    held by an external wallet (Freighter, Albedo), `networkPassphrase` is
+   *    the network to sign for. It defaults to the key's network, then to the
+   *    default network passphrase, and must match the transaction's network.
    * @returns {Promise<Transaction>} Signed transaction
    */
   public async signTransaction(
@@ -208,10 +212,20 @@ export class KeyManager {
     }
 
     const keyHandler = this.keyHandlerMap[key.type];
+
+    // Handlers that sign through an external wallet (Freighter, Albedo) can't
+    // see defaultNetworkPassphrase, so fill it in for keys without a network.
+    // Those handlers refuse a transaction built for any other network.
     const signedTransaction = await keyHandler.signTransaction({
       transaction,
       key,
-      custom,
+      custom: {
+        ...custom,
+        networkPassphrase:
+          (custom && custom.networkPassphrase) ||
+          key.network ||
+          this.defaultNetworkPassphrase,
+      },
     });
     return signedTransaction;
   }
@@ -388,9 +402,13 @@ export class KeyManager {
 
     const keyHandler = this.keyHandlerMap[key.type];
 
+    // Handlers that sign through an external wallet (Freighter, Albedo) can't
+    // see defaultNetworkPassphrase, so tell them which network the challenge
+    // was validated against.
     const signedTransaction = await keyHandler.signTransaction({
       transaction,
       key,
+      custom: { networkPassphrase: keyNetwork },
     });
 
     const signedTransactionXDR: string = signedTransaction

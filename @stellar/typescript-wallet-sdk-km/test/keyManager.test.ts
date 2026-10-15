@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
+import albedo from "@albedo-link/intent";
+import freighterApi from "@stellar/freighter-api";
 import {
   Networks,
   Keypair,
@@ -9,6 +11,7 @@ import {
   Transaction,
   TimeoutInfinite,
   BASE_FEE,
+  WebAuth,
 } from "@stellar/stellar-sdk";
 import {
   DefaultAuthHeaderSigner,
@@ -22,6 +25,7 @@ import path from "path";
 import randomBytes from "randombytes";
 import sinon from "sinon";
 
+import { albedoSigningWith } from "./fixtures/albedo";
 import { createBrowserStorageArea } from "./fixtures/browserStorage";
 import { KeyManager } from "../src";
 import { DomainSigningModifiedError } from "../src/Exceptions";
@@ -33,6 +37,24 @@ import {
   IdentityEncrypter,
   ScryptEncrypter,
 } from "../src/Plugins";
+
+jest.mock("@albedo-link/intent", () => ({
+  __esModule: true,
+  default: {
+    tx: jest.fn(),
+  },
+}));
+
+const mockAlbedoTx = albedo.tx as jest.Mock;
+
+jest.mock("@stellar/freighter-api", () => ({
+  __esModule: true,
+  default: {
+    signTransaction: jest.fn(),
+  },
+}));
+
+const mockFreighterSign = freighterApi.signTransaction as jest.Mock;
 
 describe("KeyManager", () => {
   let clock: sinon.SinonFakeTimers;
@@ -1668,6 +1690,224 @@ describe("fetchAuthToken", () => {
         `The transaction source account is not equal to the server's account`,
       );
     }
+  });
+
+  test.each([
+    {
+      source: "the key's network",
+      keyNetwork: Networks.TESTNET,
+      defaultNetworkPassphrase: undefined,
+    },
+    {
+      source: "the manager's default network",
+      keyNetwork: undefined,
+      defaultNetworkPassphrase: Networks.TESTNET,
+    },
+  ])(
+    "Has Albedo sign the challenge for $source",
+    async ({ keyNetwork, defaultNetworkPassphrase }) => {
+      const authServer = "https://www.stellar.org/auth";
+      const password = "very secure password";
+      const token = "👍";
+
+      const serverKey = Keypair.random();
+      const serverAccount = new Account(serverKey.publicKey(), "-1");
+      const albedoAccount = Keypair.random();
+
+      const testKeyManager = new KeyManager({
+        keyStore: new MemoryKeyStore(),
+        defaultNetworkPassphrase,
+      });
+      testKeyManager.registerEncrypter(IdentityEncrypter);
+
+      const challenge = new TransactionBuilder(serverAccount, {
+        fee: BASE_FEE,
+        networkPassphrase: Networks.TESTNET,
+      })
+        .addOperation(
+          Operation.manageData({
+            name: "stellar.org auth",
+            value: randomBytes(48).toString("base64"),
+            source: albedoAccount.publicKey(),
+          }),
+        )
+        .addOperation(
+          Operation.manageData({
+            name: "web_auth_domain",
+            value: new URL(authServer).hostname,
+            source: serverAccount.accountId(),
+          }),
+        )
+        .setTimeout(300)
+        .build();
+      challenge.sign(serverKey);
+
+      jest
+        .spyOn(global, "fetch")
+        .mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              transaction: challenge.toXdr(),
+              network_passphrase: Networks.TESTNET,
+            }),
+          ),
+        )
+        .mockResolvedValueOnce(new Response(JSON.stringify({ token })));
+      mockAlbedoTx.mockImplementation(albedoSigningWith(albedoAccount));
+
+      const keyMetadata = await testKeyManager.storeKey({
+        key: {
+          type: KeyType.albedo,
+          publicKey: albedoAccount.publicKey(),
+          privateKey: "",
+          network: keyNetwork,
+        },
+        password,
+        encrypterName: "IdentityEncrypter",
+      });
+
+      const res = await testKeyManager.fetchAuthToken({
+        id: keyMetadata.id,
+        password,
+        authServer,
+        authServerKey: serverKey.publicKey(),
+        authServerHomeDomains: ["stellar.org"],
+      });
+
+      const submittedXdr: string = JSON.parse(
+        (global.fetch as any).mock.calls[1][1].body,
+      ).transaction;
+      const submittedTx = new Transaction(submittedXdr, Networks.TESTNET);
+
+      expect(
+        WebAuth.verifyTxSignedBy(submittedTx, albedoAccount.publicKey()),
+      ).toBe(true);
+      expect(res).toBe(token);
+    },
+  );
+});
+
+describe("signTransaction with a key held by an external wallet", () => {
+  const password = "very secure password";
+  let walletAccount: Keypair;
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+    walletAccount = Keypair.random();
+    mockAlbedoTx.mockImplementation(albedoSigningWith(walletAccount));
+  });
+
+  // A manager whose default network is testnet, holding one wallet key.
+  async function createTestnetManager(
+    keyNetwork?: string,
+    type: KeyType = KeyType.albedo,
+  ) {
+    const keyManager = new KeyManager({
+      keyStore: new MemoryKeyStore(),
+      defaultNetworkPassphrase: Networks.TESTNET,
+    });
+    keyManager.registerEncrypter(IdentityEncrypter);
+    const { id } = await keyManager.storeKey({
+      key: {
+        type,
+        publicKey: walletAccount.publicKey(),
+        privateKey: "",
+        network: keyNetwork,
+      },
+      password,
+      encrypterName: "IdentityEncrypter",
+    });
+    return { keyManager, id };
+  }
+
+  function buildTransaction(networkPassphrase: string): Transaction {
+    return new TransactionBuilder(
+      new Account(walletAccount.publicKey(), "100"),
+      { fee: BASE_FEE, networkPassphrase },
+    )
+      .addOperation(
+        Operation.payment({
+          destination: Keypair.random().publicKey(),
+          asset: Asset.native(),
+          amount: "10",
+        }),
+      )
+      .setTimeout(30)
+      .build();
+  }
+
+  test.each([
+    {
+      source: "the manager's default network",
+      txNetwork: Networks.TESTNET,
+      keyNetwork: undefined,
+      customNetwork: undefined,
+    },
+    {
+      source: "the key's network over the manager's default",
+      txNetwork: Networks.PUBLIC,
+      keyNetwork: Networks.PUBLIC,
+      customNetwork: undefined,
+    },
+    {
+      source: "custom.networkPassphrase over the key's network",
+      txNetwork: Networks.PUBLIC,
+      keyNetwork: Networks.TESTNET,
+      customNetwork: Networks.PUBLIC,
+    },
+  ])(
+    "Has Albedo sign for $source",
+    async ({ txNetwork, keyNetwork, customNetwork }) => {
+      const { keyManager, id } = await createTestnetManager(keyNetwork);
+      const tx = buildTransaction(txNetwork);
+
+      const result = await keyManager.signTransaction({
+        transaction: tx,
+        id,
+        password,
+        custom: { networkPassphrase: customNetwork },
+      });
+
+      expect(result.networkPassphrase).toBe(txNetwork);
+      expect(WebAuth.verifyTxSignedBy(result, walletAccount.publicKey())).toBe(
+        true,
+      );
+    },
+  );
+
+  test("Refuses a mainnet transaction for a key on a testnet manager without opening Albedo", async () => {
+    const { keyManager, id } = await createTestnetManager();
+    const tx = buildTransaction(Networks.PUBLIC);
+
+    await expect(
+      keyManager.signTransaction({ transaction: tx, id, password }),
+    ).rejects.toThrow(`"${Networks.PUBLIC}"`);
+    expect(mockAlbedoTx).not.toHaveBeenCalled();
+  });
+
+  test("Gives Freighter the manager's default network and the caller's other custom fields", async () => {
+    const { keyManager, id } = await createTestnetManager(
+      undefined,
+      KeyType.freighter,
+    );
+    const tx = buildTransaction(Networks.TESTNET);
+    const address = walletAccount.publicKey();
+    mockFreighterSign.mockResolvedValue({
+      signedTxXdr: tx.toXdr(),
+      signerAddress: address,
+    });
+
+    await keyManager.signTransaction({
+      transaction: tx,
+      id,
+      password,
+      custom: { address },
+    });
+
+    expect(mockFreighterSign).toHaveBeenCalledWith(tx.toXdr(), {
+      networkPassphrase: Networks.TESTNET,
+      address,
+    });
   });
 });
 

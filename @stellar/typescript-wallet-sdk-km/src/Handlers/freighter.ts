@@ -25,6 +25,14 @@ export const freighterHandler: KeyTypeHandler = {
     const networkPassphrase =
       (custom && custom.networkPassphrase) || key.network || Networks.PUBLIC;
 
+    // Freighter signs for the network named here, not the one the transaction
+    // was built for, so refuse rather than sign for a different network.
+    if (networkPassphrase !== transaction.networkPassphrase) {
+      throw new Error(
+        `Network mismatch: the transaction is for "${transaction.networkPassphrase}", but signing was requested for "${networkPassphrase}"`,
+      );
+    }
+
     try {
       const response = await freighterApi.signTransaction(transaction.toXdr(), {
         networkPassphrase,
