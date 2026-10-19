@@ -1,3 +1,19 @@
+# Release notes - Typescript Wallet SDK Key Manager - 5.1.0
+
+### Changed
+* Albedo and Freighter keys throw a "Network mismatch" error, before opening the wallet, when the network they would sign for differs from the transaction's `networkPassphrase`. That network is `custom.networkPassphrase` if set, otherwise the key's `network`, otherwise `KeyManager`'s default network passphrase (#259)
+* `KeyManager.signTransaction` passes that network to the key's handler as `custom.networkPassphrase`. Albedo and Freighter keys without a `network` used to sign for `Networks.PUBLIC` whatever `setDefaultNetworkPassphrase` was set to. Other `custom` fields are passed through unchanged (#259)
+* `KeyManager.fetchAuthToken` passes the network the challenge was validated against to the key's handler, so Albedo and Freighter keys without a `network` sign the challenge for that network (#259)
+* Albedo keys reject networks other than `Networks.PUBLIC` and `Networks.TESTNET` before opening Albedo, as Albedo's `tx` intent supports only those two (#259)
+* Both bundles are built with `sha.js` 2.4.12, which they inline through `@ledgerhq/hw-app-str` (#258)
+
+### Fixed
+* `KeyManager.changePassword` works with `BrowserStorageKeyStore`. `BrowserStorageKeyStore.updateKeys` checked for existing keys with an async callback passed to `Array.prototype.filter`, which treats the returned Promise as always truthy, so every key counted as missing and the call always rejected with "Some keys couldn't be found in the keystore". Keys were never re-encrypted with the new password. `updateKeys` now writes all keys in one storage call and resolves once it completes, rejecting if it fails (#257)
+* `BrowserStorageKeyStore` finds keys stored under a custom `prefix`. `loadAllKeys` only matched entries under the default `stellarkeys` prefix, so with a custom prefix `KeyManager.loadKey` and `loadAllKeyIds` found no keys, and `changePassword` resolved with an empty list without updating any key. The prefix is matched as plain text, so characters such as `.` or `+` in it match only themselves (#257)
+* `BrowserStorageKeyStore.storeKeys` writes all keys in one storage call and resolves once it completes, rejecting if it fails. It didn't wait for its writes, so a failed write still resolved as if the keys were stored, and it wrote each key separately, so a failure partway through could leave some keys stored and the rest not (#257)
+* `BrowserStorageKeyStore.removeKey` rejects with the id when no key has it, as the other keystores do, instead of throwing a `TypeError`. It also waits for the delete, so a failed delete rejects and keeps the key (#257)
+* Albedo keys sign for their configured network. The handler didn't pass a network to Albedo, so Albedo signed for its default network (public), and it parsed the signed envelope as `Networks.PUBLIC` whatever the key's `network` was (#259)
+
 # Release notes - Typescript Wallet SDK Key Manager - 5.0.0
 
 ### BREAKING CHANGES

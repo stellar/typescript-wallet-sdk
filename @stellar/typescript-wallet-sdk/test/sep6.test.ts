@@ -16,7 +16,7 @@ describe("SEP-6", () => {
     await axios.get(
       "https://friendbot.stellar.org/?addr=" + accountKp.publicKey,
     );
-  }, 10000);
+  }, 30000);
 
   it("should get anchor info", async () => {
     const resp = await sep6.info();
@@ -172,7 +172,7 @@ describe("SEP-6", () => {
     resp = await anchor.sep6().getTransactionBy({ authToken, id });
 
     expect(resp.id).toEqual(id);
-  }, 10000);
+  }, 30000);
 
   let txId;
 

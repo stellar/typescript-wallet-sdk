@@ -18,6 +18,10 @@ const commonConfigs = {
 };
 
 module.exports = {
+  // Several unit tests talk to testnet (friendbot, Horizon, testanchor), which
+  // can take well over Jest's 5s default to respond. testTimeout is a global
+  // option, so it can't go in commonConfigs.
+  testTimeout: 30000,
   projects: [
     {
       displayName: "Wallet SDK",

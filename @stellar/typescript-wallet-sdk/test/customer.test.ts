@@ -14,7 +14,7 @@ describe("Customer", () => {
     await axios.get(
       "https://friendbot.stellar.org/?addr=" + accountKp.publicKey,
     );
-  }, 10000);
+  }, 30000);
 
   // skipped: the testanchor changed its SEP-12 API behavior
   test.skip("Sep-12 methods work", async () => {
@@ -89,5 +89,5 @@ describe("Customer", () => {
 
     // Delete
     await sep12.delete();
-  }, 20000);
+  }, 30000);
 });

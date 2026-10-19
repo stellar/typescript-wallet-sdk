@@ -2054,7 +2054,7 @@ describe("AuthHeaderSigner", () => {
     });
 
     expect(authToken).toBeTruthy();
-  }, 15000);
+  }, 30000);
 
   it("should match example implementation generated JWT", async () => {
     const generatedAuthToken =

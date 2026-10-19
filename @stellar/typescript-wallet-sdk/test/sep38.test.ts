@@ -11,7 +11,7 @@ describe("SEP-38", () => {
     anchor = wallet.anchor({ homeDomain: "testanchor.stellar.org" });
     sep38 = anchor.sep38();
     accountKp = accountKp = wallet.stellar().account().createKeypair();
-  }, 10000);
+  }, 30000);
 
   it("should get Sep-38 anchor info", async () => {
     const resp = await sep38.info();
