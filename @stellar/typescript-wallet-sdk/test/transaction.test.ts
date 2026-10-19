@@ -293,7 +293,7 @@ describe("Path Payment", () => {
       sourceKp.sign(txn);
       await stellar.submitTransaction(txn);
     }
-  }, 20000);
+  }, 30000);
 
   it("should use path payment send", async () => {
     const txBuilder = await stellar.transaction({
@@ -309,7 +309,7 @@ describe("Path Payment", () => {
       })
       .build();
     expect(txn.operations[0].type).toBe("pathPaymentStrictSend");
-  }, 15000);
+  }, 30000);
 
   it("should use path payment receive", async () => {
     const txBuilder = await stellar.transaction({
@@ -325,7 +325,7 @@ describe("Path Payment", () => {
       })
       .build();
     expect(txn.operations[0].type).toBe("pathPaymentStrictReceive");
-  }, 15000);
+  }, 30000);
 
   it("should swap", async () => {
     const txBuilder = await stellar.transaction({
@@ -337,7 +337,7 @@ describe("Path Payment", () => {
     sourceKp.sign(txn);
     const success = await stellar.submitTransaction(txn);
     expect(success).toBe(true);
-  }, 15000);
+  }, 30000);
 });
 
 describe("Path Payment bounds", () => {

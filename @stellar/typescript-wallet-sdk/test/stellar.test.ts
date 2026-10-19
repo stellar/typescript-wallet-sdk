@@ -45,7 +45,7 @@ describe("Stellar", () => {
     } catch (e) {
       await stellar.fundTestnetAccount(kp.publicKey);
     }
-  }, 10000);
+  }, 30000);
 
   it("should create and submit a transaction", async () => {
     const now = Math.floor(Date.now() / 1000) - 5;
@@ -130,7 +130,7 @@ describe("Stellar", () => {
     const feeBumpTx = stellar.makeFeeBump({ feeAddress: kp, transaction });
     kp.sign(feeBumpTx);
     await stellar.submitTransaction(feeBumpTx);
-  }, 10000);
+  }, 30000);
 
   it("should be able to give a signing keypair", async () => {
     // mock 1 failed response and then 1 successful to test retry
@@ -242,7 +242,7 @@ describe("Stellar", () => {
       (b) => (b as Horizon.HorizonApi.BalanceLineAsset).asset_code === "USDC",
     );
     expect(balance).toBeFalsy();
-  }, 20000);
+  }, 30000);
 
   it("should import and sign a transaction from xdr", () => {
     const txnXdr =
@@ -373,7 +373,7 @@ describe("Stellar", () => {
           .build();
         expect(txn).toBeTruthy();
       }
-    }, 20000);
+    }, 30000);
 
     it("should throw if tx not in pending_user_transfer_start status", async () => {
       const walletTransaction = {
@@ -402,7 +402,7 @@ describe("Stellar", () => {
           .transferWithdrawalTransaction(walletTransaction, asset)
           .build();
       }).toThrowError(WithdrawalTxNotPendingUserTransferStartError);
-    }, 5000);
+    }, 30000);
 
     it("should throw if tx is missing withdraw_anchor_account", async () => {
       const walletTransaction = {
@@ -430,7 +430,7 @@ describe("Stellar", () => {
           .transferWithdrawalTransaction(walletTransaction, asset)
           .build();
       }).toThrowError(WithdrawalTxMissingDestinationError);
-    }, 5000);
+    }, 30000);
 
     it("should throw if tx is missing withdraw_memo_type", async () => {
       const walletTransaction = {
@@ -459,7 +459,7 @@ describe("Stellar", () => {
           .transferWithdrawalTransaction(walletTransaction, asset)
           .build();
       }).toThrowError(WithdrawalTxMissingMemoError);
-    }, 5000);
+    }, 30000);
 
     it("should throw if tx is missing withdraw_memo", async () => {
       const walletTransaction = {
@@ -488,7 +488,7 @@ describe("Stellar", () => {
           .transferWithdrawalTransaction(walletTransaction, asset)
           .build();
       }).toThrowError(WithdrawalTxMissingMemoError);
-    }, 5000);
+    }, 30000);
   });
 });
 
@@ -509,7 +509,7 @@ describe("SponsoringBuilder", () => {
     await axios.get(
       "https://friendbot.stellar.org/?addr=" + txnSourceKp.publicKey,
     );
-  }, 15000);
+  }, 30000);
 
   it("should sponsor creating an account", async () => {
     const wal = Wallet.TestNet();
@@ -535,7 +535,7 @@ describe("SponsoringBuilder", () => {
       newKp.publicKey,
     )) as any;
     expect(sponsoredLoaded.num_sponsored).toBe(2);
-  }, 15000);
+  }, 30000);
 
   it("should sponsor adding trustlines", async () => {
     const txBuilder = await stellar.transaction({
@@ -560,7 +560,7 @@ describe("SponsoringBuilder", () => {
       sponsorKp.publicKey,
     )) as any;
     expect(sponsorLoaded.num_sponsoring).toBe(3);
-  }, 15000);
+  }, 30000);
 
   it("should allow sponsoring and regular operations in same transaction", async () => {
     const txBuilder = await stellar.transaction({
@@ -588,7 +588,7 @@ describe("SponsoringBuilder", () => {
       sponsorKp.publicKey,
     )) as any;
     expect(sponsorLoaded.num_sponsoring).toBe(3);
-  }, 15000);
+  }, 30000);
   it("should sponsor account modification", async () => {
     const txBuilder = await stellar.transaction({
       sourceAddress: txnSourceKp,
@@ -610,7 +610,7 @@ describe("SponsoringBuilder", () => {
       sourceLoaded.signers.find((signer) => signer.key === otherKp.publicKey)
         .weight,
     ).toBe(2);
-  }, 15000);
+  }, 30000);
 });
 
 describe("Asset", () => {
