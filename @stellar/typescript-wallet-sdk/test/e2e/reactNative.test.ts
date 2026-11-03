@@ -226,6 +226,45 @@ describe("React Native (Hermes-like) bundle compatibility", () => {
     expect(await verifyWith(NonFatalTextDecoder)).toBe(false);
   });
 
+  it("reads an anchor's stellar.toml only with a TextDecoder that decodes strictly", async () => {
+    // Every anchor flow starts from Anchor.sep1(), which reads the anchor's
+    // stellar.toml. With a TextDecoder that can't decode strictly, it rejects.
+    const sep1With = (textDecoder: typeof TextDecoder) => {
+      const context = makeHermesLikeContext({ textDecoder });
+      // React Native defines `window` as the global object, and
+      // Wallet.anchor() reads `window.URL` through it.
+      Object.assign(context, {
+        window: context,
+        Headers,
+        AbortController,
+        AbortSignal,
+        fetch: () =>
+          Promise.resolve(
+            new Response(
+              'WEB_AUTH_ENDPOINT="https://example.com/auth"\n[DOCUMENTATION]\nORG_NAME="Example"\n',
+            ),
+          ),
+      });
+      const code = fs.readFileSync(
+        path.resolve(__dirname, "../../lib/bundle_browser.js"),
+        "utf8",
+      );
+      vm.runInContext(code, context, { filename: "bundle_browser.js" });
+
+      return vm.runInContext(
+        `module.exports.Wallet.TestNet().anchor({ homeDomain: "example.com" }).sep1()`,
+        context,
+      ) as Promise<{ webAuthEndpoint: string }>;
+    };
+
+    expect((await sep1With(TextDecoder)).webAuthEndpoint).toBe(
+      "https://example.com/auth",
+    );
+    await expect(sep1With(NonFatalTextDecoder)).rejects.toThrow(
+      "the 'fatal' option is unsupported",
+    );
+  });
+
   it("requires btoa/atob for base64 paths, while base32/StrKey keypair creation stays pure JS", () => {
     const context = makeHermesLikeContext({ includeBase64: false });
     const code = fs.readFileSync(
