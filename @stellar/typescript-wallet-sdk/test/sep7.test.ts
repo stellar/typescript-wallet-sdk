@@ -28,6 +28,14 @@ import {
   Sep7InvalidUriError,
   Sep7LongMsgError,
 } from "../src/walletSdk/Exceptions";
+import {
+  MUXED_CONTRACT_BAD_CHECKSUM,
+  MUXED_CONTRACT_MAX_ID,
+  SEP23_CONTRACT,
+  SEP23_MUXED_CONTRACT,
+  TRANSFER_TO_MUXED_CONTRACT_XDR,
+  transferRecipient,
+} from "./fixtures/muxedContract";
 
 const testKp1 = SigningKeypair.fromSecret(
   "SBKQDF56C5VY2YQTNQFGY7HM6R3V6QKDUEDXZQUCPQOP2EBZWG2QJ2JL",
@@ -700,7 +708,14 @@ describe("sep7Parser", () => {
     // With Soroban Contract destination
     expect(
       isValidSep7Uri(
-        "web+stellar:pay?destination=CAPECFLUT6KHYOOWUQNP7KC6PTMICKANBURFWRMPZTXUEEKHN67B7UI2&amount=120.1234567&memo=skdjfasf&memo_type=MEMO_TEXT&msg=pay%20me%20with%20lumens",
+        "web+stellar:pay?destination=CAPECFLUT6KHYOOWUQNP7KC6PTMICKANBURFWRMPZTXUEEKHN67B7UI2&amount=120.1234567&msg=pay%20me%20with%20lumens",
+      ).result,
+    ).toBe(true);
+
+    // With Muxed Contract destination
+    expect(
+      isValidSep7Uri(
+        `web+stellar:pay?destination=${SEP23_MUXED_CONTRACT}&amount=120.1234567&msg=pay%20me%20with%20lumens`,
       ).result,
     ).toBe(true);
   });
@@ -857,7 +872,14 @@ describe("sep7Parser", () => {
     // With Soroban Contract destination
     expect(
       parseSep7Uri(
-        "web+stellar:pay?destination=CAPECFLUT6KHYOOWUQNP7KC6PTMICKANBURFWRMPZTXUEEKHN67B7UI2&amount=120.123&asset_code=USD&asset_issuer=GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB&memo=hasysda987fs&memo_type=MEMO_TEXT&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fhasysda987fs%3Fasset%3DUSD",
+        "web+stellar:pay?destination=CAPECFLUT6KHYOOWUQNP7KC6PTMICKANBURFWRMPZTXUEEKHN67B7UI2&amount=120.123&asset_code=USD&asset_issuer=GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fhasysda987fs%3Fasset%3DUSD",
+      ),
+    ).toBeInstanceOf(Sep7Pay);
+
+    // With Muxed Contract destination
+    expect(
+      parseSep7Uri(
+        `web+stellar:pay?destination=${SEP23_MUXED_CONTRACT}&amount=120.123&asset_code=USD&asset_issuer=GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB&callback=url%3Ahttps%3A%2F%2FsomeSigningService.com%2Fhasysda987fs%3Fasset%3DUSD`,
       ),
     ).toBeInstanceOf(Sep7Pay);
   });
@@ -1066,4 +1088,75 @@ describe("SEP-7 byte encoding regressions", () => {
     // The decisive check: it must parse back into the same transaction.
     expect(uri.getTransaction().toXdr()).toEqual(tx.toXdr());
   });
+});
+
+describe("SEP-7 with muxed contract (W) addresses", () => {
+  it.each([
+    ["mux ID 0", SEP23_MUXED_CONTRACT],
+    ["the largest mux ID", MUXED_CONTRACT_MAX_ID],
+  ])(
+    "parses a 'pay' uri to a W address with %s and keeps the address as given",
+    (_, destination) => {
+      const uri = parseSep7Uri(
+        `web+stellar:pay?destination=${destination}&amount=10&asset_code=USDC&asset_issuer=GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5`,
+      );
+
+      expect(uri).toBeInstanceOf(Sep7Pay);
+      expect((uri as Sep7Pay).destination).toBe(destination);
+    },
+  );
+
+  it("rejects a 'pay' uri to a W address whose checksum doesn't match", () => {
+    expect(
+      isValidSep7Uri(
+        `web+stellar:pay?destination=${MUXED_CONTRACT_BAD_CHECKSUM}&amount=10`,
+      ),
+    ).toEqual({
+      result: false,
+      reason:
+        "the provided 'destination' parameter is not a valid Stellar address",
+    });
+  });
+
+  it("parses a 'tx' uri whose transaction pays a W address", () => {
+    const uri = `web+stellar:tx?xdr=${encodeURIComponent(
+      TRANSFER_TO_MUXED_CONTRACT_XDR,
+    )}&network_passphrase=${encodeURIComponent(Networks.TESTNET)}`;
+
+    expect(isValidSep7Uri(uri)).toEqual({ result: true });
+
+    const tx = (parseSep7Uri(uri) as Sep7Tx).getTransaction();
+    expect(transferRecipient(tx)).toBe(MUXED_CONTRACT_MAX_ID);
+    expect(tx.toXdr()).toBe(TRANSFER_TO_MUXED_CONTRACT_XDR);
+  });
+});
+
+// A C or W address can only be paid with a Stellar Asset Contract transfer, and
+// that's a Soroban transaction, which can't carry a memo.
+describe("SEP-7 'pay' to a contract (C or W) address with a memo", () => {
+  it.each([
+    ["C", "a MEMO_TEXT", SEP23_CONTRACT, "&memo=skdjfasf&memo_type=MEMO_TEXT"],
+    ["C", "a MEMO_ID", SEP23_CONTRACT, "&memo=1234&memo_type=MEMO_ID"],
+    ["C", "an untyped", SEP23_CONTRACT, "&memo=skdjfasf"],
+    [
+      "W",
+      "a MEMO_TEXT",
+      SEP23_MUXED_CONTRACT,
+      "&memo=skdjfasf&memo_type=MEMO_TEXT",
+    ],
+    ["W", "a MEMO_ID", SEP23_MUXED_CONTRACT, "&memo=1234&memo_type=MEMO_ID"],
+    ["W", "an untyped", SEP23_MUXED_CONTRACT, "&memo=skdjfasf"],
+  ])(
+    "rejects a 'pay' uri to a %s address that has %s memo",
+    (_, __, destination, memoParams) => {
+      const uri = `web+stellar:pay?destination=${destination}&amount=10${memoParams}`;
+
+      expect(isValidSep7Uri(uri)).toEqual({
+        result: false,
+        reason:
+          "the 'memo' parameter is not supported for a contract ('C') or muxed contract ('W') 'destination'",
+      });
+      expect(() => parseSep7Uri(uri)).toThrow(Sep7InvalidUriError);
+    },
+  );
 });

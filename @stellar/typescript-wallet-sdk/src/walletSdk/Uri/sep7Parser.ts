@@ -78,17 +78,33 @@ export const isValidSep7Uri = (uri: string): IsValidSep7UriResult => {
   }
 
   if (type === Sep7OperationType.pay && destination) {
-    // Checks if it's a valid "G", "M" or "C" Stellar address
+    const isContract =
+      StrKey.isValidContract(destination) ||
+      StrKey.isValidMuxedContract(destination);
+
+    // Checks if it's a valid "G", "M", "C" or "W" Stellar address
     const isValidStellarAddress =
       StrKey.isValidEd25519PublicKey(destination) ||
       StrKey.isValidMed25519PublicKey(destination) ||
-      StrKey.isValidContract(destination);
+      isContract;
 
     if (!isValidStellarAddress) {
       return {
         result: false,
         reason:
           "the provided 'destination' parameter is not a valid Stellar address",
+      };
+    }
+
+    // A "C" (contract) or "W" (muxed contract) address can only be paid with
+    // a Stellar Asset Contract transfer. That's a Soroban transaction, which
+    // can't have a memo, so a wallet could only drop it. A "W" address's mux
+    // ID already identifies the payee.
+    if (isContract && url.searchParams.get("memo")) {
+      return {
+        result: false,
+        reason:
+          "the 'memo' parameter is not supported for a contract ('C') or muxed contract ('W') 'destination'",
       };
     }
   }

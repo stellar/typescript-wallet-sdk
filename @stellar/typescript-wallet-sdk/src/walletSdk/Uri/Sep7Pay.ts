@@ -45,6 +45,10 @@ export class Sep7Pay extends Sep7Base {
    * Gets the destination of the payment request, which should be a valid
    * Stellar address.
    *
+   * A contract ("C...") or muxed contract ("W...") destination can only be
+   * paid with a Stellar Asset Contract transfer, not a classic payment, and a
+   * uri with one can't have a memo.
+   *
    * @returns {string | undefined} the 'destination' uri param if present.
    */
   get destination(): string | undefined {
