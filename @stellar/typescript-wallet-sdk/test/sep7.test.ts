@@ -1,12 +1,17 @@
 import {
   Account,
+  Address,
   Asset,
   BASE_FEE,
   Keypair,
   Networks,
   Operation,
   StellarToml,
+  Transaction,
   TransactionBuilder,
+  nativeToScVal,
+  rpc,
+  xdr,
 } from "@stellar/stellar-sdk";
 import {
   NativeAssetId,
@@ -33,6 +38,7 @@ import {
   MUXED_CONTRACT_MAX_ID,
   SEP23_CONTRACT,
   SEP23_MUXED_CONTRACT,
+  TESTNET_NATIVE_SAC,
   TRANSFER_TO_MUXED_CONTRACT_XDR,
   transferRecipient,
 } from "./fixtures/muxedContract";
@@ -1129,6 +1135,52 @@ describe("SEP-7 with muxed contract (W) addresses", () => {
     expect(transferRecipient(tx)).toBe(MUXED_CONTRACT_MAX_ID);
     expect(tx.toXdr()).toBe(TRANSFER_TO_MUXED_CONTRACT_XDR);
   });
+});
+
+// Runs on testnet, which needs Protocol 30 for a W address to go on chain. A
+// dapp builds the transfer, has RPC add its Soroban data and passes it to a
+// wallet as a 'tx' uri, which the wallet signs and submits.
+describe("SEP-7 'tx' uri for a transfer to a W address, on testnet", () => {
+  it("is signed and submitted by a wallet, and the network keeps the W", async () => {
+    const stellar = Wallet.TestNet().stellar();
+    const sourceKp = stellar.account().createKeypair();
+    await stellar.fundTestnetAccount(sourceKp.publicKey);
+
+    const txBuilder = await stellar.transaction({ sourceAddress: sourceKp });
+    const transfer = txBuilder
+      .addOperation(
+        Operation.invokeContractFunction({
+          contract: TESTNET_NATIVE_SAC,
+          function: "transfer",
+          args: [
+            new Address(sourceKp.publicKey).toScVal(),
+            new Address(MUXED_CONTRACT_MAX_ID).toScVal(),
+            nativeToScVal(12345, { type: "i128" }),
+          ],
+        }),
+      )
+      .build();
+    const prepared = await new rpc.Server(
+      "https://soroban-testnet.stellar.org",
+    ).prepareTransaction(transfer);
+    const uri = Sep7Tx.forTransaction(prepared).toString();
+
+    expect(isValidSep7Uri(uri)).toEqual({ result: true });
+    const tx = (parseSep7Uri(uri) as Sep7Tx).getTransaction();
+    expect(transferRecipient(tx)).toBe(MUXED_CONTRACT_MAX_ID);
+
+    sourceKp.sign(tx);
+    expect(await stellar.submitTransaction(tx)).toBe(true);
+
+    const record = await stellar.server
+      .transactions()
+      .transaction(xdr.encodeBytes(tx.hash(), "hex"))
+      .call();
+    const onChain = stellar.decodeTransaction(
+      record.envelope_xdr,
+    ) as Transaction;
+    expect(transferRecipient(onChain)).toBe(MUXED_CONTRACT_MAX_ID);
+  }, 60000);
 });
 
 // A C or W address can only be paid with a Stellar Asset Contract transfer, and
