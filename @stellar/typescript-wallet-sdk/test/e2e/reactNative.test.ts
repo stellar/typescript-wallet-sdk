@@ -19,9 +19,22 @@ import * as vm from "vm";
  */
 const BANNED = ["Buffer", "Event", "EventTarget", "process"];
 
+// Behaves like fast-text-encoding 1.0.6, a TextDecoder that React Native apps
+// commonly install on Hermes: its constructor throws for `{ fatal: true }`.
+const NonFatalTextDecoder = function (
+  label?: string,
+  options?: TextDecoderOptions,
+) {
+  if (options?.fatal) {
+    throw new RangeError("the 'fatal' option is unsupported");
+  }
+  return new TextDecoder(label, options);
+} as unknown as typeof TextDecoder;
+
 const makeHermesLikeContext = ({
   includeBase64 = true,
   includeTextCodec = true,
+  textDecoder = TextDecoder,
 } = {}) => {
   const sandbox: Record<string, unknown> = {
     console,
@@ -56,7 +69,7 @@ const makeHermesLikeContext = ({
     // "TypeError: globalThis.TextDecoder is not a constructor" at load —
     // before any of our own code runs. See the test below that enforces this.
     sandbox.TextEncoder = TextEncoder;
-    sandbox.TextDecoder = TextDecoder;
+    sandbox.TextDecoder = textDecoder;
   }
 
   if (includeBase64) {
@@ -126,6 +139,25 @@ describe("React Native (Hermes-like) bundle compatibility", () => {
     });
   }
 
+  for (const [name, relativePath] of bundles) {
+    it(`loads the ${name} bundle with a TextDecoder that can't decode strictly`, () => {
+      // stellar-sdk 17.3+ builds a strict (`{ fatal: true }`) TextDecoder only
+      // when it decodes something: a stellar.toml or federation response, or
+      // an XdrString read with toStringStrict(). Loading a bundle must not
+      // need one, or an app whose TextDecoder can't decode strictly would
+      // crash on startup instead of only on those calls.
+      const bundlePath = path.resolve(__dirname, relativePath);
+      const context = makeHermesLikeContext({
+        textDecoder: NonFatalTextDecoder,
+      });
+      const code = fs.readFileSync(bundlePath, "utf8");
+
+      expect(() =>
+        vm.runInContext(code, context, { filename: `${name}.js` }),
+      ).not.toThrow();
+    });
+  }
+
   it("exercises the core SDK public API in the sandbox", () => {
     const context = makeHermesLikeContext();
     const code = fs.readFileSync(
@@ -152,6 +184,46 @@ describe("React Native (Hermes-like) bundle compatibility", () => {
     // encoder yields comma-joined decimals.
     expect(result.signature).toMatch(/^[A-Za-z0-9+/]+={0,2}$/);
     expect(result.signature).toHaveLength(88);
+  });
+
+  it("verifies a SEP-7 signature only with a TextDecoder that decodes strictly", async () => {
+    // Verifying reads the origin domain's stellar.toml, and stellar-sdk 17.3+
+    // decodes stellar.toml and federation responses with a strict
+    // (`{ fatal: true }`) TextDecoder. With a TextDecoder that can't build
+    // one, verifySignature() fails closed and returns false for a valid
+    // signature, and Anchor.sep1() rejects.
+    const verifyWith = (textDecoder: typeof TextDecoder) => {
+      const context = makeHermesLikeContext({ textDecoder });
+      // React Native provides these, and the SDK's stellar.toml fetch uses
+      // them. The fetch stub serves the toml that the code below writes.
+      Object.assign(context, {
+        Headers,
+        AbortController,
+        AbortSignal,
+        fetch: () => Promise.resolve(new Response(context.stellarToml)),
+      });
+      const code = fs.readFileSync(
+        path.resolve(__dirname, "../../lib/bundle_browser.js"),
+        "utf8",
+      );
+      vm.runInContext(code, context, { filename: "bundle_browser.js" });
+
+      return vm.runInContext(
+        `(() => {
+          const { Wallet, Sep7Pay } = module.exports;
+          const kp = Wallet.TestNet().stellar().account().createKeypair();
+          globalThis.stellarToml = 'URI_REQUEST_SIGNING_KEY="' + kp.publicKey + '"';
+          const uri = Sep7Pay.forDestination(kp.publicKey);
+          uri.originDomain = "example.com";
+          uri.addSignature(kp.keypair);
+          return uri.verifySignature();
+        })()`,
+        context,
+      ) as Promise<boolean>;
+    };
+
+    expect(await verifyWith(TextDecoder)).toBe(true);
+    expect(await verifyWith(NonFatalTextDecoder)).toBe(false);
   });
 
   it("requires btoa/atob for base64 paths, while base32/StrKey keypair creation stays pure JS", () => {
