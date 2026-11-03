@@ -1,3 +1,16 @@
+# Release notes - Typescript Wallet SDK - 6.0.0
+
+### BREAKING CHANGES
+* **React Native: reading a `stellar.toml` needs a `TextDecoder` that supports `{ fatal: true }`.** stellar-sdk 17.3 and later decodes `stellar.toml` with `TextDecoder("utf-8", { fatal: true })`. Where `TextDecoder` can't be built with `fatal`, as with `fast-text-encoding` on Hermes, `Anchor.sep1()` rejects, and with it every call that needs the anchor's `stellar.toml`, and `verifySignature()` on a SEP-7 URI returns `false` for a valid signature. Both worked with such a `TextDecoder` in 5.1.0. Loading the bundle doesn't need one. Verified in a Hermes-like sandbox test
+* `isValidSep7Uri` and `parseSep7Uri` reject a `pay` URI that has a `memo` when its destination is a contract (`C…`) or muxed contract (`W…`) address. Paying either takes a Soroban transaction, and the network rejects a Soroban transaction that has a memo, so a wallet could only drop the memo. A `C…` destination with a memo used to be accepted
+
+### Added
+* Protocol 30 support: upgraded `@stellar/stellar-sdk` from `17.0.1` to `17.4.0`, which adds CAP-84 muxed contract (`W…`) addresses. `Stellar.decodeTransaction` and `Sep7Tx.getTransaction` decode a transaction that contains one, and `isValidSep7Uri` accepts a `tx` URI whose transaction contains one. Before, decoding such a transaction threw, so `isValidSep7Uri` returned `false`
+* `isValidSep7Uri` and `parseSep7Uri` accept a muxed contract (`W…`) address as a `pay` destination. As with a contract (`C…`) address, a wallet can only pay it with a Stellar Asset Contract `transfer`. `TransactionBuilder`'s `transfer`, `pathPay` and `accountMerge` reject it, as before
+
+### Changed
+* Stricter checks from stellar-sdk 17.1 to 17.4 that reach this SDK: `AccountService.getInfo` and `getHistory` reject with a `TypeError` for an empty account address, which used to query a different Horizon endpoint; `Sep10.authenticate` and `Server.signChallengeTransaction` reject a challenge whose `client_domain` operation has no source account or uses the server account as its source; `Anchor.sep1()` rejects a `homeDomain` with credentials, a path, a query or a fragment before making a request; and a `stellar.toml` that isn't valid UTF-8 fails to load. See the stellar-sdk changelog for the full list
+
 # Release notes - Typescript Wallet SDK - 5.1.0
 
 ### Added
