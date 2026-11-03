@@ -1,12 +1,10 @@
 # Release notes - Typescript Wallet SDK Key Manager - 6.0.0
 
-This package has no breaking changes. It moves to 6.0.0 to stay in lockstep with the core SDK.
+### BREAKING CHANGES
+* `KeyManager.fetchAuthToken` rejects a challenge whose `client_domain` operation has no source account or uses the server account as its source, throwing stellar-sdk's `InvalidChallengeError`. stellar-sdk 17.3's `WebAuth.readChallengeTx` added this check, since SEP-10 requires that source to be the client domain's signing key. 5.1.0 accepted such a challenge
 
 ### Added
 * Protocol 30 support: upgraded `@stellar/stellar-sdk` from `17.0.1` to `17.4.0`, which adds CAP-84 muxed contract (`W…`) addresses. The Albedo and Freighter handlers read back a signed transaction that contains one. Before, decoding the signed envelope threw
-
-### Changed
-* `KeyManager.fetchAuthToken` rejects a challenge whose `client_domain` operation has no source account or uses the server account as its source, as stellar-sdk 17.3's `WebAuth.readChallengeTx` does
 
 **Consumer note:** the key-store surface (`KeyManager`'s `registerEncrypter`, `storeKey`, `loadKey`, `loadAllKeyIds`, `removeKey` and `changePassword`, the keystores and the encrypters) doesn't use stellar-sdk and is unchanged, so upgrading from 5.x needs no code changes for it. Consumers that also depend on `@stellar/stellar-sdk` directly should align their pin to `17.4.0`, since this package bundles that exact version.
 
