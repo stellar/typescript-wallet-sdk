@@ -11,6 +11,10 @@ import { Address, scValToNative, xdr } from "@stellar/stellar-sdk";
  * @returns the smart contract value converted to a common/simpler
  *     value like string, array, hex string, JSON string, etc.
  *
+ * @throws {TypeError} when a map, at any depth, has two keys that convert to
+ *     the same JSON key, such as u32 1 and symbol "1", instead of rendering it
+ *     without one of them.
+ *
  * @example
  *   const accountAddress = xdr.ScVal.scvAddress(
  *     new Address("GBBM6BKZPEHWYO3E3YKREDPQXMS4VK35YLNU7NFBRI26RAN7GI5POFBB").toScAddress(),
@@ -21,8 +25,8 @@ import { Address, scValToNative, xdr } from "@stellar/stellar-sdk";
 export const scValByType = (scVal: xdr.ScVal) => {
   switch (scVal.type) {
     case "scvAddress":
-      // Address.fromScAddress covers all five ScAddress variants, so no
-      // per-variant branching is needed here.
+      // Address.fromScAddress covers every ScAddress variant, muxed contract
+      // (W...) addresses included, so no per-variant branching is needed here.
       return Address.fromScAddress(scVal.address).toString();
 
     case "scvBool":

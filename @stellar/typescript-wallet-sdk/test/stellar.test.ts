@@ -22,6 +22,11 @@ import {
 } from "../src/walletSdk/Asset";
 import { TransactionStatus, WithdrawTransaction } from "../src/walletSdk/Types";
 import {
+  MUXED_CONTRACT_MAX_ID,
+  TRANSFER_TO_MUXED_CONTRACT_XDR,
+  transferRecipient,
+} from "./fixtures/muxedContract";
+import {
   TransactionSubmitWithFeeIncreaseFailedError,
   WithdrawalTxMemoError,
   WithdrawalTxMissingDestinationError,
@@ -816,5 +821,16 @@ describe("transferWithdrawalTransaction memo validation", () => {
         usdc(),
       ),
     ).toThrow(WithdrawalTxMemoError);
+  });
+});
+
+describe("decodeTransaction with a muxed contract (W) address", () => {
+  it("decodes a transfer to a W address and re-encodes it unchanged", () => {
+    const tx = Wallet.TestNet()
+      .stellar()
+      .decodeTransaction(TRANSFER_TO_MUXED_CONTRACT_XDR) as Transaction;
+
+    expect(transferRecipient(tx)).toBe(MUXED_CONTRACT_MAX_ID);
+    expect(tx.toXdr()).toBe(TRANSFER_TO_MUXED_CONTRACT_XDR);
   });
 });

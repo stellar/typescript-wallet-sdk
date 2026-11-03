@@ -52,6 +52,9 @@ const args = getTokenInvocationArgs(op);
     to: "GDUBMXMABE7UOZSGYJ5ONE7UYAEHKK3JOX7HZQGNZ7NYTZPPP4AJ2GQJ",
     amount: 5
   }
+
+  `to` is the recipient as the invocation names it, so it can also be a muxed
+  account (M...) or, since Protocol 30, a muxed contract (W...) address.
 */
 
 const formattedAmount = formatTokenAmount("10000123", 3);
@@ -77,4 +80,6 @@ const accountAddress = xdr.ScVal.scvAddress(
 const addressString = scValByType(accountAddress);
 // converts smart contract complex value into a simple string
 // addressString = "GBBM6BKZPEHWYO3E3YKREDPQXMS4VK35YLNU7NFBRI26RAN7GI5POFBB"
+// Every address type renders as its strkey, including Protocol 30 muxed
+// contract (W...) addresses.
 ```

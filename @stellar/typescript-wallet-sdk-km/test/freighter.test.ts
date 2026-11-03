@@ -7,9 +7,15 @@ import {
   Transaction,
   Asset,
   BASE_FEE,
+  WebAuth,
 } from "@stellar/stellar-sdk";
 import freighterApi from "@stellar/freighter-api";
 
+import {
+  MUXED_CONTRACT_MAX_ID,
+  buildTransferToMuxedContract,
+  transferRecipient,
+} from "./fixtures/muxedContract";
 import { freighterHandler } from "../src/Handlers/freighter";
 import { Key, KeyType } from "../src/Types";
 
@@ -86,6 +92,36 @@ describe("freighterHandler", () => {
       networkPassphrase,
       address: undefined,
     });
+  });
+
+  it("returns the signed transaction with its muxed contract (W) recipient intact", async () => {
+    const networkPassphrase = Networks.TESTNET;
+    const signer = Keypair.random();
+    const tx = buildTransferToMuxedContract(
+      signer.publicKey(),
+      networkPassphrase,
+    );
+    const key = makeFreighterKey({ publicKey: signer.publicKey() });
+
+    // Freighter answers with the envelope it signed
+    const signed = TransactionBuilder.fromXdr(
+      tx.toXdr(),
+      networkPassphrase,
+    ) as Transaction;
+    signed.sign(signer);
+    mockSignTransaction.mockResolvedValue({
+      signedTxXdr: signed.toXdr(),
+      signerAddress: signer.publicKey(),
+    });
+
+    const result = await freighterHandler.signTransaction({
+      transaction: tx,
+      key,
+      custom: { networkPassphrase },
+    });
+
+    expect(transferRecipient(result)).toBe(MUXED_CONTRACT_MAX_ID);
+    expect(WebAuth.verifyTxSignedBy(result, signer.publicKey())).toBe(true);
   });
 
   it("passes custom.address through to freighter", async () => {

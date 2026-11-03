@@ -22,6 +22,16 @@ import {
 } from "../src";
 import { makeInvocation, randomContracts, randomKey } from "./utils";
 
+// Protocol 30 (CAP-84) muxed contract addresses. SEP-23's test vector is this
+// contract with mux ID 0. The other is the same contract with the largest mux
+// ID, 2^64 - 1, which a JS number can't hold exactly.
+const SEP23_CONTRACT =
+  "CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUWDA";
+const SEP23_MUXED_CONTRACT =
+  "WA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAAAAAAAAAWWC";
+const MUXED_CONTRACT_MAX_ID =
+  "WA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJV7777777777777GMO";
+
 const transactions = {
   classic:
     "AAAAAgAAAACCMXQVfkjpO2gAJQzKsUsPfdBCyfrvy7sr8+35cOxOSwAAAGQABqQMAAAAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAACCMXQVfkjpO2gAJQzKsUsPfdBCyfrvy7sr8+35cOxOSwAAAAAAmJaAAAAAAAAAAAFw7E5LAAAAQBu4V+/lttEONNM6KFwdSf5TEEogyEBy0jTOHJKuUzKScpLHyvDJGY+xH9Ri4cIuA7AaB8aL+VdlucCfsNYpKAY=",
@@ -29,6 +39,9 @@ const transactions = {
     "AAAAAgAAAACM6IR9GHiRoVVAO78JJNksy2fKDQNs2jBn8bacsRLcrDucaFsAAAWIAAAAMQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAGAAAAAAAAAABHkEVdJ+UfDnWpBr/qF582IEoDQ0iW0WPzO9CEUdvvh8AAAAIdHJhbnNmZXIAAAADAAAAEgAAAAAAAAAAjOiEfRh4kaFVQDu/CSTZLMtnyg0DbNowZ/G2nLES3KwAAAASAAAAAAAAAADoFl2ACT9HZkbCeuaT9MAIdStpdf58wM3P24nl738AnQAAAAoAAAAAAAAAAAAAAAAAAAAFAAAAAQAAAAAAAAAAAAAAAR5BFXSflHw51qQa/6hefNiBKA0NIltFj8zvQhFHb74fAAAACHRyYW5zZmVyAAAAAwAAABIAAAAAAAAAAIzohH0YeJGhVUA7vwkk2SzLZ8oNA2zaMGfxtpyxEtysAAAAEgAAAAAAAAAA6BZdgAk/R2ZGwnrmk/TACHUraXX+fMDNz9uJ5e9/AJ0AAAAKAAAAAAAAAAAAAAAAAAAABQAAAAAAAAABAAAAAAAAAAIAAAAGAAAAAR5BFXSflHw51qQa/6hefNiBKA0NIltFj8zvQhFHb74fAAAAFAAAAAEAAAAHa35L+/RxV6EuJOVk78H5rCN+eubXBWtsKrRxeLnnpRAAAAACAAAABgAAAAEeQRV0n5R8OdakGv+oXnzYgSgNDSJbRY/M70IRR2++HwAAABAAAAABAAAAAgAAAA8AAAAHQmFsYW5jZQAAAAASAAAAAAAAAACM6IR9GHiRoVVAO78JJNksy2fKDQNs2jBn8bacsRLcrAAAAAEAAAAGAAAAAR5BFXSflHw51qQa/6hefNiBKA0NIltFj8zvQhFHb74fAAAAEAAAAAEAAAACAAAADwAAAAdCYWxhbmNlAAAAABIAAAAAAAAAAOgWXYAJP0dmRsJ65pP0wAh1K2l1/nzAzc/bieXvfwCdAAAAAQBkcwsAACBwAAABKAAAAAAAAB1kAAAAAA==",
   sorobanMint:
     "AAAAAgAAAACM6IR9GHiRoVVAO78JJNksy2fKDQNs2jBn8bacsRLcrDucQIQAAAWIAAAAMQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAGAAAAAAAAAABHkEVdJ+UfDnWpBr/qF582IEoDQ0iW0WPzO9CEUdvvh8AAAAEbWludAAAAAIAAAASAAAAAAAAAADoFl2ACT9HZkbCeuaT9MAIdStpdf58wM3P24nl738AnQAAAAoAAAAAAAAAAAAAAAAAAAAFAAAAAQAAAAAAAAAAAAAAAR5BFXSflHw51qQa/6hefNiBKA0NIltFj8zvQhFHb74fAAAABG1pbnQAAAACAAAAEgAAAAAAAAAA6BZdgAk/R2ZGwnrmk/TACHUraXX+fMDNz9uJ5e9/AJ0AAAAKAAAAAAAAAAAAAAAAAAAABQAAAAAAAAABAAAAAAAAAAIAAAAGAAAAAR5BFXSflHw51qQa/6hefNiBKA0NIltFj8zvQhFHb74fAAAAFAAAAAEAAAAHa35L+/RxV6EuJOVk78H5rCN+eubXBWtsKrRxeLnnpRAAAAABAAAABgAAAAEeQRV0n5R8OdakGv+oXnzYgSgNDSJbRY/M70IRR2++HwAAABAAAAABAAAAAgAAAA8AAAAHQmFsYW5jZQAAAAASAAAAAAAAAADoFl2ACT9HZkbCeuaT9MAIdStpdf58wM3P24nl738AnQAAAAEAYpBIAAAfrAAAAJQAAAAAAAAdYwAAAAA=",
+  // Testnet native XLM SAC transfer(GDVEU3..., MUXED_CONTRACT_MAX_ID, 12345)
+  sorobanTransferToMuxedContract:
+    "AAAAAgAAAADqSmxj4pxSCr71UHsTLsX5lUd2rr6+e5JCHuppFEbSLAAAAGQAAAAAAAAAZAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAGAAAAAAAAAAB15KLcsJwPM/q9+uf9O9NUEpVqLl5/JtFDqLIQrTRzmEAAAAIdHJhbnNmZXIAAAADAAAAEgAAAAAAAAAA6kpsY+KcUgq+9VB7Ey7F+ZVHdq6+vnuSQh7qaRRG0iwAAAASAAAABf//////////Pww0v5OtDZlx0EzMkPcFURyDiq2XNKSi+w16A/x/6JoAAAAKAAAAAAAAAAAAAAAAAAAwOQAAAAAAAAAAAAAAAA==",
 };
 
 describe("getTokenInvocationArgs for different function names", () => {
@@ -84,6 +97,22 @@ describe("getTokenInvocationArgs for different function names", () => {
     const args = getTokenInvocationArgs(op);
 
     expect(args).toBe(null);
+  });
+
+  it("get token invocation args for a Soroban transfer to a muxed contract (W) address", () => {
+    const transaction = TransactionBuilder.fromXDR(
+      transactions.sorobanTransferToMuxedContract,
+      Networks.TESTNET,
+    ) as Transaction;
+    const op = transaction.operations[0] as Operation.InvokeHostFunction;
+
+    expect(getTokenInvocationArgs(op)).toEqual({
+      fnName: SorobanTokenInterface.transfer,
+      contractId: "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+      from: "GDVEU3DD4KOFECV66VIHWEZOYX4ZKR3WV27L464SIIPOU2IUI3JCZA57",
+      to: MUXED_CONTRACT_MAX_ID,
+      amount: BigInt(12345),
+    });
   });
 });
 
@@ -298,6 +327,22 @@ describe("scValByType should render expected common types", () => {
         2,
       ),
     );
+  });
+
+  it("should throw, not drop an entry, when two map keys render as the same JSON key", () => {
+    // u32 1 and symbol "1" both become the JSON key "1"
+    const xdrMap = xdr.ScVal.scvMap([
+      new xdr.ScMapEntry({
+        key: xdr.ScVal.scvU32(1),
+        val: xdr.ScVal.scvU32(10),
+      }),
+      new xdr.ScMapEntry({
+        key: xdr.ScVal.scvSymbol("1"),
+        val: xdr.ScVal.scvU32(20),
+      }),
+    ]);
+
+    expect(() => scValByType(xdrMap)).toThrow(TypeError);
   });
 
   it("should possibly render strings and symbols as strings", () => {
@@ -995,7 +1040,7 @@ describe("scValByType Protocol 28 and address coverage", () => {
     expect(renderedA).not.toEqual(renderedB);
   });
 
-  it("renders all five ScAddress variants", () => {
+  it("renders all six ScAddress variants", () => {
     const account = Keypair.random().publicKey();
     const contract = StrKey.encodeContract(new Uint8Array(32).fill(3));
 
@@ -1026,6 +1071,16 @@ describe("scValByType Protocol 28 and address coverage", () => {
         ),
         "L",
       ],
+      [
+        xdr.ScAddress.scAddressTypeMuxedContract(
+          new xdr.MuxedContract({
+            id: BigInt(1),
+            contractId: new xdr.ContractId(StrKey.decodeContract(contract)),
+          }),
+        ),
+        // Muxed contracts encode to a W-address.
+        "W",
+      ],
     ];
 
     for (const [scAddress, expected] of cases) {
@@ -1034,6 +1089,23 @@ describe("scValByType Protocol 28 and address coverage", () => {
       expect(rendered.startsWith(expected)).toBe(true);
     }
   });
+
+  it.each([
+    ["0", SEP23_MUXED_CONTRACT],
+    ["18446744073709551615", MUXED_CONTRACT_MAX_ID],
+  ])(
+    "renders a muxed contract address with mux ID %s as its exact W-address",
+    (id, expected) => {
+      const scAddress = xdr.ScAddress.scAddressTypeMuxedContract(
+        new xdr.MuxedContract({
+          id: BigInt(id),
+          contractId: new xdr.ContractId(StrKey.decodeContract(SEP23_CONTRACT)),
+        }),
+      );
+
+      expect(scValByType(xdr.ScVal.scvAddress(scAddress))).toBe(expected);
+    },
+  );
 
   it("returns null for an unhandled ScVal type", () => {
     expect(scValByType(xdr.ScVal.scvVoid())).toBeNull();
@@ -1103,5 +1175,18 @@ describe("getTokenInvocationArgs address handling", () => {
     expect(args.from.startsWith("M")).toBe(true);
     expect(args.to).toEqual(account);
     expect(args.amount).toEqual(BigInt(5));
+  });
+
+  it("resolves a muxed contract (W) recipient in a mint", () => {
+    const args = getArgsForTokenInvocation(SorobanTokenInterface.mint, [
+      xdr.ScVal.scvAddress(new Address(SEP23_MUXED_CONTRACT).toScAddress()),
+      xdr.ScVal.scvI128(new xdr.Int128Parts({ hi: BigInt(0), lo: BigInt(5) })),
+    ]);
+
+    expect(args).toEqual({
+      from: "",
+      to: SEP23_MUXED_CONTRACT,
+      amount: BigInt(5),
+    });
   });
 });
