@@ -30,6 +30,7 @@ import {
   URI_REPLACE_MAX_LENGTH,
 } from "../src/walletSdk/Types";
 import {
+  Sep7ContractMemoError,
   Sep7InvalidUriError,
   Sep7LongMsgError,
 } from "../src/walletSdk/Exceptions";
@@ -1211,4 +1212,75 @@ describe("SEP-7 'pay' to a contract (C or W) address with a memo", () => {
       expect(() => parseSep7Uri(uri)).toThrow(Sep7InvalidUriError);
     },
   );
+});
+
+// Sep7Pay shouldn't build a uri that parseSep7Uri rejects.
+describe("Sep7Pay with a memo and a contract (C or W) destination", () => {
+  const ACCOUNT = "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO";
+  const MUXED_ACCOUNT =
+    "MA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAAAAAABUTGI4";
+
+  describe.each([
+    ["C", SEP23_CONTRACT],
+    ["W", SEP23_MUXED_CONTRACT],
+  ])("to a %s address", (_, destination) => {
+    it("the memo setter throws and leaves the uri unchanged", () => {
+      const uri = Sep7Pay.forDestination(destination);
+
+      expect(() => {
+        uri.memo = "skdjfasf";
+      }).toThrow(Sep7ContractMemoError);
+      expect(uri.toString()).toBe(`web+stellar:pay?destination=${destination}`);
+    });
+
+    it("the destination setter throws on a uri that has a memo and leaves it unchanged", () => {
+      const uri = Sep7Pay.forDestination(ACCOUNT);
+      uri.memo = "skdjfasf";
+
+      expect(() => {
+        uri.destination = destination;
+      }).toThrow(Sep7ContractMemoError);
+      expect(uri.toString()).toBe(
+        `web+stellar:pay?destination=${ACCOUNT}&memo=skdjfasf`,
+      );
+    });
+
+    it("the constructor throws on a uri that has a memo", () => {
+      expect(
+        () =>
+          new Sep7Pay(
+            `web+stellar:pay?destination=${destination}&memo=skdjfasf`,
+          ),
+      ).toThrow(Sep7ContractMemoError);
+    });
+
+    it("builds a uri that parses once the memo is cleared", () => {
+      const uri = Sep7Pay.forDestination(ACCOUNT);
+      uri.memo = "skdjfasf";
+      uri.memo = undefined;
+      uri.destination = destination;
+      uri.amount = "10";
+
+      expect(() => {
+        uri.memo = undefined;
+      }).not.toThrow();
+      expect(uri.toString()).toBe(
+        `web+stellar:pay?destination=${destination}&amount=10`,
+      );
+      expect(parseSep7Uri(uri.toString())).toBeInstanceOf(Sep7Pay);
+    });
+  });
+
+  it.each([
+    ["G", ACCOUNT],
+    ["M", MUXED_ACCOUNT],
+  ])("the memo setter accepts a %s destination", (_, destination) => {
+    const uri = Sep7Pay.forDestination(destination);
+    uri.memo = "skdjfasf";
+
+    expect(uri.toString()).toBe(
+      `web+stellar:pay?destination=${destination}&memo=skdjfasf`,
+    );
+    expect(parseSep7Uri(uri.toString())).toBeInstanceOf(Sep7Pay);
+  });
 });

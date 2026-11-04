@@ -1,6 +1,31 @@
-import { MemoType } from "@stellar/stellar-sdk";
+import { MemoType, StrKey } from "@stellar/stellar-sdk";
 import { Sep7Base } from "../Uri";
 import { Sep7OperationType, WEB_STELLAR_SCHEME } from "../Types";
+import { Sep7ContractMemoError } from "../Exceptions";
+
+/**
+ * Throws if a uri would have a memo with a contract ("C...") or muxed
+ * contract ("W...") destination, which 'parseSep7Uri' rejects. Paying either
+ * takes a Soroban transaction, which can't have a memo.
+ *
+ * @param {string | undefined} destination the uri 'destination' param.
+ * @param {string | undefined} memo the uri 'memo' param.
+ * @throws {Sep7ContractMemoError} if both are set and 'destination' is a
+ * contract or muxed contract address.
+ */
+const assertNoContractMemo = (
+  destination: string | undefined,
+  memo: string | undefined,
+) => {
+  if (
+    memo &&
+    destination &&
+    (StrKey.isValidContract(destination) ||
+      StrKey.isValidMuxedContract(destination))
+  ) {
+    throw new Sep7ContractMemoError();
+  }
+};
 
 /**
  * The Sep-7 'pay' operation represents a request to pay a specific address
@@ -27,9 +52,13 @@ export class Sep7Pay extends Sep7Base {
    *
    * @constructor
    * @param {URL | string} [uri] - uri to initialize the Sep7 instance.
+   * @throws {Sep7ContractMemoError} if 'uri' has a memo and a contract ("C...")
+   * or muxed contract ("W...") destination.
    */
   constructor(uri?: URL | string) {
     super(uri ?? new URL(`${WEB_STELLAR_SCHEME}${Sep7OperationType.pay}`));
+
+    assertNoContractMemo(this.destination, this.memo);
   }
 
   /**
@@ -62,8 +91,12 @@ export class Sep7Pay extends Sep7Base {
    * Deletes the uri 'destination' param if set as 'undefined'.
    *
    * @param {string | undefined} destination the uri 'destination' param to be set.
+   * @throws {Sep7ContractMemoError} if 'destination' is a contract ("C...") or
+   * muxed contract ("W...") address and the uri has a memo.
    */
   set destination(destination: string | undefined) {
+    assertNoContractMemo(destination, this.memo);
+
     this.setParam("destination", destination);
   }
 
@@ -146,8 +179,12 @@ export class Sep7Pay extends Sep7Base {
    * Deletes the uri 'memo' param if set as 'undefined'.
    *
    * @param {string | undefined} memo the uri 'memo' param to be set.
+   * @throws {Sep7ContractMemoError} if 'memo' is set and the uri's destination
+   * is a contract ("C...") or muxed contract ("W...") address.
    */
   set memo(memo: string | undefined) {
+    assertNoContractMemo(this.destination, memo);
+
     this.setParam("memo", memo);
   }
 
