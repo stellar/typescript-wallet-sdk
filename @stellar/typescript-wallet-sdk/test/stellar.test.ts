@@ -501,6 +501,8 @@ let txnSourceKp;
 let sponsorKp;
 let newKp;
 describe("SponsoringBuilder", () => {
+  // One friendbot call can take 25 s or more on testnet, so this funds both
+  // accounts in parallel and allows 90 s.
   beforeAll(async () => {
     wal = Wallet.TestNet();
     stellar = wal.stellar();
@@ -508,13 +510,11 @@ describe("SponsoringBuilder", () => {
     txnSourceKp = new SigningKeypair(Keypair.random());
     sponsorKp = new SigningKeypair(Keypair.random());
     newKp = new SigningKeypair(Keypair.random());
-    await axios.get(
-      "https://friendbot.stellar.org/?addr=" + sponsorKp.publicKey,
-    );
-    await axios.get(
-      "https://friendbot.stellar.org/?addr=" + txnSourceKp.publicKey,
-    );
-  }, 30000);
+    await Promise.all([
+      axios.get("https://friendbot.stellar.org/?addr=" + sponsorKp.publicKey),
+      axios.get("https://friendbot.stellar.org/?addr=" + txnSourceKp.publicKey),
+    ]);
+  }, 90000);
 
   it("should sponsor creating an account", async () => {
     const wal = Wallet.TestNet();
