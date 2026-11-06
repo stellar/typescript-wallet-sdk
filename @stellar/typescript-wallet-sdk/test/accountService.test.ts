@@ -11,7 +11,8 @@ let accountAddress: string;
 
 describe("Horizon", () => {
   // Creates testing stellar account with USDC trustline
-  // in case it doesn't exist just yet
+  // in case it doesn't exist just yet. One friendbot call can take 25 s or
+  // more on testnet, so this allows 90 s.
   beforeAll(async () => {
     const wallet = Wallet.TestNet();
     const stellar = wallet.stellar();
@@ -46,7 +47,7 @@ describe("Horizon", () => {
     await stellar.submitTransaction(addUsdcTx);
 
     accountAddress = testingAccountKp.publicKey;
-  }, 30000);
+  }, 90000);
 
   it("should return stellar account details", async () => {
     const response = await accountService.getInfo({ accountAddress });

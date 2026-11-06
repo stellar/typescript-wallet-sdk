@@ -2033,6 +2033,7 @@ describe("AuthHeaderSigner", () => {
   beforeAll(() => {
     jest.resetAllMocks();
   });
+  // One friendbot call can take 25 s or more on testnet, so this allows 90 s.
   it("full sep-10 auth using header token should work", async () => {
     const wallet = Wallet.TestNet();
     const accountKp = wallet.stellar().account().createKeypair();
@@ -2054,7 +2055,7 @@ describe("AuthHeaderSigner", () => {
     });
 
     expect(authToken).toBeTruthy();
-  }, 30000);
+  }, 90000);
 
   it("should match example implementation generated JWT", async () => {
     const generatedAuthToken =
