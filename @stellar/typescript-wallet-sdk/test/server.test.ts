@@ -277,6 +277,45 @@ describe("signChallengeTransaction validation", () => {
     ).rejects.toThrow(ChallengeValidationFailedError);
   });
 
+  // WebAuth.readChallengeTx checks these since stellar-sdk 17.3. SEP-10
+  // requires the client_domain operation's source to be the client domain's
+  // signing key.
+  it.each([
+    ["has no source account", "none"],
+    ["uses the server account as its source", "server"],
+  ])(
+    "should reject a challenge whose client_domain operation %s",
+    async (_, clientDomainSource) => {
+      const challenge = TransactionBuilder.cloneFrom(
+        TransactionBuilder.fromXDR(
+          buildChallenge(anchorAKp, anchorA, accountKp.publicKey),
+          networkPassphrase,
+        ) as Transaction,
+      )
+        .addOperation(
+          Operation.manageData({
+            name: "client_domain",
+            value: "wallet.example.com",
+            source:
+              clientDomainSource === "server"
+                ? anchorAKp.publicKey()
+                : undefined,
+          }),
+        )
+        .build();
+      challenge.sign(anchorAKp);
+
+      const result = Server.signChallengeTransaction({
+        accountKp,
+        challengeTx: challenge.toXDR(),
+        networkPassphrase,
+        anchorDomain: anchorA,
+      });
+      await expect(result).rejects.toThrow(ChallengeValidationFailedError);
+      await expect(result).rejects.toThrow(/client_domain/);
+    },
+  );
+
   it("should accept an explicit homeDomain that differs from anchorDomain", async () => {
     const homeDomain = "wallet-home.example.com";
     const challengeTx = buildChallenge(

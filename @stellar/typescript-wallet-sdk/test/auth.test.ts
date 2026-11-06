@@ -726,6 +726,57 @@ describe("Sep10 challenge validation", () => {
     });
   });
 
+  // WebAuth.readChallengeTx checks these since stellar-sdk 17.3. SEP-10
+  // requires the client_domain operation's source to be the client domain's
+  // signing key.
+  describe("client_domain operation source", () => {
+    it.each([
+      ["has no source account", "none"],
+      ["uses the server account as its source", "server"],
+    ])(
+      "should reject a challenge whose client_domain operation %s",
+      async (_, clientDomainSource) => {
+        const serverKeypair = Keypair.random();
+        const clientKeypair = Keypair.random();
+        const { xdr } = buildChallenge({
+          serverKeypair,
+          clientKeypair,
+          additionalOps: [
+            Operation.manageData({
+              name: "client_domain",
+              value: "wallet.example.com",
+              source:
+                clientDomainSource === "server"
+                  ? serverKeypair.publicKey()
+                  : undefined,
+            }),
+          ],
+        });
+        const { sep10, postStub } = setupSep10({
+          serverSigningKey: serverKeypair.publicKey(),
+          challengeXdr: xdr,
+          token: createJwt(clientKeypair),
+        });
+        const signWithDomainAccount = sinon
+          .stub()
+          .rejects(new Error("the challenge should be rejected first"));
+
+        const result = sep10.authenticate({
+          accountKp: SigningKeypair.fromSecret(clientKeypair.secret()),
+          clientDomain: "wallet.example.com",
+          walletSigner: {
+            signWithClientAccount: ({ transaction }) => transaction,
+            signWithDomainAccount,
+          },
+        });
+        await expect(result).rejects.toThrow(ChallengeValidationFailedError);
+        await expect(result).rejects.toThrow(/client_domain/);
+        expect(signWithDomainAccount.notCalled).toBe(true);
+        expect(postStub.notCalled).toBe(true);
+      },
+    );
+  });
+
   describe("network passphrase mismatch", () => {
     it("should reject when server returns a different network passphrase", async () => {
       const { xdr, serverKeypair, clientKeypair } = buildChallenge();

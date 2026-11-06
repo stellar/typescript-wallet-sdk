@@ -1,3 +1,14 @@
+# Release notes - Typescript Wallet SDK Soroban - 6.0.0
+
+### BREAKING CHANGES
+* `scValByType` throws a `TypeError` for a map, at any depth, with two keys that convert to the same JSON key, such as `u32 1` and `symbol "1"`. It used to render the map without one of those entries. The change comes from stellar-sdk 17.3's `scValToNative`
+
+### Added
+* Protocol 30 support: upgraded `@stellar/stellar-sdk` from `17.0.1` to `17.4.0`, which adds CAP-84 muxed contract (`W…`) addresses. `scValByType` renders one as its `W…` address, and `getTokenInvocationArgs` returns it as `to` for a Stellar Asset Contract `transfer` or `mint` to it. Before, a transaction that contained one failed to decode
+
+### Fixed
+* `getInvocationDetails` shows a Stellar Asset Contract's asset with its code as encoded, so an asset whose code is `xlm` shows as `xlm:G…`. It used to show as `XLM:G…`, the same as an asset whose code is `XLM`. The fix comes from stellar-sdk 17.3
+
 # Release notes - Typescript Wallet SDK Soroban - 5.1.0
 * Version bump
 

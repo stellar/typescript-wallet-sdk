@@ -8,6 +8,8 @@ export enum SorobanTokenInterface {
 
 export type ArgsForTokenInvocation = {
   from: string;
+  // The recipient as the invocation names it, so it can also be a muxed
+  // account (M...) or, since Protocol 30, a muxed contract (W...) address.
   to: string;
   amount: bigint | number;
 };

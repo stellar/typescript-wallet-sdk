@@ -474,6 +474,15 @@ export class Sep7LongMsgError extends Error {
   }
 }
 
+export class Sep7ContractMemoError extends Error {
+  constructor() {
+    super(
+      "the 'memo' parameter is not supported for a contract ('C') or muxed contract ('W') 'destination'",
+    );
+    Object.setPrototypeOf(this, Sep7ContractMemoError.prototype);
+  }
+}
+
 export class Sep7UriTypeNotSupportedError extends Error {
   constructor(type: string) {
     super(

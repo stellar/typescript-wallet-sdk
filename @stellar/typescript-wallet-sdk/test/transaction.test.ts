@@ -19,6 +19,7 @@ import {
 } from "../src";
 import { IssuedAssetId, NativeAssetId } from "../src/walletSdk/Asset";
 import { PathPayBoundRequiredError } from "../src/walletSdk/Exceptions";
+import { MUXED_CONTRACT_MAX_ID } from "./fixtures/muxedContract";
 
 describe("Muxed Transactions", () => {
   let wallet: Wallet;
@@ -422,5 +423,47 @@ describe("Path Payment bounds", () => {
     const op = txn.operations[0] as Operation.PathPaymentStrictSend;
     expect(op.type).toBe("pathPaymentStrictSend");
     expect(op.destMin).toBe("0.9000000");
+  });
+});
+
+// A muxed contract (W) address can only receive a Stellar Asset Contract
+// transfer, so no classic operation may take one as its destination.
+describe("classic operations to a muxed contract (W) address", () => {
+  const newBuilder = () =>
+    new TransactionBuilder(
+      new Config({
+        stellarConfiguration: StellarConfiguration.TestNet(),
+        applicationConfiguration: new ApplicationConfiguration(),
+      }),
+      new Account(Keypair.random().publicKey(), "0"),
+    );
+
+  it.each([
+    [
+      "transfer",
+      (builder: TransactionBuilder) =>
+        builder.transfer(MUXED_CONTRACT_MAX_ID, new NativeAssetId(), "1"),
+    ],
+    [
+      "pathPay",
+      (builder: TransactionBuilder) =>
+        builder.pathPay({
+          destinationAddress: MUXED_CONTRACT_MAX_ID,
+          sendAsset: new NativeAssetId(),
+          destAsset: new IssuedAssetId(
+            "USDC",
+            "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+          ),
+          sendAmount: "5",
+          destMin: "4.9",
+        }),
+    ],
+    [
+      "accountMerge",
+      (builder: TransactionBuilder) =>
+        builder.accountMerge(MUXED_CONTRACT_MAX_ID),
+    ],
+  ])("%s refuses a W destination", (_, addOperation) => {
+    expect(() => addOperation(newBuilder())).toThrow("destination is invalid");
   });
 });

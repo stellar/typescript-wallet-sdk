@@ -51,15 +51,15 @@ describe("Recovery Integration Tests", () => {
       await stellar.server.loadAccount(deviceKp.publicKey);
       await stellar.server.loadAccount(recoveryKp.publicKey);
     } catch (e) {
-      await axios.get(
-        "https://friendbot.stellar.org/?addr=" + accountKp.publicKey,
-      );
-      await axios.get(
-        "https://friendbot.stellar.org/?addr=" + deviceKp.publicKey,
-      );
-      await axios.get(
-        "https://friendbot.stellar.org/?addr=" + recoveryKp.publicKey,
-      );
+      // One friendbot call can take 25 s or more on testnet, so these run in
+      // parallel and the test allows 120 s.
+      await Promise.all([
+        axios.get("https://friendbot.stellar.org/?addr=" + accountKp.publicKey),
+        axios.get("https://friendbot.stellar.org/?addr=" + deviceKp.publicKey),
+        axios.get(
+          "https://friendbot.stellar.org/?addr=" + recoveryKp.publicKey,
+        ),
+      ]);
     }
 
     // Create SEP-30 identities
@@ -164,5 +164,5 @@ describe("Recovery Integration Tests", () => {
     expect(resp.signers.find((obj) => obj.key === newKp.publicKey).weight).toBe(
       10,
     );
-  }, 60000);
+  }, 120000);
 });

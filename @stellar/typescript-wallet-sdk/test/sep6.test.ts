@@ -7,6 +7,7 @@ let sep6;
 let accountKp;
 
 describe("SEP-6", () => {
+  // One friendbot call can take 25 s or more on testnet, so this allows 90 s.
   beforeAll(async () => {
     wallet = Wallet.TestNet();
     anchor = wallet.anchor({ homeDomain: "testanchor.stellar.org" });
@@ -16,7 +17,7 @@ describe("SEP-6", () => {
     await axios.get(
       "https://friendbot.stellar.org/?addr=" + accountKp.publicKey,
     );
-  }, 30000);
+  }, 90000);
 
   it("should get anchor info", async () => {
     const resp = await sep6.info();

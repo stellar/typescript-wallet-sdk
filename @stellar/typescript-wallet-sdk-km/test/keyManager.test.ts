@@ -999,6 +999,104 @@ describe("fetchAuthToken", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
+  // WebAuth.readChallengeTx checks these since stellar-sdk 17.3. SEP-10
+  // requires the client_domain operation's source to be the client domain's
+  // signing key.
+  test.each([
+    ["has no source account", "none"],
+    ["uses the server account as its source", "server"],
+  ])(
+    "Rejects a challenge whose client_domain operation %s",
+    async (_, clientDomainSource) => {
+      const authServer = "https://www.stellar.org/auth";
+      const password = "very secure password";
+
+      const keyNetwork = Networks.TESTNET;
+
+      const accountKey = Keypair.random();
+      const account = new Account(accountKey.publicKey(), "-1");
+
+      // set up the manager
+      const testStore = new MemoryKeyStore();
+      const testKeyManager = new KeyManager({
+        keyStore: testStore,
+      });
+
+      testKeyManager.registerEncrypter(IdentityEncrypter);
+
+      const keypair = Keypair.master(keyNetwork);
+
+      const tx = new TransactionBuilder(account, {
+        fee: BASE_FEE,
+        networkPassphrase: keyNetwork,
+      })
+        .addOperation(
+          Operation.manageData({
+            name: `stellar.org auth`,
+            value: randomBytes(48).toString("base64"),
+            source: keypair.publicKey(),
+          }),
+        )
+        .addOperation(
+          Operation.manageData({
+            name: "web_auth_domain",
+            value: new URL(authServer).hostname,
+            source: account.accountId(),
+          }),
+        )
+        .addOperation(
+          Operation.manageData({
+            name: "client_domain",
+            value: "wallet.example.com",
+            source:
+              clientDomainSource === "server" ? account.accountId() : undefined,
+          }),
+        )
+        .setTimeout(300)
+        .build();
+
+      tx.sign(accountKey);
+
+      const fetchSpy = jest.spyOn(global, "fetch").mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            transaction: tx.toXDR(),
+            network_passphrase: keyNetwork,
+          }),
+        ),
+      );
+
+      const keyMetadata = await testKeyManager.storeKey({
+        key: {
+          type: KeyType.plaintextKey,
+          publicKey: keypair.publicKey(),
+          privateKey: keypair.secret(),
+          network: keyNetwork,
+        },
+        password,
+        encrypterName: "IdentityEncrypter",
+      });
+
+      const onChallengeTransactionSignature = jest.fn();
+
+      const result = testKeyManager.fetchAuthToken({
+        id: keyMetadata.id,
+        password,
+        authServer,
+        authServerKey: account.accountId(),
+        authServerHomeDomains: ["stellar.org"],
+        clientDomain: "wallet.example.com",
+        onChallengeTransactionSignature,
+      });
+      await expect(result).rejects.toThrow(WebAuth.InvalidChallengeError);
+      await expect(result).rejects.toThrow(/client_domain/);
+
+      // The challenge was fetched, but nothing was signed or posted back.
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(onChallengeTransactionSignature).not.toHaveBeenCalled();
+    },
+  );
+
   test("Can use a challenge token", async () => {
     const authServer = "https://www.stellar.org/auth";
     const password = "very secure password";

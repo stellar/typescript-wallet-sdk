@@ -12,6 +12,11 @@ import {
 import albedo from "@albedo-link/intent";
 
 import { albedoSigningWith } from "./fixtures/albedo";
+import {
+  MUXED_CONTRACT_MAX_ID,
+  buildTransferToMuxedContract,
+  transferRecipient,
+} from "./fixtures/muxedContract";
 import { albedoHandler } from "../src/Handlers/albedo";
 import { Key, KeyType } from "../src/Types";
 
@@ -153,6 +158,22 @@ describe("albedoHandler", () => {
       expect(mockTx).not.toHaveBeenCalled();
     },
   );
+
+  it("returns the signed transaction with its muxed contract (W) recipient intact", async () => {
+    const tx = buildTransferToMuxedContract(
+      signer.publicKey(),
+      Networks.TESTNET,
+    );
+    const key = makeAlbedoKey(signer, { network: Networks.TESTNET });
+
+    const result = await albedoHandler.signTransaction({
+      transaction: tx,
+      key,
+    });
+
+    expect(transferRecipient(result)).toBe(MUXED_CONTRACT_MAX_ID);
+    expect(WebAuth.verifyTxSignedBy(result, signer.publicKey())).toBe(true);
+  });
 
   it("refuses a key that holds a private key without opening Albedo", async () => {
     const tx = buildTestTransaction(signer, Networks.TESTNET);

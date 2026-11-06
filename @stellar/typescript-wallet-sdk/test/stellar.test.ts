@@ -22,6 +22,11 @@ import {
 } from "../src/walletSdk/Asset";
 import { TransactionStatus, WithdrawTransaction } from "../src/walletSdk/Types";
 import {
+  MUXED_CONTRACT_MAX_ID,
+  TRANSFER_TO_MUXED_CONTRACT_XDR,
+  transferRecipient,
+} from "./fixtures/muxedContract";
+import {
   TransactionSubmitWithFeeIncreaseFailedError,
   WithdrawalTxMemoError,
   WithdrawalTxMissingDestinationError,
@@ -496,6 +501,8 @@ let txnSourceKp;
 let sponsorKp;
 let newKp;
 describe("SponsoringBuilder", () => {
+  // One friendbot call can take 25 s or more on testnet, so this funds both
+  // accounts in parallel and allows 90 s.
   beforeAll(async () => {
     wal = Wallet.TestNet();
     stellar = wal.stellar();
@@ -503,13 +510,11 @@ describe("SponsoringBuilder", () => {
     txnSourceKp = new SigningKeypair(Keypair.random());
     sponsorKp = new SigningKeypair(Keypair.random());
     newKp = new SigningKeypair(Keypair.random());
-    await axios.get(
-      "https://friendbot.stellar.org/?addr=" + sponsorKp.publicKey,
-    );
-    await axios.get(
-      "https://friendbot.stellar.org/?addr=" + txnSourceKp.publicKey,
-    );
-  }, 30000);
+    await Promise.all([
+      axios.get("https://friendbot.stellar.org/?addr=" + sponsorKp.publicKey),
+      axios.get("https://friendbot.stellar.org/?addr=" + txnSourceKp.publicKey),
+    ]);
+  }, 90000);
 
   it("should sponsor creating an account", async () => {
     const wal = Wallet.TestNet();
@@ -644,6 +649,8 @@ describe("Asset", () => {
   });
 });
 
+// These tests wait on testnet, where one friendbot call can take 25 s or more,
+// so they fund their accounts in parallel and allow 90 s.
 describe("Account Modifying", () => {
   it("should modify account ", async () => {
     const wallet = Wallet.TestNet();
@@ -651,10 +658,10 @@ describe("Account Modifying", () => {
 
     const sourceKp = new SigningKeypair(Keypair.random());
     const otherKp = new SigningKeypair(Keypair.random());
-    await axios.get(
-      "https://friendbot.stellar.org/?addr=" + sourceKp.publicKey,
-    );
-    await axios.get("https://friendbot.stellar.org/?addr=" + otherKp.publicKey);
+    await Promise.all([
+      axios.get("https://friendbot.stellar.org/?addr=" + sourceKp.publicKey),
+      axios.get("https://friendbot.stellar.org/?addr=" + otherKp.publicKey),
+    ]);
 
     // Add account signer
     let txBuilder = await stellar.transaction({
@@ -718,7 +725,7 @@ describe("Account Modifying", () => {
 
     resp = await stellar.server.loadAccount(sourceKp.publicKey);
     expect(resp.signers[0].weight).toBe(0);
-  }, 45000);
+  }, 90000);
 
   it("should merge account", async () => {
     const wallet = Wallet.TestNet();
@@ -727,8 +734,10 @@ describe("Account Modifying", () => {
 
     const accountKp = account.createKeypair();
     const sourceKp = account.createKeypair();
-    await stellar.fundTestnetAccount(accountKp.publicKey);
-    await stellar.fundTestnetAccount(sourceKp.publicKey);
+    await Promise.all([
+      stellar.fundTestnetAccount(accountKp.publicKey),
+      stellar.fundTestnetAccount(sourceKp.publicKey),
+    ]);
 
     const txBuilder = await stellar.transaction({
       sourceAddress: accountKp,
@@ -753,7 +762,7 @@ describe("Account Modifying", () => {
     expect(found).toBeFalsy();
     const accResp = await stellar.server.loadAccount(accountKp.publicKey);
     expect(parseInt(accResp.balances[0].balance)).toBeGreaterThan(19998);
-  }, 30000);
+  }, 90000);
 });
 
 // Hermetic (no network): stellar-sdk v16 tightened Memo validation, so a
@@ -816,5 +825,16 @@ describe("transferWithdrawalTransaction memo validation", () => {
         usdc(),
       ),
     ).toThrow(WithdrawalTxMemoError);
+  });
+});
+
+describe("decodeTransaction with a muxed contract (W) address", () => {
+  it("decodes a transfer to a W address and re-encodes it unchanged", () => {
+    const tx = Wallet.TestNet()
+      .stellar()
+      .decodeTransaction(TRANSFER_TO_MUXED_CONTRACT_XDR) as Transaction;
+
+    expect(transferRecipient(tx)).toBe(MUXED_CONTRACT_MAX_ID);
+    expect(tx.toXdr()).toBe(TRANSFER_TO_MUXED_CONTRACT_XDR);
   });
 });
