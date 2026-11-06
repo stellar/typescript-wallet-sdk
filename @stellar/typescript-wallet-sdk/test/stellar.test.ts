@@ -649,6 +649,8 @@ describe("Asset", () => {
   });
 });
 
+// These tests wait on testnet, where one friendbot call can take 25 s or more,
+// so they fund their accounts in parallel and allow 90 s.
 describe("Account Modifying", () => {
   it("should modify account ", async () => {
     const wallet = Wallet.TestNet();
@@ -656,10 +658,10 @@ describe("Account Modifying", () => {
 
     const sourceKp = new SigningKeypair(Keypair.random());
     const otherKp = new SigningKeypair(Keypair.random());
-    await axios.get(
-      "https://friendbot.stellar.org/?addr=" + sourceKp.publicKey,
-    );
-    await axios.get("https://friendbot.stellar.org/?addr=" + otherKp.publicKey);
+    await Promise.all([
+      axios.get("https://friendbot.stellar.org/?addr=" + sourceKp.publicKey),
+      axios.get("https://friendbot.stellar.org/?addr=" + otherKp.publicKey),
+    ]);
 
     // Add account signer
     let txBuilder = await stellar.transaction({
@@ -723,7 +725,7 @@ describe("Account Modifying", () => {
 
     resp = await stellar.server.loadAccount(sourceKp.publicKey);
     expect(resp.signers[0].weight).toBe(0);
-  }, 45000);
+  }, 90000);
 
   it("should merge account", async () => {
     const wallet = Wallet.TestNet();
@@ -732,8 +734,10 @@ describe("Account Modifying", () => {
 
     const accountKp = account.createKeypair();
     const sourceKp = account.createKeypair();
-    await stellar.fundTestnetAccount(accountKp.publicKey);
-    await stellar.fundTestnetAccount(sourceKp.publicKey);
+    await Promise.all([
+      stellar.fundTestnetAccount(accountKp.publicKey),
+      stellar.fundTestnetAccount(sourceKp.publicKey),
+    ]);
 
     const txBuilder = await stellar.transaction({
       sourceAddress: accountKp,
@@ -758,7 +762,7 @@ describe("Account Modifying", () => {
     expect(found).toBeFalsy();
     const accResp = await stellar.server.loadAccount(accountKp.publicKey);
     expect(parseInt(accResp.balances[0].balance)).toBeGreaterThan(19998);
-  }, 30000);
+  }, 90000);
 });
 
 // Hermetic (no network): stellar-sdk v16 tightened Memo validation, so a
