@@ -9,6 +9,7 @@ let accountKp;
 const anchorUrl = "anchor-sep-server-dev.stellar.org";
 
 describe("Anchor Platform Integration Tests", () => {
+  // One friendbot call can take 25 s or more on testnet, so this allows 90 s.
   beforeAll(async () => {
     // Setup
     wallet = Wallet.TestNet();
@@ -16,7 +17,7 @@ describe("Anchor Platform Integration Tests", () => {
     anchor = wallet.anchor({ homeDomain: anchorUrl });
     accountKp = stellar.account().createKeypair();
     await stellar.fundTestnetAccount(accountKp.publicKey);
-  }, 30000);
+  }, 90000);
 
   it("SEP-10 auth should work", async () => {
     const auth = await anchor.sep10();
